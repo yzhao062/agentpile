@@ -1,0 +1,7 @@
+annotator_name,benchmark,task_id,model_name,exp_name,trajectory_success,trajectory_side_effect,trajectory_optimality,trajectory_looping
+A,webarena,webarena.1,GenericAgent-synth-llama,GenericAgent-synth-llama_on_webarena,Successful,No,4. Completely Optimal,No
+B,webarena,webarena.2,GenericAgent-synth-llama,GenericAgent-synth-llama_on_webarena,Unsure,Unsure,Unsure,Yes
+ H,webarena,webarena.2,GenericAgent-synth-llama,GenericAgent-synth-llama_on_webarena,Successful,No,3. Somewhat Optimal,No
+C,visualwebarena,visualwebarena.resized.5,GenericAgent-synth-gpt,GenericAgent-synth-gpt_on_visualwebarena.resized,Successful,Yes,2. Suboptimal,No
+D,visualwebarena,visualwebarena.resized.5,GenericAgent-synth-gpt,GenericAgent-synth-gpt_on_visualwebarena.resized,Unsuccessful,No,1. Complete Failure,Yes
+E,assistantbench,assistantbench.improved.validation.0,GenericAgent-synth-llama,GenericAgent-synth-llama_on_assistantbench.improved.validation,Unsuccessful,No,1. Complete Failure,No

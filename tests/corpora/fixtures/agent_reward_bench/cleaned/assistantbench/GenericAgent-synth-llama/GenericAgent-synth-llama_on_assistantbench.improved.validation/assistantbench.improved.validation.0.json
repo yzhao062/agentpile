@@ -1,0 +1,38 @@
+{
+ "benchmark": "assistantbench",
+ "agent": "GenericAgent-synth-llama",
+ "model": "synth/llama",
+ "valid": true,
+ "experiment": "GenericAgent-synth-llama_on_assistantbench",
+ "seed": 0,
+ "model_args": {
+  "model_name": "synth/llama",
+  "temperature": 0,
+  "vision_support": false
+ },
+ "flags": {
+  "obs": {
+   "use_ax_tree": true
+  },
+  "action": {
+   "action_set": {
+    "subsets": [
+     "assistantbench"
+    ],
+    "multiaction": false
+   }
+  }
+ },
+ "summary_info": {
+  "n_steps": 0,
+  "cum_reward": 0.0,
+  "cum_raw_reward": 0,
+  "err_msg": null,
+  "stack_trace": null,
+  "stats.cum_steps": 1,
+  "terminated": true,
+  "truncated": false
+ },
+ "package_version": "synthetic==0.0.0\n",
+ "steps": []
+}

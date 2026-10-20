@@ -1,0 +1,14 @@
+{
+  "jsonrpc": "2.0",
+  "id": 7,
+  "result": {
+    "tools": [
+      {
+        "name": "list_dir",
+        "description": "List a directory.",
+        "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}}},
+        "annotations": {"readOnlyHint": true}
+      }
+    ]
+  }
+}

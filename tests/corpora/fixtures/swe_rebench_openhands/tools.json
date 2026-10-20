@@ -1,0 +1,102 @@
+[
+ {
+  "type": "function",
+  "function": {
+   "name": "execute_bash",
+   "description": "Run one synthetic shell command.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "command": {
+      "type": "string",
+      "description": "The command."
+     }
+    },
+    "required": [
+     "command"
+    ]
+   }
+  }
+ },
+ {
+  "type": "function",
+  "function": {
+   "name": "think",
+   "description": "Log a synthetic thought.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "thought": {
+      "type": "string",
+      "description": "The thought."
+     }
+    },
+    "required": [
+     "thought"
+    ]
+   }
+  }
+ },
+ {
+  "type": "function",
+  "function": {
+   "name": "finish",
+   "description": "End the synthetic task.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "message": {
+      "type": "string",
+      "description": "The message."
+     }
+    },
+    "required": [
+     "message"
+    ]
+   }
+  }
+ },
+ {
+  "type": "function",
+  "function": {
+   "name": "task_tracker",
+   "description": "Track synthetic tasks.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "command": {
+      "type": "string",
+      "description": "The command."
+     }
+    },
+    "required": [
+     "command"
+    ]
+   }
+  }
+ },
+ {
+  "type": "function",
+  "function": {
+   "name": "str_replace_editor",
+   "description": "Edit a synthetic file.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "command": {
+      "type": "string",
+      "description": "The command."
+     },
+     "path": {
+      "type": "string",
+      "description": "The path."
+     }
+    },
+    "required": [
+     "command",
+     "path"
+    ]
+   }
+  }
+ }
+]

@@ -1,0 +1,75 @@
+{
+  "name": "who_and_when",
+  "hf_id": "Kevin355/Who_and_When",
+  "revision": "59b9fcba1aaed7bbf206b5f4d3c68b8face2f49c",
+  "checked_at": "2026-10-20",
+  "license_on_card": "not declared",
+  "gated": false,
+  "allow_patterns": [
+    "Who&When/**"
+  ],
+  "configs_splits": [
+    {
+      "config": "Algorithm-Generated",
+      "split": "train",
+      "rows": 126
+    },
+    {
+      "config": "Hand-Crafted",
+      "split": "train",
+      "rows": 58
+    }
+  ],
+  "unsupported": [
+    {
+      "what": "Parquet files (Algorithm-Generated.parquet, Hand-Crafted.parquet) as the source"
+    },
+    {
+      "what": "Successful runs and any run-level success classifier"
+    },
+    {
+      "what": "Structured tool calls, tool call ids, tool definitions, timestamps, token or cost metrics, model names"
+    },
+    {
+      "what": "Step-to-step dependencies (which earlier step a step used)"
+    },
+    {
+      "what": "Hand-Crafted per-agent system prompts"
+    }
+  ],
+  "counts": {
+    "source_rows": {
+      "value": 184
+    },
+    "runs_after_load": {
+      "value": 184
+    }
+  },
+  "labels": [
+    {
+      "field": "mistake_step",
+      "level": "step"
+    },
+    {
+      "field": "mistake_agent",
+      "level": "step"
+    },
+    {
+      "field": "mistake_reason",
+      "level": "step"
+    },
+    {
+      "field": "is_correct (Algorithm-Generated) / is_corrected (Hand-Crafted)",
+      "level": "run"
+    },
+    {
+      "field": "mistake_type",
+      "level": "run"
+    },
+    {
+      "field": "labels",
+      "level": "run"
+    }
+  ],
+  "stage0_record": "agent-io/stage0/u1-multiagent/manifest-who_and_when.yaml"
+}

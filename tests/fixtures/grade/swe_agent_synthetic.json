@@ -1,0 +1,376 @@
+{
+ "sample": "swe_agent_synthetic",
+ "corpus": "swe_agent_nebius",
+ "provenance": "raw record written by hand in the nebius/SWE-agent-trajectories layout (role system/user/ai, text); expected_steps are the output of GRADE 3839a57 experiment/agent_graph_swe_agent.to_steps on it, projected to idx, agent, kind, deps",
+ "raw": {
+  "instance_id": "demo__repo-3",
+  "model_name": "swe-agent-demo",
+  "target": false,
+  "trajectory": [
+   {
+    "role": "system",
+    "text": "You are a software engineer."
+   },
+   {
+    "role": "user",
+    "text": "Fix the bug in the repository.\n(Open file: n/a)\n(Current directory: /repo)\nbash-$"
+   },
+   {
+    "role": "ai",
+    "text": "List the files.\n```\nls -a\n```"
+   },
+   {
+    "role": "user",
+    "text": "a.py b.py\n(Open file: n/a)\n(Current directory: /repo)\nbash-$"
+   },
+   {
+    "role": "ai",
+    "text": "Open a.py.\n```\nopen src/a.py\n```"
+   },
+   {
+    "role": "user",
+    "text": "[File: src/a.py (10 lines total)]\n(Open file: /repo/src/a.py)\n(Current directory: /repo)\nbash-$"
+   },
+   {
+    "role": "ai",
+    "text": "Edit the open file.\n```\nedit 1:2\nx = 1\nend_of_edit\n```"
+   },
+   {
+    "role": "user",
+    "text": "File updated.\n(Open file: /repo/src/a.py)\n(Current directory: /repo)\nbash-$"
+   },
+   {
+    "role": "ai",
+    "text": "Go to line 5.\n```\ngoto 5\n```"
+   },
+   {
+    "role": "user",
+    "text": "[File: src/a.py]\n(Open file: /repo/src/a.py)\n(Current directory: /repo)\nbash-$"
+   },
+   {
+    "role": "ai",
+    "text": "Open it again by path.\n```\nopen src/a.py\n```"
+   },
+   {
+    "role": "user",
+    "text": "[File: src/a.py]\n(Open file: /repo/src/a.py)\n(Current directory: /repo)\nbash-$"
+   },
+   {
+    "role": "ai",
+    "text": "Search.\n```\nsearch_file \"def foo\"\n```"
+   },
+   {
+    "role": "user",
+    "text": "Found 1 match.\n(Open file: /repo/src/a.py)\n(Current directory: /repo)\nbash-$"
+   },
+   {
+    "role": "ai",
+    "text": "Search another file.\n```\nsearch_file \"bar baz\" src/b.py\n```"
+   },
+   {
+    "role": "user",
+    "text": "Found 2 matches.\n(Open file: /repo/src/a.py)\n(Current directory: /repo)\nbash-$"
+   },
+   {
+    "role": "ai",
+    "text": "Cat.\n```\ncat src/b.py\n```"
+   },
+   {
+    "role": "user",
+    "text": "contents"
+   },
+   {
+    "role": "ai",
+    "text": "Grep a file.\n```\ngrep -n foo src/b.py\n```"
+   },
+   {
+    "role": "user",
+    "text": "1: foo"
+   },
+   {
+    "role": "ai",
+    "text": "Grep the tree.\n```\ngrep -rn foo .\n```"
+   },
+   {
+    "role": "user",
+    "text": "many matches"
+   },
+   {
+    "role": "ai",
+    "text": "Create a script.\n```\ncreate src/new.py\n```"
+   },
+   {
+    "role": "user",
+    "text": "[File: src/new.py (1 lines total)]\n(Open file: /repo/src/new.py)\n(Current directory: /repo)\nbash-$"
+   },
+   {
+    "role": "ai",
+    "text": "Edit the new file.\n```\nedit 1:1\nprint(1)\nend_of_edit\n```"
+   },
+   {
+    "role": "user",
+    "text": "File updated.\n(Open file: /repo/src/new.py)\n(Current directory: /repo)\nbash-$"
+   },
+   {
+    "role": "ai",
+    "text": "Find a file.\n```\nfind_file \"conftest.py\"\n```"
+   },
+   {
+    "role": "user",
+    "text": "Found 1 matches.\n(Open file: n/a)\n(Current directory: /repo)\nbash-$"
+   },
+   {
+    "role": "ai",
+    "text": "Edit with no open file.\n```\nedit 1:1\nx\nend_of_edit\n```"
+   },
+   {
+    "role": "user",
+    "text": "No file open."
+   },
+   {
+    "role": "ai",
+    "text": "I think we are done, nothing more to run."
+   },
+   {
+    "role": "user",
+    "text": "Please continue."
+   },
+   {
+    "role": "ai",
+    "text": "Run it.\n```\npython reproduce.py\n```"
+   },
+   {
+    "role": "user",
+    "text": "ok"
+   },
+   {
+    "role": "ai",
+    "text": "Empty block.\n```\n\n```"
+   },
+   {
+    "role": "user",
+    "text": "ok"
+   },
+   {
+    "role": "ai",
+    "text": "Submit.\n```\nsubmit\n```"
+   }
+  ]
+ },
+ "expected_steps": [
+  {
+   "idx": 0,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 1,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": []
+  },
+  {
+   "idx": 2,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 3,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": []
+  },
+  {
+   "idx": 4,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 5,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": []
+  },
+  {
+   "idx": 6,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 7,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": [
+    5
+   ]
+  },
+  {
+   "idx": 8,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 9,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": [
+    3
+   ]
+  },
+  {
+   "idx": 10,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 11,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": [
+    7
+   ]
+  },
+  {
+   "idx": 12,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 13,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": []
+  },
+  {
+   "idx": 14,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 15,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": [
+    13
+   ]
+  },
+  {
+   "idx": 16,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 17,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": [
+    15
+   ]
+  },
+  {
+   "idx": 18,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 19,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": []
+  },
+  {
+   "idx": 20,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 21,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": []
+  },
+  {
+   "idx": 22,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 23,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": []
+  },
+  {
+   "idx": 24,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 25,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": []
+  },
+  {
+   "idx": 26,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 27,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": []
+  },
+  {
+   "idx": 28,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 29,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 30,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": []
+  },
+  {
+   "idx": 31,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 32,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 33,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": []
+  }
+ ]
+}

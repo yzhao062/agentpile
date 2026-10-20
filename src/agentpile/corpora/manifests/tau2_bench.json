@@ -1,0 +1,69 @@
+{
+  "name": "tau2_bench",
+  "hf_id": "AgentSuite/tau2-bench-trajectories",
+  "revision": "07264f1d253a618fc20966670eddc44246212916",
+  "checked_at": "2026-10-20",
+  "license_on_card": "not declared",
+  "gated": false,
+  "allow_patterns": [
+    "*.jsonl",
+    "README.md"
+  ],
+  "configs_splits": [
+    {
+      "config": "default",
+      "split": "train",
+      "rows": 8340
+    }
+  ],
+  "unsupported": [
+    {
+      "what": "tool_call_id on tool results (and name or requestor on them)"
+    },
+    {
+      "what": "per-message or per-step timestamps"
+    },
+    {
+      "what": "tool definitions"
+    },
+    {
+      "what": "reasoning or thinking content"
+    },
+    {
+      "what": "per-step token, latency or cost metrics"
+    },
+    {
+      "what": "results for 179 tool calls in 167 call messages"
+    },
+    {
+      "what": "a meaningful db_match for telecom rows"
+    }
+  ],
+  "counts": {
+    "source_rows": {
+      "value": 8340
+    },
+    "runs_after_load": {
+      "value": 8340
+    }
+  },
+  "labels": [
+    {
+      "field": "eval_result.score",
+      "level": "run"
+    },
+    {
+      "field": "eval_result.db_match",
+      "level": "run"
+    },
+    {
+      "field": "meta.reward_details.reward_breakdown",
+      "level": "run"
+    },
+    {
+      "field": "meta.finish_reason",
+      "level": "run"
+    }
+  ],
+  "stage0_record": "agent-io/stage0/u3-tau/manifest-tau2_bench.yaml"
+}

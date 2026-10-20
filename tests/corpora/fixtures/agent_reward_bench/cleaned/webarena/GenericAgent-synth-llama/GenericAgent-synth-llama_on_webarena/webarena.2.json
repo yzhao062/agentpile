@@ -1,0 +1,454 @@
+{
+ "benchmark": "webarena",
+ "agent": "GenericAgent-synth-llama",
+ "model": "synth/llama",
+ "valid": true,
+ "experiment": "GenericAgent-synth-llama_on_webarena",
+ "seed": 0,
+ "model_args": {
+  "model_name": "synth/llama",
+  "temperature": 0,
+  "vision_support": false
+ },
+ "flags": {
+  "obs": {
+   "use_ax_tree": true
+  },
+  "action": {
+   "action_set": {
+    "subsets": [
+     "webarena"
+    ],
+    "multiaction": false
+   }
+  }
+ },
+ "summary_info": {
+  "n_steps": 6,
+  "cum_reward": 0.0,
+  "cum_raw_reward": 0,
+  "err_msg": "KeyboardInterrupt: stop",
+  "stack_trace": null,
+  "stats.cum_steps": 7,
+  "terminated": false,
+  "truncated": false
+ },
+ "package_version": "synthetic==0.0.0\n",
+ "goal": "Open the synthetic forum and like a post",
+ "steps": [
+  {
+   "num": 0,
+   "reasoning": "Click the post.",
+   "action": "click('3')  <!-- the model added a comment -->",
+   "screenshot_path": "trajectories/screenshots/synth/step_0.png",
+   "url": "https://shop.example/",
+   "open_pages_urls": [
+    "https://shop.example/"
+   ],
+   "focused_element": "",
+   "last_action_error": "",
+   "stats": {
+    "n_retry_llm": 1,
+    "n_retry": 0.0,
+    "busted_retry": 0,
+    "input_tokens": 100,
+    "output_tokens": 10,
+    "cost": 0.0
+   },
+   "axtree": "RootWebArea 'Shop 0', focused\n\t[12] link 'Mugs ☕ café', clickable, visible\n\t[7] searchbox 'Search', visible",
+   "chat_messages": [
+    {
+     "role": "system",
+     "content": "You are a synthetic agent. Send actions to the browser."
+    },
+    {
+     "role": "user",
+     "content": [
+      {
+       "type": "text",
+       "text": "# Instructions\nChoose the next action.\n\n## Goal:\nOpen the synthetic forum and like a post\n\n# Action space:\nclick(bid: str)\nfill(bid: str, value: str)\nscroll(delta_x: float, delta_y: float)\n"
+      },
+      {
+       "type": "image_url",
+       "image_url": {
+        "url": "REMOVED"
+       }
+      }
+     ]
+    },
+    {
+     "role": "assistant",
+     "content": "<think>\nClick the post.\n</think>\n\n<action>\nclick('3')  <!-- the model added a comment -->\n</action>"
+    }
+   ],
+   "axtree_obj": {
+    "nodes": [
+     {
+      "nodeId": "1"
+     }
+    ]
+   },
+   "bounding_boxes": {
+    "0": {
+     "bbox": [
+      0,
+      0,
+      1,
+      1
+     ]
+    }
+   },
+   "extra_element_properties": {
+    "0": {
+     "visibility": 1.0
+    }
+   },
+   "axtree_pruned": "[12] link 'Mugs'"
+  },
+  {
+   "num": 1,
+   "reasoning": "Type into the box.",
+   "action": "fill('4', some_variable)",
+   "screenshot_path": "trajectories/screenshots/synth/step_1.png",
+   "url": "https://shop.example/",
+   "open_pages_urls": [
+    "https://shop.example/"
+   ],
+   "focused_element": "",
+   "last_action_error": "",
+   "stats": {
+    "n_retry_llm": 1,
+    "n_retry": 0.0,
+    "busted_retry": 0,
+    "input_tokens": 101,
+    "output_tokens": 10,
+    "cost": 0.0
+   },
+   "axtree": "RootWebArea 'Shop 1', focused\n\t[12] link 'Mugs ☕ café', clickable, visible\n\t[7] searchbox 'Search', visible",
+   "chat_messages": [
+    {
+     "role": "system",
+     "content": "You are a synthetic agent. Send actions to the browser."
+    },
+    {
+     "role": "user",
+     "content": [
+      {
+       "type": "text",
+       "text": "# Instructions\nChoose the next action.\n\n## Goal:\nOpen the synthetic forum and like a post\n\n# Action space:\nclick(bid: str)\nfill(bid: str, value: str)\nscroll(delta_x: float, delta_y: float)\n"
+      },
+      {
+       "type": "image_url",
+       "image_url": {
+        "url": "REMOVED"
+       }
+      }
+     ]
+    },
+    {
+     "role": "assistant",
+     "content": "<think>\nType into the box.\n</think>\n\n<action>\nfill('4', some_variable)\n</action>"
+    }
+   ],
+   "axtree_obj": {
+    "nodes": [
+     {
+      "nodeId": "1"
+     }
+    ]
+   },
+   "bounding_boxes": {
+    "0": {
+     "bbox": [
+      0,
+      0,
+      1,
+      1
+     ]
+    }
+   },
+   "extra_element_properties": {
+    "0": {
+     "visibility": 1.0
+    }
+   },
+   "axtree_pruned": "[12] link 'Mugs'"
+  },
+  {
+   "num": 2,
+   "reasoning": "Wait a moment.",
+   "action": "noop(wait_ms=2000)",
+   "screenshot_path": "trajectories/screenshots/synth/step_2.png",
+   "url": "https://shop.example/",
+   "open_pages_urls": [
+    "https://shop.example/"
+   ],
+   "focused_element": "",
+   "last_action_error": "",
+   "stats": {
+    "n_retry_llm": 1,
+    "n_retry": 0.0,
+    "busted_retry": 0,
+    "input_tokens": 102,
+    "output_tokens": 10,
+    "cost": 0.0
+   },
+   "axtree": "RootWebArea 'Shop 2', focused\n\t[12] link 'Mugs ☕ café', clickable, visible\n\t[7] searchbox 'Search', visible",
+   "chat_messages": [
+    {
+     "role": "system",
+     "content": "You are a synthetic agent. Send actions to the browser."
+    },
+    {
+     "role": "user",
+     "content": [
+      {
+       "type": "text",
+       "text": "# Instructions\nChoose the next action.\n\n## Goal:\nOpen the synthetic forum and like a post\n\n# Action space:\nclick(bid: str)\nfill(bid: str, value: str)\nscroll(delta_x: float, delta_y: float)\n"
+      },
+      {
+       "type": "image_url",
+       "image_url": {
+        "url": "REMOVED"
+       }
+      }
+     ]
+    },
+    {
+     "role": "assistant",
+     "content": "<think>\nWait a moment.\n</think>\n\n<action>\nnoop(wait_ms=2000)\n</action>"
+    }
+   ],
+   "axtree_obj": {
+    "nodes": [
+     {
+      "nodeId": "1"
+     }
+    ]
+   },
+   "bounding_boxes": {
+    "0": {
+     "bbox": [
+      0,
+      0,
+      1,
+      1
+     ]
+    }
+   },
+   "extra_element_properties": {
+    "0": {
+     "visibility": 1.0
+    }
+   },
+   "axtree_pruned": "[12] link 'Mugs'"
+  },
+  {
+   "num": 3,
+   "reasoning": "Go back.",
+   "action": "go_back()",
+   "screenshot_path": "trajectories/screenshots/synth/step_3.png",
+   "url": "https://shop.example/",
+   "open_pages_urls": [
+    "https://shop.example/"
+   ],
+   "focused_element": "",
+   "last_action_error": "",
+   "stats": {
+    "n_retry_llm": 1,
+    "n_retry": 0.0,
+    "busted_retry": 0,
+    "input_tokens": 103,
+    "output_tokens": 10,
+    "cost": 0.0
+   },
+   "axtree": "RootWebArea 'Shop 3', focused\n\t[12] link 'Mugs ☕ café', clickable, visible\n\t[7] searchbox 'Search', visible",
+   "chat_messages": [
+    {
+     "role": "system",
+     "content": "You are a synthetic agent. Send actions to the browser."
+    },
+    {
+     "role": "user",
+     "content": [
+      {
+       "type": "text",
+       "text": "# Instructions\nChoose the next action.\n\n## Goal:\nOpen the synthetic forum and like a post\n\n# Action space:\nclick(bid: str)\nfill(bid: str, value: str)\nscroll(delta_x: float, delta_y: float)\n"
+      },
+      {
+       "type": "image_url",
+       "image_url": {
+        "url": "REMOVED"
+       }
+      }
+     ]
+    },
+    {
+     "role": "assistant",
+     "content": "<think>\nGo back.\n</think>\n\n<action>\ngo_back()\n</action>"
+    }
+   ],
+   "axtree_obj": {
+    "nodes": [
+     {
+      "nodeId": "1"
+     }
+    ]
+   },
+   "bounding_boxes": {
+    "0": {
+     "bbox": [
+      0,
+      0,
+      1,
+      1
+     ]
+    }
+   },
+   "extra_element_properties": {
+    "0": {
+     "visibility": 1.0
+    }
+   },
+   "axtree_pruned": "[12] link 'Mugs'"
+  },
+  {
+   "num": 4,
+   "reasoning": "Say it in words.",
+   "action": "this is not a call",
+   "screenshot_path": "trajectories/screenshots/synth/step_4.png",
+   "url": "https://shop.example/",
+   "open_pages_urls": [
+    "https://shop.example/"
+   ],
+   "focused_element": "",
+   "last_action_error": "",
+   "stats": {
+    "n_retry_llm": 1,
+    "n_retry": 0.0,
+    "busted_retry": 0,
+    "input_tokens": 104,
+    "output_tokens": 10,
+    "cost": 0.0
+   },
+   "axtree": "RootWebArea 'Shop 4', focused\n\t[12] link 'Mugs ☕ café', clickable, visible\n\t[7] searchbox 'Search', visible",
+   "chat_messages": [
+    {
+     "role": "system",
+     "content": "You are a synthetic agent. Send actions to the browser."
+    },
+    {
+     "role": "user",
+     "content": [
+      {
+       "type": "text",
+       "text": "# Instructions\nChoose the next action.\n\n## Goal:\nOpen the synthetic forum and like a post\n\n# Action space:\nclick(bid: str)\nfill(bid: str, value: str)\nscroll(delta_x: float, delta_y: float)\n"
+      },
+      {
+       "type": "image_url",
+       "image_url": {
+        "url": "REMOVED"
+       }
+      }
+     ]
+    },
+    {
+     "role": "assistant",
+     "content": "<think>\nSay it in words.\n</think>\n\n<action>\nthis is not a call\n</action>"
+    }
+   ],
+   "axtree_obj": {
+    "nodes": [
+     {
+      "nodeId": "1"
+     }
+    ]
+   },
+   "bounding_boxes": {
+    "0": {
+     "bbox": [
+      0,
+      0,
+      1,
+      1
+     ]
+    }
+   },
+   "extra_element_properties": {
+    "0": {
+     "visibility": 1.0
+    }
+   },
+   "axtree_pruned": "[12] link 'Mugs'"
+  },
+  {
+   "num": 5,
+   "reasoning": "Press a key.",
+   "action": "keyboard_press('Control+a'",
+   "screenshot_path": "trajectories/screenshots/synth/step_5.png",
+   "url": "https://shop.example/",
+   "open_pages_urls": [
+    "https://shop.example/"
+   ],
+   "focused_element": "",
+   "last_action_error": "",
+   "stats": {
+    "n_retry_llm": 1,
+    "n_retry": 0.0,
+    "busted_retry": 0,
+    "input_tokens": 105,
+    "output_tokens": 10,
+    "cost": 0.0
+   },
+   "axtree": "RootWebArea 'Shop 5', focused\n\t[12] link 'Mugs ☕ café', clickable, visible\n\t[7] searchbox 'Search', visible",
+   "chat_messages": [
+    {
+     "role": "system",
+     "content": "You are a synthetic agent. Send actions to the browser."
+    },
+    {
+     "role": "user",
+     "content": [
+      {
+       "type": "text",
+       "text": "# Instructions\nChoose the next action.\n\n## Goal:\nOpen the synthetic forum and like a post\n\n# Action space:\nclick(bid: str)\nfill(bid: str, value: str)\nscroll(delta_x: float, delta_y: float)\n"
+      },
+      {
+       "type": "image_url",
+       "image_url": {
+        "url": "REMOVED"
+       }
+      }
+     ]
+    },
+    {
+     "role": "assistant",
+     "content": "<think>\nPress a key.\n</think>\n\n<action>\nkeyboard_press('Control+a'\n</action>"
+    }
+   ],
+   "axtree_obj": {
+    "nodes": [
+     {
+      "nodeId": "1"
+     }
+    ]
+   },
+   "bounding_boxes": {
+    "0": {
+     "bbox": [
+      0,
+      0,
+      1,
+      1
+     ]
+    }
+   },
+   "extra_element_properties": {
+    "0": {
+     "visibility": 1.0
+    }
+   },
+   "axtree_pruned": "[12] link 'Mugs'"
+  }
+ ]
+}

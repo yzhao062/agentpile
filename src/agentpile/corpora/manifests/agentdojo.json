@@ -1,0 +1,114 @@
+{
+  "name": "agentdojo",
+  "hf_id": "sungjuncho/agentdojo-trajectories",
+  "revision": "43df1b8d8ea3b2c17d9820fad1c7452c387e45c9",
+  "checked_at": "2026-10-20",
+  "license_on_card": "not declared",
+  "gated": false,
+  "allow_patterns": [
+    "*/*/*/*/*.json"
+  ],
+  "configs_splits": [
+    {
+      "config": "gemma-4-E4B-it/banking",
+      "split": null,
+      "rows": 1033
+    },
+    {
+      "config": "gemma-4-E4B-it/slack",
+      "split": null,
+      "rows": 1057
+    },
+    {
+      "config": "gemma-4-E4B-it/travel",
+      "split": null,
+      "rows": 1289
+    },
+    {
+      "config": "gemma-4-E4B-it/workspace",
+      "split": null,
+      "rows": 4536
+    },
+    {
+      "config": "qwen3.5-9B/banking",
+      "split": null,
+      "rows": 1033
+    },
+    {
+      "config": "qwen3.5-9B/slack",
+      "split": null,
+      "rows": 487
+    },
+    {
+      "config": "qwen3.5-9B/travel",
+      "split": null,
+      "rows": 1124
+    },
+    {
+      "config": "qwen3.5-9B/workspace",
+      "split": null,
+      "rows": 4536
+    }
+  ],
+  "unsupported": [
+    {
+      "what": "HF dataset viewer, parquet export, datasets.load_dataset config"
+    },
+    {
+      "what": "step-level timestamps"
+    },
+    {
+      "what": "tool definitions (names, descriptions, argument schemas)"
+    },
+    {
+      "what": "location of the injection in the trace"
+    },
+    {
+      "what": "definitions of attacks chunked_exfiltration, delayed_trigger, multi_injection_chaining"
+    },
+    {
+      "what": "utility and security labels for 13 records"
+    },
+    {
+      "what": "placeholder_args"
+    },
+    {
+      "what": ".gitattributes"
+    }
+  ],
+  "counts": {
+    "source_rows": {
+      "value": 15095
+    },
+    "runs_after_load": {
+      "value": 15095
+    }
+  },
+  "labels": [
+    {
+      "field": "utility",
+      "level": "run"
+    },
+    {
+      "field": "security",
+      "level": "run"
+    },
+    {
+      "field": "injection_task_id",
+      "level": "run"
+    },
+    {
+      "field": "attack_type",
+      "level": "run"
+    },
+    {
+      "field": "injections",
+      "level": "span"
+    },
+    {
+      "field": "messages[].error (tool messages)",
+      "level": "call"
+    }
+  ],
+  "stage0_record": "agent-io/stage0/u7-dojo-pre/manifest-agentdojo.yaml"
+}

@@ -1,0 +1,60 @@
+{
+ "sample": "scienceworld_fixture",
+ "corpus": "scienceworld",
+ "grade_rule": "agent_graph_scienceworld.py:50-72 at 3839a57: each assistant turn whose text contains 'action:' gives a decision step and a tool step; a tool step depends on the latest earlier 'go to' or 'teleport to' step; turns without 'action:' emit nothing",
+ "schema_note": "No stage-0 data and no public reader exist for ScienceWorld. These are synthetic records in the layout the converter accepts (conversations with from/value, info.reward). They say nothing about the real dataset.",
+ "fixtures": [
+  {
+   "fixture_id": "sw-fixture-1",
+   "raw": {
+    "conversations": [
+     {"from": "human", "value": "Your task is to boil water."},
+     {"from": "gpt", "value": "Thought: I should go to the kitchen. Action: go to kitchen"},
+     {"from": "human", "value": "You are in the kitchen."},
+     {"from": "gpt", "value": "Thought: Open the fridge. Action: open fridge"},
+     {"from": "human", "value": "The fridge is open."},
+     {"from": "gpt", "value": "I am not sure what to do."},
+     {"from": "human", "value": "Try again."},
+     {"from": "gpt", "value": "Thought: Look around. Action: look around"},
+     {"from": "human", "value": "You see a stove."},
+     {"from": "gpt", "value": "Thought: The thermometer is outside. Action: teleport to outside"},
+     {"from": "human", "value": "You are outside."},
+     {"from": "gpt", "value": "Thought: Take it. Action: pick up thermometer"}
+    ],
+    "info": {"reward": 100}
+   },
+   "expected_steps_hand": [
+    {"idx": 0, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 1, "agent": "env", "kind": "tool_call", "deps": []},
+    {"idx": 2, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 3, "agent": "env", "kind": "tool_call", "deps": [1]},
+    {"idx": 4, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 5, "agent": "env", "kind": "tool_call", "deps": [1]},
+    {"idx": 6, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 7, "agent": "env", "kind": "tool_call", "deps": [1]},
+    {"idx": 8, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 9, "agent": "env", "kind": "tool_call", "deps": [7]}
+   ],
+   "hand_reasoning": "Assistant turn 1 ('go to kitchen'): decision 0, tool 1 with no earlier location step, deps []; it is a move, so the latest location step becomes 1. Turn 2 ('open fridge'): decision 2, tool 3, deps [1]. The third assistant turn has no 'action:' so it emits nothing. Turn 4 ('look around'): decision 4, tool 5, deps [1]. Turn 5 ('teleport to outside'): decision 6, tool 7; deps are taken before the move updates the pointer, so [1]; afterwards the latest location step is 7. Turn 6 ('pick up thermometer'): decision 8, tool 9, deps [7]."
+  },
+  {
+   "fixture_id": "sw-fixture-2",
+   "raw": {
+    "conversations": [
+     {"role": "user", "content": "Your task is to find a plant."},
+     {"role": "assistant", "content": "Thought: Look. Action: look around"},
+     {"role": "user", "content": "A room."},
+     {"role": "assistant", "content": "Thought: Move on. Action: go to garden"}
+    ],
+    "info": {"reward": 0}
+   },
+   "expected_steps_hand": [
+    {"idx": 0, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 1, "agent": "env", "kind": "tool_call", "deps": []},
+    {"idx": 2, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 3, "agent": "env", "kind": "tool_call", "deps": []}
+   ],
+   "hand_reasoning": "Role/content keys are read as well as from/value. Turn 1 ('look around'): decision 0, tool 1, deps [] (no location step yet). Turn 2 ('go to garden'): decision 2, tool 3, deps [] because no location step precedes it; the move only affects later steps. Reward 0 means failed."
+  }
+ ]
+}

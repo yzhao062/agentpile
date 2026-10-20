@@ -1,0 +1,69 @@
+{
+  "name": "swe_rebench_openhands",
+  "hf_id": "nebius/SWE-rebench-openhands-trajectories",
+  "revision": "35455389ab51bf5e2306bfd436ef72d0f98bf882",
+  "checked_at": "2026-10-20",
+  "license_on_card": "cc-by-4.0",
+  "gated": false,
+  "allow_patterns": [
+    "trajectories.parquet",
+    "tools.json",
+    "README.md",
+    "config.toml"
+  ],
+  "configs_splits": [
+    {
+      "config": "default",
+      "split": "train",
+      "rows": 67074
+    }
+  ],
+  "unsupported": [
+    {
+      "what": "per-step timestamps"
+    },
+    {
+      "what": "per-step model name, token usage, cost, latency (ATIF metrics)"
+    },
+    {
+      "what": "a result for every tool call"
+    },
+    {
+      "what": "multi-agent structure"
+    },
+    {
+      "what": "a per-row link from tools.json to a run"
+    }
+  ],
+  "counts": {
+    "source_rows": {
+      "value": 67074
+    },
+    "runs_after_load": {
+      "value": 67074
+    }
+  },
+  "labels": [
+    {
+      "field": "resolved",
+      "level": "run"
+    },
+    {
+      "field": "exit_status",
+      "level": "run"
+    },
+    {
+      "field": "gen_tests_correct",
+      "level": "run"
+    },
+    {
+      "field": "pred_passes_gen_tests",
+      "level": "run"
+    },
+    {
+      "field": "model_patch",
+      "level": "run"
+    }
+  ],
+  "stage0_record": "agent-io/stage0/u4-openhands/manifest-swe_rebench_openhands.yaml"
+}

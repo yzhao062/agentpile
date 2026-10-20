@@ -1,0 +1,51 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  core:
+    # Gate 6: the core installs with no dependencies and runs on the oldest and newest supported Python.
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.9", "3.12"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Build and install the wheel with no dependencies
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build --wheel
+          python -m pip install --no-deps dist/*.whl
+          python -m pip install pytest
+      - name: Offline tests against the installed wheel
+        run: |
+          mv src src.unused
+          python -m pytest tests -q
+
+  extras:
+    # Hub readers on Parquet fixtures, Harbor's ATIF v1.7 models, and the two capture integrations.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install with extras and the pinned Harbor models
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ".[hf,pydantic-ai,openai-agents,dev]"
+          python -m pip install --no-deps "harbor==0.22.0"
+          python -m pip install "pydantic>=2.11.7"
+      - name: Offline tests with every optional dependency
+        env:
+          PYDANTIC_AI_NO_BANNER: "1"
+        run: python -m pytest tests -q
+
+# Real-data tests (-m network) need the pinned datasets (tens of GB, one of them gated) and
+# the GRADE expected outputs; they run by hand with AGENTPILE_DATA and AGENTPILE_GRADE_EXPECTED.

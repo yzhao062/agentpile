@@ -1,0 +1,30 @@
+[
+ {
+  "instance_id": "sweagent-x1",
+  "source": "sweagent",
+  "provenance": {
+   "repo": "https://example.invalid/synthetic",
+   "commit": "0000000000000000000000000000000000000000",
+   "path": ".",
+   "license": "MIT"
+  },
+  "declared_capabilities": [
+   {
+    "name": "bash",
+    "type": "shell",
+    "permission_level": "execute"
+   }
+  ],
+  "minimal_reference": [
+   "bash"
+  ],
+  "labels": {
+   "excess_set": [],
+   "label_source": "declared_minus_used"
+  },
+  "spec_tokens": [
+   "synthetic"
+  ],
+  "spec_token_overrides": {}
+ }
+]

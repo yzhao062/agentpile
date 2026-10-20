@@ -1,0 +1,20 @@
+{
+  "tools": [
+    {
+      "name": "get_stock_price",
+      "description": "Current price for a ticker.",
+      "input_schema": {"type": "object", "properties": {"ticker": {"type": "string"}}, "required": ["ticker"]},
+      "cache_control": {"type": "ephemeral"}
+    },
+    {
+      "type": "custom",
+      "name": "get_news",
+      "description": "Latest headlines.",
+      "input_schema": {"type": "object", "properties": {"topic": {"type": "string"}}}
+    },
+    {
+      "type": "bash_20250124",
+      "name": "bash"
+    }
+  ]
+}

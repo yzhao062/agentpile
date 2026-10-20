@@ -1,0 +1,1 @@
+{"id": "synth_m2w_0", "content": [{"class_": "text_observation", "content": "'''\n<html> <a id=0> Synthetic link </a> </html>\n'''\nSynthetic web task.", "name": null, "source": "user"}, {"class_": "message_action", "content": "<finish> A. None of the above. </finish>", "description": "No action is needed."}], "details": {}}

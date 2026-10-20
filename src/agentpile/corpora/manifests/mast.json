@@ -1,0 +1,109 @@
+{
+  "name": "mast",
+  "hf_id": "mcemri/MAST-Data",
+  "revision": "95118ac951421753cf1deb87ddea3b01e693c41b",
+  "checked_at": "2026-10-20",
+  "license_on_card": "cc-by-4.0",
+  "gated": false,
+  "allow_patterns": [
+    "MAD_full_dataset.json",
+    "README.md"
+  ],
+  "configs_splits": [
+    {
+      "config": "default",
+      "split": "train",
+      "rows": 1642
+    },
+    {
+      "config": "human_labelled",
+      "split": "train",
+      "rows": 19
+    }
+  ],
+  "unsupported": [
+    {
+      "what": "human_labelled config (MAD_human_labelled_dataset.json, 2662908 bytes, 19 rows)"
+    },
+    {
+      "what": "Structured turns, tool calls, tool call ids, tool definitions, per-step or per-span failure locations"
+    },
+    {
+      "what": "Task success or failure outcome of the run"
+    },
+    {
+      "what": "Per-framework turn splitting of the log"
+    }
+  ],
+  "counts": {
+    "source_rows": {
+      "value": 1642
+    },
+    "runs_after_load": {
+      "value": 1642
+    }
+  },
+  "labels": [
+    {
+      "field": "mast_annotation['1.1']",
+      "level": "run"
+    },
+    {
+      "field": "mast_annotation['1.2']",
+      "level": "run"
+    },
+    {
+      "field": "mast_annotation['1.3']",
+      "level": "run"
+    },
+    {
+      "field": "mast_annotation['1.4']",
+      "level": "run"
+    },
+    {
+      "field": "mast_annotation['1.5']",
+      "level": "run"
+    },
+    {
+      "field": "mast_annotation['2.1']",
+      "level": "run"
+    },
+    {
+      "field": "mast_annotation['2.2']",
+      "level": "run"
+    },
+    {
+      "field": "mast_annotation['2.3']",
+      "level": "run"
+    },
+    {
+      "field": "mast_annotation['2.4']",
+      "level": "run"
+    },
+    {
+      "field": "mast_annotation['2.5']",
+      "level": "run"
+    },
+    {
+      "field": "mast_annotation['2.6']",
+      "level": "run"
+    },
+    {
+      "field": "mast_annotation['3.1']",
+      "level": "run"
+    },
+    {
+      "field": "mast_annotation['3.2']",
+      "level": "run"
+    },
+    {
+      "field": "mast_annotation['3.3']",
+      "level": "run"
+    },
+    {
+      "field": "human_labelled config: annotations[].annotator_1 / annotator_2 / annotator_3",
+      "level": "run"
+    }
+  ],
+  "stage0_record": "agent-io/stage0/u1-multiagent/manifest-mast.yaml"
+}

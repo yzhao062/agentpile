@@ -1,0 +1,29 @@
+{
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "Weather for a city.",
+        "parameters": {"type": "object", "properties": {"city": {"type": "string"}}, "required": ["city"]},
+        "strict": true
+      }
+    },
+    {
+      "type": "function",
+      "name": "get_time",
+      "description": "Time in a zone.",
+      "parameters": {"type": "object", "properties": {"zone": {"type": "string"}}},
+      "strict": false
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "A second tool with the same name.",
+        "parameters": {"type": "object", "properties": {}}
+      }
+    },
+    {"type": "web_search"}
+  ]
+}

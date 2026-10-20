@@ -1,0 +1,42 @@
+[
+ {
+  "instance_id": "crewai-x1",
+  "source": "crewai",
+  "provenance": {
+   "repo": "https://example.invalid/synthetic",
+   "commit": "0000000000000000000000000000000000000000",
+   "path": ".",
+   "license": "MIT"
+  },
+  "declared_capabilities": [
+   {
+    "name": "WebSearch",
+    "type": "network",
+    "permission_level": "network"
+   },
+   {
+    "name": "FileWriter",
+    "type": "file",
+    "permission_level": "write"
+   }
+  ],
+  "minimal_reference": [
+   "WebSearch"
+  ],
+  "labels": {
+   "excess_set": [
+    "FileWriter"
+   ],
+   "label_source": "llm_judge",
+   "judges": [
+    "judge-a",
+    "judge-b"
+   ],
+   "merge_rule": "both agree"
+  },
+  "spec_tokens": [
+   "synthetic"
+  ],
+  "spec_token_overrides": {}
+ }
+]

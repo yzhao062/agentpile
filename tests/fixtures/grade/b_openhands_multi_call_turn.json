@@ -1,0 +1,36 @@
+{
+ "sample": "b_openhands_multi_call_turn",
+ "corpus": "swe_rebench_openhands",
+ "grade_rule": "agent_graph_openhands.py:63-72 at 3839a57: the calls of one assistant message are visited in order and last_on_file is updated after each, so a later call in the same turn depends on an earlier call in that turn when they share a path",
+ "raw": {
+  "trajectory_id": "sample-b",
+  "instance_id": "demo__repo-2",
+  "resolved": 0,
+  "trajectory": [
+   {"role": "system", "content": "You are OpenHands.", "name": null, "tool_call_id": null, "tool_calls": null},
+   {"role": "user", "content": "Refactor a.py and check b.py.", "name": null, "tool_call_id": null, "tool_calls": null},
+   {"role": "assistant", "content": "", "name": null, "tool_call_id": null, "tool_calls": [
+     {"id": "c1", "type": "function", "function": {"name": "str_replace_editor", "arguments": "{\"command\": \"view\", \"path\": \"/repo/a.py\"}"}},
+     {"id": "c2", "type": "function", "function": {"name": "str_replace_editor", "arguments": "{\"command\": \"str_replace\", \"path\": \"/repo/a.py\", \"old_str\": \"x\", \"new_str\": \"y\"}"}},
+     {"id": "c3", "type": "function", "function": {"name": "str_replace_editor", "arguments": "{\"command\": \"view\", \"path\": \"/repo/b.py\"}"}}]},
+   {"role": "tool", "content": "a.py contents", "name": "str_replace_editor", "tool_call_id": "c1", "tool_calls": null},
+   {"role": "tool", "content": "edited", "name": "str_replace_editor", "tool_call_id": "c2", "tool_calls": null},
+   {"role": "tool", "content": "b.py contents", "name": "str_replace_editor", "tool_call_id": "c3", "tool_calls": null},
+   {"role": "assistant", "content": "", "name": null, "tool_call_id": null, "tool_calls": [{"id": "c4", "type": "function", "function": {"name": "str_replace_editor", "arguments": "{\"command\": \"view\", \"path\": \"/repo/a.py\"}"}}]},
+   {"role": "tool", "content": "a.py contents", "name": "str_replace_editor", "tool_call_id": "c4", "tool_calls": null},
+   {"role": "assistant", "content": "", "name": null, "tool_call_id": null, "tool_calls": [{"id": "c5", "type": "function", "function": {"name": "execute_bash", "arguments": "{\"command\": \"pytest -q\"}"}}]},
+   {"role": "tool", "content": "1 passed", "name": "execute_bash", "tool_call_id": "c5", "tool_calls": null}
+  ]
+ },
+ "expected_steps_hand": [
+  {"idx": 0, "agent": "agent", "kind": "decision", "deps": []},
+  {"idx": 1, "agent": "env", "kind": "tool_call", "deps": []},
+  {"idx": 2, "agent": "env", "kind": "tool_call", "deps": [1]},
+  {"idx": 3, "agent": "env", "kind": "tool_call", "deps": []},
+  {"idx": 4, "agent": "agent", "kind": "decision", "deps": []},
+  {"idx": 5, "agent": "env", "kind": "tool_call", "deps": [2]},
+  {"idx": 6, "agent": "agent", "kind": "decision", "deps": []},
+  {"idx": 7, "agent": "env", "kind": "tool_call", "deps": []}
+ ],
+ "hand_reasoning": "Turn 1 holds three calls. Decision step 0. Call c1 (view a.py) is step 1, first event on /repo/a.py, deps empty. Call c2 (str_replace a.py) is step 2 and depends on step 1 even though both calls sit in one turn. Call c3 (view b.py) is step 3 on a new path, deps empty. Turn 2: decision step 4, view of a.py is step 5 and depends on the latest event on a.py, which is step 2 (not step 1). Turn 3: decision step 6, execute_bash is step 7; bash resolves to no path, so deps empty. The three tool messages in the middle emit no steps."
+}

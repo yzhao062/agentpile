@@ -1,0 +1,625 @@
+{
+ "resourceSpans": [
+  {
+   "resource": {
+    "attributes": [
+     {
+      "key": "telemetry.sdk.language",
+      "value": {
+       "stringValue": "python"
+      }
+     },
+     {
+      "key": "telemetry.sdk.name",
+      "value": {
+       "stringValue": "opentelemetry"
+      }
+     },
+     {
+      "key": "telemetry.sdk.version",
+      "value": {
+       "stringValue": "1.45.1"
+      }
+     },
+     {
+      "key": "service.instance.id",
+      "value": {
+       "stringValue": "28dbbdfc-0002-4331-8cb0-7fb564c23e92"
+      }
+     },
+     {
+      "key": "service.name",
+      "value": {
+       "stringValue": "fixture-pydantic-ai-delegation"
+      }
+     }
+    ]
+   },
+   "scopeSpans": [
+    {
+     "scope": {
+      "name": "pydantic-ai",
+      "version": "2.58.0"
+     },
+     "spans": [
+      {
+       "traceId": "21253ccb6d5fd17dfe0320d272d7c220",
+       "spanId": "87240edfb488d723",
+       "parentSpanId": "a601cdd8c728c623",
+       "name": "chat fake-boss",
+       "kind": 3,
+       "startTimeUnixNano": "1792489225005406000",
+       "endTimeUnixNano": "1792489225005778000",
+       "attributes": [
+        {
+         "key": "gen_ai.provider.name",
+         "value": {
+          "stringValue": "function"
+         }
+        },
+        {
+         "key": "gen_ai.system",
+         "value": {
+          "stringValue": "function"
+         }
+        },
+        {
+         "key": "gen_ai.request.model",
+         "value": {
+          "stringValue": "fake-boss"
+         }
+        },
+        {
+         "key": "model_request_parameters",
+         "value": {
+          "stringValue": "{\"function_tools\":[{\"name\":\"ask_helper\",\"parameters_json_schema\":{\"additionalProperties\":false,\"properties\":{\"question\":{\"type\":\"string\"}},\"required\":[\"question\"],\"type\":\"object\"},\"description\":\"Ask the helper agent.\",\"outer_typed_dict_key\":null,\"strict\":null,\"sequential\":false,\"kind\":\"function\",\"metadata\":null,\"timeout\":null,\"defer_loading\":false,\"unless_native\":null,\"with_native\":null,\"tool_kind\":null,\"return_schema\":null,\"include_return_schema\":null,\"toolset_id\":\"<agent>\",\"capability_id\":null}],\"native_tools\":[],\"tool_visibility\":{\"ask_helper\":\"visible\"},\"revealed_tool_names\":[],\"deferred_capability_ids\":[],\"output_mode\":\"text\",\"output_object\":null,\"output_tools\":[],\"prompted_output_template\":null,\"allow_text_output\":true,\"allow_image_output\":false,\"instruction_parts\":[{\"content\":\"Delegate.\",\"dynamic\":false,\"name\":null,\"id\":\"agent\",\"part_kind\":\"instruction\"}],\"thinking\":null,\"cache\":null}"
+         }
+        },
+        {
+         "key": "gen_ai.tool.definitions",
+         "value": {
+          "stringValue": "[{\"type\":\"function\",\"name\":\"ask_helper\",\"description\":\"Ask the helper agent.\",\"parameters\":{\"additionalProperties\":false,\"properties\":{\"question\":{\"type\":\"string\"}},\"required\":[\"question\"],\"type\":\"object\"}}]"
+         }
+        },
+        {
+         "key": "gen_ai.operation.name",
+         "value": {
+          "stringValue": "chat"
+         }
+        },
+        {
+         "key": "gen_ai.agent.name",
+         "value": {
+          "stringValue": "boss_agent"
+         }
+        },
+        {
+         "key": "gen_ai.agent.call.id",
+         "value": {
+          "stringValue": "01a158ae-fb2c-7680-a321-b5e89b9f4794"
+         }
+        },
+        {
+         "key": "gen_ai.conversation.id",
+         "value": {
+          "stringValue": "01a158ae-fb2c-7680-a321-b5e965f699cd"
+         }
+        },
+        {
+         "key": "gen_ai.input.messages",
+         "value": {
+          "stringValue": "[{\"role\":\"user\",\"parts\":[{\"type\":\"text\",\"content\":\"What is the answer?\"}]}]"
+         }
+        },
+        {
+         "key": "gen_ai.output.messages",
+         "value": {
+          "stringValue": "[{\"role\":\"assistant\",\"parts\":[{\"type\":\"tool_call\",\"id\":\"call_ask_1\",\"name\":\"ask_helper\",\"arguments\":{\"question\":\"answer?\"}}]}]"
+         }
+        },
+        {
+         "key": "gen_ai.system_instructions",
+         "value": {
+          "stringValue": "[{\"type\":\"text\",\"content\":\"Delegate.\"}]"
+         }
+        },
+        {
+         "key": "logfire.json_schema",
+         "value": {
+          "stringValue": "{\"type\":\"object\",\"properties\":{\"gen_ai.input.messages\":{\"type\":\"array\"},\"gen_ai.output.messages\":{\"type\":\"array\"},\"gen_ai.system_instructions\":{\"type\":\"array\"},\"model_request_parameters\":{\"type\":\"object\"}}}"
+         }
+        },
+        {
+         "key": "gen_ai.usage.input_tokens",
+         "value": {
+          "intValue": "54"
+         }
+        },
+        {
+         "key": "gen_ai.usage.output_tokens",
+         "value": {
+          "intValue": "5"
+         }
+        },
+        {
+         "key": "gen_ai.response.model",
+         "value": {
+          "stringValue": "fake-boss"
+         }
+        }
+       ],
+       "status": {},
+       "flags": 256
+      },
+      {
+       "traceId": "21253ccb6d5fd17dfe0320d272d7c220",
+       "spanId": "699a191b8c156f43",
+       "parentSpanId": "35dc4049abc796c0",
+       "name": "chat fake-helper",
+       "kind": 3,
+       "startTimeUnixNano": "1792489225007043000",
+       "endTimeUnixNano": "1792489225007302000",
+       "attributes": [
+        {
+         "key": "gen_ai.provider.name",
+         "value": {
+          "stringValue": "function"
+         }
+        },
+        {
+         "key": "gen_ai.system",
+         "value": {
+          "stringValue": "function"
+         }
+        },
+        {
+         "key": "gen_ai.request.model",
+         "value": {
+          "stringValue": "fake-helper"
+         }
+        },
+        {
+         "key": "model_request_parameters",
+         "value": {
+          "stringValue": "{\"function_tools\":[],\"native_tools\":[],\"tool_visibility\":{},\"revealed_tool_names\":[],\"deferred_capability_ids\":[],\"output_mode\":\"text\",\"output_object\":null,\"output_tools\":[],\"prompted_output_template\":null,\"allow_text_output\":true,\"allow_image_output\":false,\"instruction_parts\":[{\"content\":\"Help.\",\"dynamic\":false,\"name\":null,\"id\":\"agent\",\"part_kind\":\"instruction\"}],\"thinking\":null,\"cache\":null}"
+         }
+        },
+        {
+         "key": "gen_ai.operation.name",
+         "value": {
+          "stringValue": "chat"
+         }
+        },
+        {
+         "key": "gen_ai.agent.name",
+         "value": {
+          "stringValue": "helper_agent"
+         }
+        },
+        {
+         "key": "gen_ai.agent.call.id",
+         "value": {
+          "stringValue": "01a158ae-fb2e-759b-9193-4313a3484ebc"
+         }
+        },
+        {
+         "key": "gen_ai.conversation.id",
+         "value": {
+          "stringValue": "01a158ae-fb2e-759b-9193-4314b988411a"
+         }
+        },
+        {
+         "key": "gen_ai.input.messages",
+         "value": {
+          "stringValue": "[{\"role\":\"user\",\"parts\":[{\"type\":\"text\",\"content\":\"answer?\"}]}]"
+         }
+        },
+        {
+         "key": "gen_ai.output.messages",
+         "value": {
+          "stringValue": "[{\"role\":\"assistant\",\"parts\":[{\"type\":\"text\",\"content\":\"42\"}]}]"
+         }
+        },
+        {
+         "key": "gen_ai.system_instructions",
+         "value": {
+          "stringValue": "[{\"type\":\"text\",\"content\":\"Help.\"}]"
+         }
+        },
+        {
+         "key": "logfire.json_schema",
+         "value": {
+          "stringValue": "{\"type\":\"object\",\"properties\":{\"gen_ai.input.messages\":{\"type\":\"array\"},\"gen_ai.output.messages\":{\"type\":\"array\"},\"gen_ai.system_instructions\":{\"type\":\"array\"},\"model_request_parameters\":{\"type\":\"object\"}}}"
+         }
+        },
+        {
+         "key": "gen_ai.usage.input_tokens",
+         "value": {
+          "intValue": "51"
+         }
+        },
+        {
+         "key": "gen_ai.usage.output_tokens",
+         "value": {
+          "intValue": "1"
+         }
+        },
+        {
+         "key": "gen_ai.response.model",
+         "value": {
+          "stringValue": "fake-helper"
+         }
+        }
+       ],
+       "status": {},
+       "flags": 256
+      },
+      {
+       "traceId": "21253ccb6d5fd17dfe0320d272d7c220",
+       "spanId": "35dc4049abc796c0",
+       "parentSpanId": "a04cb571be6e7a99",
+       "name": "invoke_agent helper_agent",
+       "kind": 1,
+       "startTimeUnixNano": "1792489225006644000",
+       "endTimeUnixNano": "1792489225007627000",
+       "attributes": [
+        {
+         "key": "model_name",
+         "value": {
+          "stringValue": "fake-helper"
+         }
+        },
+        {
+         "key": "agent_name",
+         "value": {
+          "stringValue": "helper_agent"
+         }
+        },
+        {
+         "key": "gen_ai.agent.name",
+         "value": {
+          "stringValue": "helper_agent"
+         }
+        },
+        {
+         "key": "gen_ai.agent.call.id",
+         "value": {
+          "stringValue": "01a158ae-fb2e-759b-9193-4313a3484ebc"
+         }
+        },
+        {
+         "key": "gen_ai.conversation.id",
+         "value": {
+          "stringValue": "01a158ae-fb2e-759b-9193-4314b988411a"
+         }
+        },
+        {
+         "key": "gen_ai.operation.name",
+         "value": {
+          "stringValue": "invoke_agent"
+         }
+        },
+        {
+         "key": "logfire.msg",
+         "value": {
+          "stringValue": "helper_agent run"
+         }
+        },
+        {
+         "key": "final_result",
+         "value": {
+          "stringValue": "42"
+         }
+        },
+        {
+         "key": "gen_ai.aggregated_usage.input_tokens",
+         "value": {
+          "intValue": "51"
+         }
+        },
+        {
+         "key": "gen_ai.aggregated_usage.output_tokens",
+         "value": {
+          "intValue": "1"
+         }
+        },
+        {
+         "key": "pydantic_ai.all_messages",
+         "value": {
+          "stringValue": "[{\"role\":\"user\",\"parts\":[{\"type\":\"text\",\"content\":\"answer?\"}]},{\"role\":\"assistant\",\"parts\":[{\"type\":\"text\",\"content\":\"42\"}]}]"
+         }
+        },
+        {
+         "key": "gen_ai.system_instructions",
+         "value": {
+          "stringValue": "[{\"type\":\"text\",\"content\":\"Help.\"}]"
+         }
+        },
+        {
+         "key": "logfire.json_schema",
+         "value": {
+          "stringValue": "{\"type\":\"object\",\"properties\":{\"pydantic_ai.all_messages\":{\"type\":\"array\"},\"gen_ai.system_instructions\":{\"type\":\"array\"},\"final_result\":{\"type\":\"object\"}}}"
+         }
+        }
+       ],
+       "status": {},
+       "flags": 256
+      },
+      {
+       "traceId": "21253ccb6d5fd17dfe0320d272d7c220",
+       "spanId": "a04cb571be6e7a99",
+       "parentSpanId": "a601cdd8c728c623",
+       "name": "execute_tool ask_helper",
+       "kind": 1,
+       "startTimeUnixNano": "1792489225006064000",
+       "endTimeUnixNano": "1792489225007703000",
+       "attributes": [
+        {
+         "key": "gen_ai.operation.name",
+         "value": {
+          "stringValue": "execute_tool"
+         }
+        },
+        {
+         "key": "gen_ai.tool.name",
+         "value": {
+          "stringValue": "ask_helper"
+         }
+        },
+        {
+         "key": "gen_ai.tool.call.id",
+         "value": {
+          "stringValue": "call_ask_1"
+         }
+        },
+        {
+         "key": "gen_ai.tool.call.arguments",
+         "value": {
+          "stringValue": "{\"question\":\"answer?\"}"
+         }
+        },
+        {
+         "key": "gen_ai.agent.name",
+         "value": {
+          "stringValue": "boss_agent"
+         }
+        },
+        {
+         "key": "gen_ai.agent.call.id",
+         "value": {
+          "stringValue": "01a158ae-fb2c-7680-a321-b5e89b9f4794"
+         }
+        },
+        {
+         "key": "gen_ai.conversation.id",
+         "value": {
+          "stringValue": "01a158ae-fb2c-7680-a321-b5e965f699cd"
+         }
+        },
+        {
+         "key": "logfire.msg",
+         "value": {
+          "stringValue": "running tool: ask_helper"
+         }
+        },
+        {
+         "key": "logfire.json_schema",
+         "value": {
+          "stringValue": "{\"type\":\"object\",\"properties\":{\"gen_ai.tool.call.arguments\":{\"type\":\"object\"},\"gen_ai.tool.call.result\":{\"type\":\"object\"},\"gen_ai.tool.name\":{},\"gen_ai.tool.call.id\":{}}}"
+         }
+        },
+        {
+         "key": "gen_ai.tool.call.result",
+         "value": {
+          "stringValue": "42"
+         }
+        }
+       ],
+       "status": {},
+       "flags": 256
+      },
+      {
+       "traceId": "21253ccb6d5fd17dfe0320d272d7c220",
+       "spanId": "65ed467d8b2b1f11",
+       "parentSpanId": "a601cdd8c728c623",
+       "name": "chat fake-boss",
+       "kind": 3,
+       "startTimeUnixNano": "1792489225007993000",
+       "endTimeUnixNano": "1792489225008242000",
+       "attributes": [
+        {
+         "key": "gen_ai.provider.name",
+         "value": {
+          "stringValue": "function"
+         }
+        },
+        {
+         "key": "gen_ai.system",
+         "value": {
+          "stringValue": "function"
+         }
+        },
+        {
+         "key": "gen_ai.request.model",
+         "value": {
+          "stringValue": "fake-boss"
+         }
+        },
+        {
+         "key": "model_request_parameters",
+         "value": {
+          "stringValue": "{\"function_tools\":[{\"name\":\"ask_helper\",\"parameters_json_schema\":{\"additionalProperties\":false,\"properties\":{\"question\":{\"type\":\"string\"}},\"required\":[\"question\"],\"type\":\"object\"},\"description\":\"Ask the helper agent.\",\"outer_typed_dict_key\":null,\"strict\":null,\"sequential\":false,\"kind\":\"function\",\"metadata\":null,\"timeout\":null,\"defer_loading\":false,\"unless_native\":null,\"with_native\":null,\"tool_kind\":null,\"return_schema\":null,\"include_return_schema\":null,\"toolset_id\":\"<agent>\",\"capability_id\":null}],\"native_tools\":[],\"tool_visibility\":{\"ask_helper\":\"visible\"},\"revealed_tool_names\":[],\"deferred_capability_ids\":[],\"output_mode\":\"text\",\"output_object\":null,\"output_tools\":[],\"prompted_output_template\":null,\"allow_text_output\":true,\"allow_image_output\":false,\"instruction_parts\":[{\"content\":\"Delegate.\",\"dynamic\":false,\"name\":null,\"id\":\"agent\",\"part_kind\":\"instruction\"}],\"thinking\":null,\"cache\":null}"
+         }
+        },
+        {
+         "key": "gen_ai.tool.definitions",
+         "value": {
+          "stringValue": "[{\"type\":\"function\",\"name\":\"ask_helper\",\"description\":\"Ask the helper agent.\",\"parameters\":{\"additionalProperties\":false,\"properties\":{\"question\":{\"type\":\"string\"}},\"required\":[\"question\"],\"type\":\"object\"}}]"
+         }
+        },
+        {
+         "key": "gen_ai.operation.name",
+         "value": {
+          "stringValue": "chat"
+         }
+        },
+        {
+         "key": "gen_ai.agent.name",
+         "value": {
+          "stringValue": "boss_agent"
+         }
+        },
+        {
+         "key": "gen_ai.agent.call.id",
+         "value": {
+          "stringValue": "01a158ae-fb2c-7680-a321-b5e89b9f4794"
+         }
+        },
+        {
+         "key": "gen_ai.conversation.id",
+         "value": {
+          "stringValue": "01a158ae-fb2c-7680-a321-b5e965f699cd"
+         }
+        },
+        {
+         "key": "gen_ai.input.messages",
+         "value": {
+          "stringValue": "[{\"role\":\"user\",\"parts\":[{\"type\":\"text\",\"content\":\"What is the answer?\"}]},{\"role\":\"assistant\",\"parts\":[{\"type\":\"tool_call\",\"id\":\"call_ask_1\",\"name\":\"ask_helper\",\"arguments\":{\"question\":\"answer?\"}}]},{\"role\":\"user\",\"parts\":[{\"type\":\"tool_call_response\",\"id\":\"call_ask_1\",\"name\":\"ask_helper\",\"result\":\"42\"}]}]"
+         }
+        },
+        {
+         "key": "gen_ai.output.messages",
+         "value": {
+          "stringValue": "[{\"role\":\"assistant\",\"parts\":[{\"type\":\"text\",\"content\":\"The answer is 42.\"}]}]"
+         }
+        },
+        {
+         "key": "gen_ai.system_instructions",
+         "value": {
+          "stringValue": "[{\"type\":\"text\",\"content\":\"Delegate.\"}]"
+         }
+        },
+        {
+         "key": "logfire.json_schema",
+         "value": {
+          "stringValue": "{\"type\":\"object\",\"properties\":{\"gen_ai.input.messages\":{\"type\":\"array\"},\"gen_ai.output.messages\":{\"type\":\"array\"},\"gen_ai.system_instructions\":{\"type\":\"array\"},\"model_request_parameters\":{\"type\":\"object\"}}}"
+         }
+        },
+        {
+         "key": "gen_ai.usage.input_tokens",
+         "value": {
+          "intValue": "55"
+         }
+        },
+        {
+         "key": "gen_ai.usage.output_tokens",
+         "value": {
+          "intValue": "10"
+         }
+        },
+        {
+         "key": "gen_ai.response.model",
+         "value": {
+          "stringValue": "fake-boss"
+         }
+        }
+       ],
+       "status": {},
+       "flags": 256
+      },
+      {
+       "traceId": "21253ccb6d5fd17dfe0320d272d7c220",
+       "spanId": "a601cdd8c728c623",
+       "name": "invoke_agent boss_agent",
+       "kind": 1,
+       "startTimeUnixNano": "1792489225004912000",
+       "endTimeUnixNano": "1792489225008549000",
+       "attributes": [
+        {
+         "key": "model_name",
+         "value": {
+          "stringValue": "fake-boss"
+         }
+        },
+        {
+         "key": "agent_name",
+         "value": {
+          "stringValue": "boss_agent"
+         }
+        },
+        {
+         "key": "gen_ai.agent.name",
+         "value": {
+          "stringValue": "boss_agent"
+         }
+        },
+        {
+         "key": "gen_ai.agent.call.id",
+         "value": {
+          "stringValue": "01a158ae-fb2c-7680-a321-b5e89b9f4794"
+         }
+        },
+        {
+         "key": "gen_ai.conversation.id",
+         "value": {
+          "stringValue": "01a158ae-fb2c-7680-a321-b5e965f699cd"
+         }
+        },
+        {
+         "key": "gen_ai.operation.name",
+         "value": {
+          "stringValue": "invoke_agent"
+         }
+        },
+        {
+         "key": "logfire.msg",
+         "value": {
+          "stringValue": "boss_agent run"
+         }
+        },
+        {
+         "key": "final_result",
+         "value": {
+          "stringValue": "The answer is 42."
+         }
+        },
+        {
+         "key": "gen_ai.aggregated_usage.input_tokens",
+         "value": {
+          "intValue": "109"
+         }
+        },
+        {
+         "key": "gen_ai.aggregated_usage.output_tokens",
+         "value": {
+          "intValue": "15"
+         }
+        },
+        {
+         "key": "pydantic_ai.all_messages",
+         "value": {
+          "stringValue": "[{\"role\":\"user\",\"parts\":[{\"type\":\"text\",\"content\":\"What is the answer?\"}]},{\"role\":\"assistant\",\"parts\":[{\"type\":\"tool_call\",\"id\":\"call_ask_1\",\"name\":\"ask_helper\",\"arguments\":{\"question\":\"answer?\"}}]},{\"role\":\"user\",\"parts\":[{\"type\":\"tool_call_response\",\"id\":\"call_ask_1\",\"name\":\"ask_helper\",\"result\":\"42\"}]},{\"role\":\"assistant\",\"parts\":[{\"type\":\"text\",\"content\":\"The answer is 42.\"}]}]"
+         }
+        },
+        {
+         "key": "gen_ai.system_instructions",
+         "value": {
+          "stringValue": "[{\"type\":\"text\",\"content\":\"Delegate.\"}]"
+         }
+        },
+        {
+         "key": "logfire.json_schema",
+         "value": {
+          "stringValue": "{\"type\":\"object\",\"properties\":{\"pydantic_ai.all_messages\":{\"type\":\"array\"},\"gen_ai.system_instructions\":{\"type\":\"array\"},\"final_result\":{\"type\":\"object\"}}}"
+         }
+        }
+       ],
+       "status": {},
+       "flags": 256
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

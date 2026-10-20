@@ -1,0 +1,66 @@
+{
+  "name": "catchbench_pre",
+  "hf_id": null,
+  "github": "yzhao062/catchbench",
+  "revision": "30a516c77cda902de2f8e56fb27be09ea3034591",
+  "checked_at": "2026-10-20",
+  "license_on_card": "MIT; rows name their upstream licence",
+  "gated": false,
+  "allow_patterns": null,
+  "configs_splits": [
+    {
+      "config": "crewai",
+      "split": null,
+      "rows": 298
+    },
+    {
+      "config": "injecagent",
+      "split": null,
+      "rows": 340
+    },
+    {
+      "config": "mcp",
+      "split": null,
+      "rows": 144
+    },
+    {
+      "config": "n8n",
+      "split": null,
+      "rows": 219
+    },
+    {
+      "config": "sweagent",
+      "split": null,
+      "rows": 130
+    },
+    {
+      "config": "synthetic",
+      "split": null,
+      "rows": 56
+    }
+  ],
+  "unsupported": [],
+  "counts": {
+    "source_rows": {
+      "value": 1187
+    },
+    "runs_after_load": {
+      "value": 1187
+    }
+  },
+  "labels": [
+    {
+      "field": "labels.excess_set",
+      "level": "tool"
+    },
+    {
+      "field": "minimal_reference",
+      "level": "run"
+    },
+    {
+      "field": "labels.attack_type",
+      "level": "run"
+    }
+  ],
+  "stage0_record": "W2-catchbench.md; per-corpus counts recomputed from the files at the pinned commit"
+}

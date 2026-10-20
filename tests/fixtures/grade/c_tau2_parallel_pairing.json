@@ -1,0 +1,131 @@
+{
+ "sample": "c_tau2_parallel_pairing",
+ "corpus": "tau2_bench",
+ "schema_note": "Records follow the HF tau2 layout: tool_calls hold id/name/arguments(dict)/requestor, tool messages hold role/content/turn_idx and no tool_call_id. Sample c3 is a synthetic extension that adds tool_call_id to results, to exercise id pairing, which the HF data cannot.",
+ "semantics": {
+  "grade_head_fe6e54d": "every result is credited to last_tc, the last tool step of the most recent assistant message (agent_graph_tau2_bench.py:73-80); last producer wins; max(producers) tie-break",
+  "frozen_tau2_frozen_v1": "result paired to its own call (by tool_call_id when present, else position); calls in user messages produce no step and no producer; last producer wins; max(producers) tie-break"
+ },
+ "records": [
+  {
+   "id": "c1_parallel_calls_positional",
+   "raw": {
+    "model_path": "sample/model", "task_name": "telecom",
+    "messages": [
+     {"role": "system", "content": "policy", "turn_idx": 0},
+     {"role": "assistant", "content": "Hi! How can I help you today?", "turn_idx": 1},
+     {"role": "user", "content": "My data is slow.", "turn_idx": 2},
+     {"role": "assistant", "content": "", "turn_idx": 3, "tool_calls": [
+       {"id": "call_0_a", "name": "get_customer_by_phone", "arguments": {"phone_number": "555-123-2002"}, "requestor": "assistant"},
+       {"id": "call_1_b", "name": "get_bills_for_customer", "arguments": {"customer_id": "none"}, "requestor": "assistant"}]},
+     {"role": "tool", "content": "{\"customer_id\": \"C1001\", \"line_ids\": [\"L1001\"]}", "turn_idx": 4},
+     {"role": "tool", "content": "{\"bill_id\": \"B1001\", \"status\": \"Paid\"}", "turn_idx": 5},
+     {"role": "assistant", "content": "", "turn_idx": 6, "tool_calls": [{"id": "call_2_c", "name": "get_details_by_id", "arguments": {"id": "L1001"}, "requestor": "assistant"}]},
+     {"role": "tool", "content": "{\"line_id\": \"L1001\", \"device_id\": \"D1001\"}", "turn_idx": 7},
+     {"role": "assistant", "content": "", "turn_idx": 8, "tool_calls": [{"id": "call_3_d", "name": "get_details_by_id", "arguments": {"id": "D1001"}, "requestor": "assistant"}]},
+     {"role": "tool", "content": "{\"device_id\": \"D1001\", \"model\": \"Phone\"}", "turn_idx": 9},
+     {"role": "assistant", "content": "Done.", "turn_idx": 10}
+    ],
+    "eval_result": {"score": 1.0, "db_match": true}, "meta": {"id": "telecom_sample_c1"}
+   },
+   "expected_frozen_hand": [
+    {"idx": 0, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 1, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 2, "agent": "env", "kind": "tool_call", "deps": []},
+    {"idx": 3, "agent": "env", "kind": "tool_call", "deps": []},
+    {"idx": 4, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 5, "agent": "env", "kind": "tool_call", "deps": [2]},
+    {"idx": 6, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 7, "agent": "env", "kind": "tool_call", "deps": [5]},
+    {"idx": 8, "agent": "agent", "kind": "decision", "deps": []}
+   ],
+   "expected_head_hand": [
+    {"idx": 0, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 1, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 2, "agent": "env", "kind": "tool_call", "deps": []},
+    {"idx": 3, "agent": "env", "kind": "tool_call", "deps": []},
+    {"idx": 4, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 5, "agent": "env", "kind": "tool_call", "deps": [3]},
+    {"idx": 6, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 7, "agent": "env", "kind": "tool_call", "deps": [5]},
+    {"idx": 8, "agent": "agent", "kind": "decision", "deps": []}
+   ],
+   "hand_reasoning": "Assistant message 1 (greeting, no calls): decision 0. Assistant message 2 holds two calls: decision 1, call get_customer_by_phone is step 2, call get_bills_for_customer is step 3. Two results follow with no ids. By position the first result (it begins with customer_id C1001 and line L1001, which is what a lookup by phone returns) belongs to step 2 and the second (bill B1001) to step 3. GRADE credits both to the last call, step 3. Next assistant message: decision 4, call get_details_by_id with id L1001 is step 5. L1001 was produced by step 2 under pairing and by step 3 under GRADE, so deps are [2] (frozen) versus [3] (HEAD). Its result produces L1001 and D1001 for step 5 under both rules. Decision 6, call with D1001 is step 7, deps [5] under both. Final text: decision 8. Only step 5 differs between the two."
+  },
+  {
+   "id": "c2_user_requestor_call",
+   "raw": {
+    "model_path": "sample/model", "task_name": "telecom",
+    "messages": [
+     {"role": "system", "content": "policy", "turn_idx": 0},
+     {"role": "assistant", "content": "Hi! How can I help you today?", "turn_idx": 1},
+     {"role": "user", "content": "My phone is 555-123-2002.", "turn_idx": 2},
+     {"role": "assistant", "content": "", "turn_idx": 3, "tool_calls": [{"id": "call_0_e", "name": "get_customer_by_phone", "arguments": {"phone_number": "555-123-2002"}, "requestor": "assistant"}]},
+     {"role": "tool", "content": "{\"customer_id\": \"C1001\"}", "turn_idx": 4},
+     {"role": "user", "content": "", "turn_idx": 5, "tool_calls": [{"id": "call_u1", "name": "check_status_bar", "arguments": {}, "requestor": "user"}]},
+     {"role": "tool", "content": "{\"device_id\": \"D2002\", \"status\": \"ok\"}", "turn_idx": 6},
+     {"role": "assistant", "content": "", "turn_idx": 7, "tool_calls": [{"id": "call_1_f", "name": "get_details_by_id", "arguments": {"id": "D2002"}, "requestor": "assistant"}]},
+     {"role": "tool", "content": "{\"device_id\": \"D2002\"}", "turn_idx": 8},
+     {"role": "assistant", "content": "Done.", "turn_idx": 9}
+    ],
+    "eval_result": {"score": 1.0, "db_match": true}, "meta": {"id": "telecom_sample_c2"}
+   },
+   "expected_frozen_hand": [
+    {"idx": 0, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 1, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 2, "agent": "env", "kind": "tool_call", "deps": []},
+    {"idx": 3, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 4, "agent": "env", "kind": "tool_call", "deps": []},
+    {"idx": 5, "agent": "agent", "kind": "decision", "deps": []}
+   ],
+   "expected_head_hand": [
+    {"idx": 0, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 1, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 2, "agent": "env", "kind": "tool_call", "deps": []},
+    {"idx": 3, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 4, "agent": "env", "kind": "tool_call", "deps": [2]},
+    {"idx": 5, "agent": "agent", "kind": "decision", "deps": []}
+   ],
+   "hand_reasoning": "Decision 0 (greeting), decision 1 with call get_customer_by_phone as step 2. Its result gives C1001 to step 2. The user message with requestor user holds its own call; its result carries device D2002. GRADE emits no step for a user-side call, and credits the result to last_tc, which is step 2. Decision 3, call get_details_by_id on D2002 is step 4. HEAD: D2002 was produced by step 2, so deps [2]. Frozen: the result belongs to the user's call, which has no step, so nothing produced D2002 and deps are []. Final text: decision 5."
+  },
+  {
+   "id": "c3_results_out_of_order_with_ids_synthetic",
+   "raw": {
+    "model_path": "sample/model", "task_name": "telecom",
+    "messages": [
+     {"role": "system", "content": "policy", "turn_idx": 0},
+     {"role": "assistant", "content": "Hi! How can I help you today?", "turn_idx": 1},
+     {"role": "user", "content": "My data is slow.", "turn_idx": 2},
+     {"role": "assistant", "content": "", "turn_idx": 3, "tool_calls": [
+       {"id": "call_0_a", "name": "get_customer_by_phone", "arguments": {"phone_number": "555-123-2002"}, "requestor": "assistant"},
+       {"id": "call_1_b", "name": "get_bills_for_customer", "arguments": {"customer_id": "none"}, "requestor": "assistant"}]},
+     {"role": "tool", "tool_call_id": "call_1_b", "content": "{\"bill_id\": \"B1001\", \"status\": \"Paid\"}", "turn_idx": 4},
+     {"role": "tool", "tool_call_id": "call_0_a", "content": "{\"customer_id\": \"C1001\", \"line_ids\": [\"L1001\"]}", "turn_idx": 5},
+     {"role": "assistant", "content": "", "turn_idx": 6, "tool_calls": [{"id": "call_2_c", "name": "get_details_by_id", "arguments": {"id": "L1001"}, "requestor": "assistant"}]},
+     {"role": "tool", "tool_call_id": "call_2_c", "content": "{\"line_id\": \"L1001\"}", "turn_idx": 7},
+     {"role": "assistant", "content": "Done.", "turn_idx": 8}
+    ],
+    "eval_result": {"score": 1.0, "db_match": true}, "meta": {"id": "telecom_sample_c3"}
+   },
+   "expected_frozen_hand": [
+    {"idx": 0, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 1, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 2, "agent": "env", "kind": "tool_call", "deps": []},
+    {"idx": 3, "agent": "env", "kind": "tool_call", "deps": []},
+    {"idx": 4, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 5, "agent": "env", "kind": "tool_call", "deps": [2]},
+    {"idx": 6, "agent": "agent", "kind": "decision", "deps": []}
+   ],
+   "expected_head_hand": [
+    {"idx": 0, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 1, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 2, "agent": "env", "kind": "tool_call", "deps": []},
+    {"idx": 3, "agent": "env", "kind": "tool_call", "deps": []},
+    {"idx": 4, "agent": "agent", "kind": "decision", "deps": []},
+    {"idx": 5, "agent": "env", "kind": "tool_call", "deps": [3]},
+    {"idx": 6, "agent": "agent", "kind": "decision", "deps": []}
+   ],
+   "hand_reasoning": "Same calls as c1 (steps 2 and 3), but the results arrive in reverse order and carry tool_call_id. By id, the result for call_0_a (the one with L1001) belongs to step 2, so the later lookup of L1001 (step 5) depends on step 2. A positional rule would pair the first result (call_1_b's) to step 2 and the second to step 3, which would give step 5 the dep [3]; GRADE gives [3] as well because it credits everything to step 3. Only id pairing gives [2]. This record is synthetic: no real tau2 result carries an id."
+  }
+ ]
+}

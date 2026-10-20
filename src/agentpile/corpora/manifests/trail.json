@@ -1,0 +1,81 @@
+{
+  "name": "trail",
+  "hf_id": "PatronusAI/TRAIL",
+  "revision": "b424ce63d5973d5dcd7169b1bc3c07ccdee276d1",
+  "checked_at": "2026-10-20",
+  "license_on_card": "mit",
+  "gated": "auto",
+  "allow_patterns": [
+    "data/*.parquet"
+  ],
+  "configs_splits": [
+    {
+      "config": "default",
+      "split": "gaia",
+      "rows": 117
+    },
+    {
+      "config": "default",
+      "split": "swe_bench",
+      "rows": 31
+    }
+  ],
+  "unsupported": [
+    {
+      "what": "TOOL spans are not tied to calls: they carry no call id, so their span address stays null (the Step CHAIN parent also holds the LLM span)"
+    },
+    {
+      "what": "Code written in a message (CodeAgent) is not parsed into calls; its call exists only through the next tool-call history message"
+    },
+    {
+      "what": "Task outcome: the source gives none (the GAIA reference answer and the SWE-Bench gold patch sit in the harness span logs, kept under spans[].source_fields.logs)"
+    },
+    {
+      "what": "Error category normalization: categories stay raw (31 strings for 21 taxonomy names)"
+    },
+    {
+      "what": "Per-message timestamps (only span start and duration exist)"
+    },
+    {
+      "what": "Outputs of the 6 failed LLM spans (none recorded)"
+    },
+    {
+      "what": "Reading the per-trace files (GAIA/*.json, SWE Bench/*.json, processed_annotations_*): byte-identical to the Parquet rows, which the loader reads"
+    }
+  ],
+  "counts": {
+    "source_rows": {
+      "value": 148
+    },
+    "runs_after_load": {
+      "value": 148
+    }
+  },
+  "labels": [
+    {
+      "field": "errors[].location",
+      "level": "span"
+    },
+    {
+      "field": "errors[].category",
+      "level": "span"
+    },
+    {
+      "field": "errors[].impact",
+      "level": "span"
+    },
+    {
+      "field": "errors[].evidence",
+      "level": "span"
+    },
+    {
+      "field": "errors[].description",
+      "level": "span"
+    },
+    {
+      "field": "scores[0].{reliability,security,instruction_adherence,plan_opt}_score and overall (plus *_reasoning texts)",
+      "level": "run"
+    }
+  ],
+  "stage0_record": "agent-io/stage0/u2-trail-arb/manifest-trail.yaml"
+}

@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/yzhao062/agentpile/schemas/agentpile-v0.schema.json",
+  "title": "agentpile record extension, version 0",
+  "description": "Fields agentpile adds to an ATIF v1.7 trajectory under extra[\"agentpile\"] (trajectory_ext, step_ext), and the agentpile-config/0 record (config). Every reference is a full address.",
+  "$defs": {
+    "address": {
+      "type": "object",
+      "properties": {
+        "trajectory": {"type": ["string", "null"]},
+        "step": {"type": "integer"},
+        "call": {"type": "string"},
+        "result": {"type": "integer"},
+        "span": {"type": "string"},
+        "agent": {"type": "string"},
+        "tool": {"type": "string"}
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": ["format"],
+      "properties": {
+        "format": {"type": "string"},
+        "dataset": {"type": ["string", "null"]},
+        "revision": {"type": ["string", "null"]},
+        "config": {"type": ["string", "null"]},
+        "split": {"type": ["string", "null"]},
+        "file": {"type": ["string", "null"]},
+        "record_key": {"type": ["string", "null"]},
+        "row": {"type": ["integer", "null"]},
+        "null_members_dropped": {"type": "array"},
+        "reader": {"type": ["string", "null"]},
+        "reader_version": {"type": ["string", "null"]},
+        "lost_fields": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "task": {
+      "type": "object",
+      "properties": {
+        "id": {"type": ["string", "null"]},
+        "text": {"type": ["string", "null"]}
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "properties": {
+        "success": {"type": ["boolean", "null"]},
+        "score": {"type": ["number", "null"]},
+        "raw": {}
+      }
+    },
+    "label": {
+      "type": "object",
+      "required": ["target", "value", "label_source"],
+      "properties": {
+        "name": {"type": ["string", "null"]},
+        "target": {
+          "type": "object",
+          "required": ["kind"],
+          "properties": {
+            "kind": {"enum": ["run", "agent", "step", "call", "span", "tool"]},
+            "address": {"$ref": "#/$defs/address"}
+          }
+        },
+        "value": {},
+        "label_source": {"type": "string"},
+        "source_ref": {}
+      }
+    },
+    "agent": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {"type": "string"},
+        "name": {"type": ["string", "null"]},
+        "instructions": {"type": ["string", "null"]},
+        "model": {"type": ["string", "null"]},
+        "tools": {"type": "array", "items": {"type": "string"}},
+        "handoffs": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "tool": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {"type": "string"},
+        "agent_or_server": {"type": ["string", "null"]},
+        "type": {"type": ["string", "null"]},
+        "definition": {"type": ["object", "null"]},
+        "definition_format": {"type": ["string", "null"]},
+        "atif_index": {"type": ["integer", "null"]},
+        "permission": {"enum": ["read", "write", "execute", "network", "admin", "unknown"]},
+        "permission_from": {"enum": ["annotation", "heuristic", "declared", "unknown"]}
+      }
+    },
+    "dep": {
+      "type": "object",
+      "required": ["src", "dst", "rule", "rule_version"],
+      "properties": {
+        "src": {"$ref": "#/$defs/address"},
+        "dst": {"$ref": "#/$defs/address"},
+        "rule": {"type": "string"},
+        "rule_version": {"type": "string"},
+        "resource": {"type": ["string", "array", "null"], "items": {"type": "string"}}
+      }
+    },
+    "call_ext": {
+      "type": "object",
+      "properties": {
+        "tool_id": {"type": ["string", "null"]},
+        "span_id": {"type": ["string", "null"]},
+        "parent": {"type": ["string", "null"]},
+        "error": {},
+        "arguments_raw": {},
+        "arguments_state": {"enum": ["missing"]},
+        "arguments_stand_in": {"type": "string"},
+        "id_generated": {"type": "boolean"},
+        "source_id": {},
+        "function_name_raw": {},
+        "source_ref": {},
+        "source_fields": {"type": "object"}
+      }
+    },
+    "span": {
+      "type": "object",
+      "description": "A span the source recorded, kept with its own identity so labels and deps can target it; address names the step or call it became, if any.",
+      "properties": {
+        "name": {"type": ["string", "null"]},
+        "kind": {"type": ["string", "null"]},
+        "parent": {"type": ["string", "null"]},
+        "trace_id": {"type": ["string", "null"]},
+        "start_time_unix_nano": {"type": ["integer", "null"]},
+        "end_time_unix_nano": {"type": ["integer", "null"]},
+        "status": {},
+        "attributes": {"type": "object"},
+        "events": {"type": "array"},
+        "links": {"type": "array"},
+        "address": {"type": ["object", "null"]}
+      }
+    },
+    "trajectory_ext": {
+      "type": "object",
+      "required": ["version", "source"],
+      "properties": {
+        "version": {"enum": ["0"]},
+        "source": {"$ref": "#/$defs/source"},
+        "task": {"$ref": "#/$defs/task"},
+        "outcome": {"$ref": "#/$defs/outcome"},
+        "labels": {"type": "array", "items": {"$ref": "#/$defs/label"}},
+        "agents": {"type": "array", "items": {"$ref": "#/$defs/agent"}},
+        "tools": {"type": "object", "additionalProperties": {"$ref": "#/$defs/tool"}},
+        "spans": {"type": "object", "additionalProperties": {"$ref": "#/$defs/span"}},
+        "dataset": {"type": "object"}
+      }
+    },
+    "step_ext": {
+      "type": "object",
+      "properties": {
+        "actor": {"type": ["string", "null"]},
+        "role": {"type": ["string", "null"]},
+        "name": {},
+        "message_state": {"enum": ["null", "missing"]},
+        "message_raw": {},
+        "source_ref": {},
+        "source_fields": {"type": "object"},
+        "empty_source": {"type": "boolean"},
+        "inputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["step"],
+            "properties": {"step": {"type": "integer"}, "chat_message": {"type": "integer"}}
+          }
+        },
+        "calls": {"type": "object", "additionalProperties": {"$ref": "#/$defs/call_ext"}},
+        "result_refs": {"type": "array"},
+        "result_fields": {"type": "array", "items": {"type": ["object", "null"]}},
+        "deps": {"type": "array", "items": {"$ref": "#/$defs/dep"}}
+      }
+    },
+    "config": {
+      "type": "object",
+      "required": ["schema", "source"],
+      "properties": {
+        "schema": {"enum": ["agentpile-config/0"]},
+        "source": {"$ref": "#/$defs/source"},
+        "task": {"$ref": "#/$defs/task"},
+        "agents": {"type": "array", "items": {"$ref": "#/$defs/agent"}},
+        "tools": {"type": "object", "additionalProperties": {"$ref": "#/$defs/tool"}},
+        "labels": {"type": "array", "items": {"$ref": "#/$defs/label"}},
+        "dataset": {"type": "object"}
+      }
+    }
+  }
+}

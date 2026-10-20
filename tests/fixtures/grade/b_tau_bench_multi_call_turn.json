@@ -1,0 +1,38 @@
+{
+ "sample": "b_tau_bench_multi_call_turn",
+ "corpus": "tau_bench",
+ "grade_rule": "agent_graph_tau_bench.py:84-100 at 3839a57: call names queue in pending at the assistant message; each role=tool message becomes one tool step (name from the message, else first pending); a write depends on every earlier db-read tool step, including reads that came from the same assistant turn",
+ "schema_note": "The pinned HF data has exactly one call per assistant message, so this record is synthetic in the real field layout; it exercises the code path the data never reaches.",
+ "raw": {
+  "model_path": "openai/gpt-4.1",
+  "user_model_path": "openai/gpt-4o-20240806",
+  "benchmark_name": "tau-bench",
+  "task_name": "retail",
+  "messages": [
+   {"role": "system", "content": "You are a retail agent.", "turn_idx": 0},
+   {"role": "user", "content": "Move my order to my new address.", "turn_idx": 1},
+   {"role": "assistant", "content": "", "turn_idx": 2, "tool_calls": [
+     {"id": "k1", "type": "function", "function": {"name": "get_user_details", "arguments": "{\"user_id\": \"u_1\"}"}},
+     {"id": "k2", "type": "function", "function": {"name": "calculate", "arguments": "{\"expression\": \"1+1\"}"}},
+     {"id": "k3", "type": "function", "function": {"name": "get_order_details", "arguments": "{\"order_id\": \"#W7\"}"}},
+     {"id": "k4", "type": "function", "function": {"name": "modify_pending_order_address", "arguments": "{\"order_id\": \"#W7\", \"address1\": \"1 Main St\"}"}}]},
+   {"role": "tool", "name": "get_user_details", "tool_call_id": "k1", "content": "{\"user_id\": \"u_1\"}", "turn_idx": 3},
+   {"role": "tool", "name": "calculate", "tool_call_id": "k2", "content": "2", "turn_idx": 4},
+   {"role": "tool", "name": "get_order_details", "tool_call_id": "k3", "content": "{\"order_id\": \"#W7\"}", "turn_idx": 5},
+   {"role": "tool", "name": "modify_pending_order_address", "tool_call_id": "k4", "content": "{\"order_id\": \"#W7\", \"status\": \"pending\"}", "turn_idx": 6},
+   {"role": "assistant", "content": "Done.", "turn_idx": 7}
+  ],
+  "eval_result": {"score": 1.0, "db_match": true},
+  "meta": {"id": "retail_sample_b"}
+ },
+ "expected_steps_hand": [
+  {"idx": 0, "agent": "user", "kind": "decision", "deps": []},
+  {"idx": 1, "agent": "openai/gpt-4.1", "kind": "decision", "deps": []},
+  {"idx": 2, "agent": "env", "kind": "tool_call", "deps": []},
+  {"idx": 3, "agent": "env", "kind": "tool_call", "deps": []},
+  {"idx": 4, "agent": "env", "kind": "tool_call", "deps": []},
+  {"idx": 5, "agent": "env", "kind": "tool_call", "deps": [2, 4]},
+  {"idx": 6, "agent": "openai/gpt-4.1", "kind": "decision", "deps": []}
+ ],
+ "hand_reasoning": "User message: step 0. The single assistant message with four calls: one decision step 1 (calls do not make steps at the call). The four tool messages become steps 2 to 5 in message order. Step 2 get_user_details is a db read. Step 3 calculate is in the non-DB set, so it is a tool step but not a read. Step 4 get_order_details is a db read. Step 5 modify_ starts with a write prefix, so its deps are the reads so far in order, [2, 4]; the calculate step 3 is excluded. Final assistant text: decision step 6."
+}

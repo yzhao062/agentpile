@@ -1,0 +1,64 @@
+{
+  "id": "mm-1",
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "describe_image",
+        "description": "Describe an image by URL.",
+        "parameters": {
+          "type": "object",
+          "properties": {"url": {"type": "string"}},
+          "required": ["url"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "lookup_caption",
+        "description": "Look up a stored caption.",
+        "parameters": {
+          "type": "object",
+          "properties": {"id": {"type": "string"}},
+          "required": ["id"]
+        }
+      }
+    }
+  ],
+  "messages": [
+    {"role": "system", "content": "You read pictures."},
+    {
+      "role": "user",
+      "content": [
+        {"type": "text", "text": "What is in this picture?"},
+        {"type": "image_url", "image_url": {"url": "https://example.invalid/cat.png", "detail": "low"}}
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [{"type": "text", "text": "Let me look at it."}],
+      "tool_calls": [
+        {
+          "id": "call_1",
+          "type": "function",
+          "function": {"name": "describe_image", "arguments": "{\"url\": \"https://example.invalid/cat.png\"}"}
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_1",
+      "content": [
+        {"type": "text", "text": "A cat on a sofa."},
+        {"type": "image_url", "image_url": {"url": "data:image/png;base64,iVBORw0KGgo="}}
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {"type": "text", "text": "It is a cat.", "cache_control": {"type": "ephemeral"}}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,285 @@
+{
+ "benchmark": "webarena",
+ "agent": "GenericAgent-synth-llama",
+ "model": "synth/llama",
+ "valid": true,
+ "experiment": "GenericAgent-synth-llama_on_webarena",
+ "seed": 0,
+ "model_args": {
+  "model_name": "synth/llama",
+  "temperature": 0,
+  "vision_support": false
+ },
+ "flags": {
+  "obs": {
+   "use_ax_tree": true
+  },
+  "action": {
+   "action_set": {
+    "subsets": [
+     "webarena"
+    ],
+    "multiaction": false
+   }
+  }
+ },
+ "summary_info": {
+  "n_steps": 3,
+  "cum_reward": 1.0,
+  "cum_raw_reward": 1,
+  "err_msg": null,
+  "stack_trace": null,
+  "stats.cum_steps": 4,
+  "terminated": true,
+  "truncated": false
+ },
+ "package_version": "synthetic==0.0.0\n",
+ "goal": "Find the price of the synthetic mug",
+ "steps": [
+  {
+   "num": 0,
+   "reasoning": "I need to open the mugs page.",
+   "action": "click('12')",
+   "screenshot_path": "trajectories/screenshots/synth/step_0.png",
+   "url": "https://shop.example/",
+   "open_pages_urls": [
+    "https://shop.example/"
+   ],
+   "focused_element": "",
+   "last_action_error": "",
+   "stats": {
+    "n_retry_llm": 1,
+    "n_retry": 0.0,
+    "busted_retry": 0,
+    "input_tokens": 100,
+    "output_tokens": 10,
+    "cost": 0.0
+   },
+   "axtree": "RootWebArea 'Shop 0', focused\n\t[12] link 'Mugs ☕ café', clickable, visible\n\t[7] searchbox 'Search', visible",
+   "chat_messages": [
+    {
+     "role": "system",
+     "content": "You are a synthetic agent. Send actions to the browser."
+    },
+    {
+     "role": "user",
+     "content": [
+      {
+       "type": "text",
+       "text": "# Instructions\nChoose the next action.\n\n## Goal:\nFind the price of the synthetic mug\n\n# Action space:\nclick(bid: str)\nfill(bid: str, value: str)\nscroll(delta_x: float, delta_y: float)\n"
+      },
+      {
+       "type": "image_url",
+       "image_url": {
+        "url": "REMOVED"
+       }
+      }
+     ]
+    },
+    {
+     "role": "assistant",
+     "content": "<think>\nI need to open the mugs page.\n</think>\n\n<action>\nclick('12')\n</action>"
+    }
+   ],
+   "axtree_obj": {
+    "nodes": [
+     {
+      "nodeId": "1"
+     }
+    ]
+   },
+   "bounding_boxes": {
+    "0": {
+     "bbox": [
+      0,
+      0,
+      1,
+      1
+     ]
+    }
+   },
+   "extra_element_properties": {
+    "0": {
+     "visibility": 1.0
+    }
+   },
+   "axtree_pruned": "[12] link 'Mugs'"
+  },
+  {
+   "num": 1,
+   "reasoning": "<action>\nfill('7', \"it's a 'mug'\")\n</action>",
+   "action": "fill('7', \"it's a 'mug'\")",
+   "screenshot_path": "trajectories/screenshots/synth/step_1.png",
+   "url": "https://shop.example/",
+   "open_pages_urls": [
+    "https://shop.example/"
+   ],
+   "focused_element": "",
+   "last_action_error": "",
+   "stats": {
+    "n_retry_llm": 1,
+    "n_retry": 0.0,
+    "busted_retry": 0,
+    "input_tokens": 101,
+    "output_tokens": 10,
+    "cost": 0.0
+   },
+   "axtree": "RootWebArea 'Shop 1', focused\n\t[12] link 'Mugs ☕ café', clickable, visible\n\t[7] searchbox 'Search', visible",
+   "chat_messages": [
+    {
+     "role": "system",
+     "content": "You are a synthetic agent. Send actions to the browser. Second-call system rule: never submit forms."
+    },
+    {
+     "role": "user",
+     "content": [
+      {
+       "type": "text",
+       "text": "# Instructions\nChoose the next action.\n\n## Goal:\nFind the price of the synthetic mug\n\n# Action space:\nclick(bid: str)\nfill(bid: str, value: str)\nscroll(delta_x: float, delta_y: float)\n\n# Page now\nUNIQUE-SECOND-CALL-PROMPT-7f3a\n"
+      },
+      {
+       "type": "image_url",
+       "image_url": {
+        "url": "REMOVED"
+       }
+      }
+     ]
+    },
+    {
+     "role": "assistant",
+     "content": "<think>\n<action>\nfill('7', \"it's a 'mug'\")\n</action>\n</think>\n\n<action>\nfill('7', \"it's a 'mug'\")\n</action>"
+    }
+   ],
+   "axtree_obj": {
+    "nodes": [
+     {
+      "nodeId": "1"
+     }
+    ]
+   },
+   "bounding_boxes": {
+    "0": {
+     "bbox": [
+      0,
+      0,
+      1,
+      1
+     ]
+    }
+   },
+   "extra_element_properties": {
+    "0": {
+     "visibility": 1.0
+    }
+   },
+   "axtree_pruned": "[12] link 'Mugs'"
+  },
+  {
+   "num": 2,
+   "reasoning": "Scroll down to see more.",
+   "action": "scroll(0, 500)",
+   "screenshot_path": "trajectories/screenshots/synth/step_2.png",
+   "url": "https://shop.example/",
+   "open_pages_urls": [
+    "https://shop.example/"
+   ],
+   "focused_element": "",
+   "last_action_error": "TimeoutError: fill did not finish",
+   "stats": {
+    "n_retry_llm": 1,
+    "n_retry": 0.0,
+    "busted_retry": 0,
+    "input_tokens": 102,
+    "output_tokens": 10,
+    "cost": 0.0
+   },
+   "axtree": "RootWebArea 'Shop 2', focused\n\t[12] link 'Mugs ☕ café', clickable, visible\n\t[7] searchbox 'Search', visible",
+   "chat_messages": [
+    {
+     "role": "system",
+     "content": "You are a synthetic agent. Send actions to the browser."
+    },
+    {
+     "role": "user",
+     "content": [
+      {
+       "type": "text",
+       "text": "# Instructions\nChoose the next action.\n\n## Goal:\nFind the price of the synthetic mug\n\n# Action space:\nclick(bid: str)\nfill(bid: str, value: str)\nscroll(delta_x: float, delta_y: float)\n"
+      },
+      {
+       "type": "image_url",
+       "image_url": {
+        "url": "REMOVED"
+       }
+      }
+     ]
+    },
+    {
+     "role": "assistant",
+     "content": "<think>\nScroll down to see more.\n</think>\n\n<action>\nscroll(0, 500)\n</action>"
+    }
+   ],
+   "axtree_obj": {
+    "nodes": [
+     {
+      "nodeId": "1"
+     }
+    ]
+   },
+   "bounding_boxes": {
+    "0": {
+     "bbox": [
+      0,
+      0,
+      1,
+      1
+     ]
+    }
+   },
+   "extra_element_properties": {
+    "0": {
+     "visibility": 1.0
+    }
+   },
+   "axtree_pruned": "[12] link 'Mugs'"
+  },
+  {
+   "num": 3,
+   "reasoning": null,
+   "action": null,
+   "screenshot_path": "trajectories/screenshots/synth/step_3.png",
+   "url": "https://shop.example/mugs",
+   "open_pages_urls": [
+    "https://shop.example/mugs"
+   ],
+   "focused_element": "",
+   "last_action_error": "",
+   "stats": null,
+   "axtree": "RootWebArea 'Shop 3', focused\n\t[12] link 'Mugs ☕ café', clickable, visible\n\t[7] searchbox 'Search', visible",
+   "chat_messages": [],
+   "axtree_obj": {
+    "nodes": [
+     {
+      "nodeId": "1"
+     }
+    ]
+   },
+   "bounding_boxes": {
+    "0": {
+     "bbox": [
+      0,
+      0,
+      1,
+      1
+     ]
+    }
+   },
+   "extra_element_properties": {
+    "0": {
+     "visibility": 1.0
+    }
+   },
+   "axtree_pruned": "[12] link 'Mugs'"
+  }
+ ]
+}

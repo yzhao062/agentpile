@@ -1,0 +1,204 @@
+{
+ "sample": "agent_reward_bench_records",
+ "corpus": "agent_reward_bench",
+ "provenance": "records written by hand in the layout of a cleaned AgentRewardBench run file, reduced to the fields the reader and GRADE use; expected_steps are the output of GRADE 3839a57 experiment/agent_reward_bench.to_steps on (action, url) of every record, projected to idx, agent, kind, deps. The last record is the observation after the last action and has no action: GRADE turns it into a decision step and a noop step (the last two expected steps), agentpile keeps it as the result of the last call.",
+ "raw": {
+  "head": {
+   "goal": "Find shoes.",
+   "agent": "GenericAgent-demo",
+   "model": "demo-model"
+  },
+  "benchmark": "webarena",
+  "model_name": "GenericAgent-demo",
+  "task_id": "webarena.1",
+  "records": [
+   {
+    "num": 0,
+    "action": "goto('http://shop.example/home')",
+    "url": "http://shop.example/home",
+    "reasoning": "start",
+    "axtree": "page text"
+   },
+   {
+    "num": 1,
+    "action": "click('12')",
+    "url": "http://shop.example/home",
+    "reasoning": "open the menu",
+    "axtree": "page text"
+   },
+   {
+    "num": 2,
+    "action": "noop()",
+    "url": "",
+    "reasoning": "wait",
+    "axtree": "page text"
+   },
+   {
+    "num": 3,
+    "action": "scroll(0, 200)",
+    "url": "http://shop.example/home",
+    "reasoning": "look further down",
+    "axtree": "page text"
+   },
+   {
+    "num": 4,
+    "action": "fill('3', 'shoes')",
+    "url": "http://shop.example/search?q=shoes",
+    "reasoning": "type the query",
+    "axtree": "page text"
+   },
+   {
+    "num": 5,
+    "action": null,
+    "url": "http://shop.example/search?q=shoes",
+    "reasoning": null,
+    "chat_messages": [
+     {
+      "role": "assistant",
+      "content": "I am not sure what to do."
+     }
+    ],
+    "axtree": "page text"
+   },
+   {
+    "num": 6,
+    "action": "click('7')",
+    "url": "http://shop.example/home",
+    "reasoning": "go back to the list",
+    "axtree": "page text"
+   },
+   {
+    "num": 7,
+    "action": "send_msg_to_user('done')",
+    "url": "",
+    "reasoning": "answer",
+    "axtree": "page text"
+   },
+   {
+    "num": 8,
+    "url": "http://shop.example/home",
+    "axtree": "page text"
+   }
+  ]
+ },
+ "expected_steps": [
+  {
+   "idx": 0,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 1,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": []
+  },
+  {
+   "idx": 2,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 3,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": [
+    1
+   ]
+  },
+  {
+   "idx": 4,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 5,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": []
+  },
+  {
+   "idx": 6,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 7,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": [
+    3
+   ]
+  },
+  {
+   "idx": 8,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 9,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": []
+  },
+  {
+   "idx": 10,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 11,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": [
+    9
+   ]
+  },
+  {
+   "idx": 12,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 13,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": [
+    7
+   ]
+  },
+  {
+   "idx": 14,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 15,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": []
+  },
+  {
+   "idx": 16,
+   "agent": "agent",
+   "kind": "decision",
+   "deps": []
+  },
+  {
+   "idx": 17,
+   "agent": "env",
+   "kind": "tool_call",
+   "deps": [
+    13
+   ]
+  }
+ ]
+}

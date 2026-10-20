@@ -1,0 +1,169 @@
+{
+ "benchmark": "workarena",
+ "agent": "GenericAgent-synth-claude",
+ "model": "synth/claude",
+ "valid": true,
+ "experiment": "GenericAgent-synth-claude_on_workarena",
+ "seed": 0,
+ "model_args": {
+  "model_name": "synth/claude",
+  "temperature": 0,
+  "vision_support": false
+ },
+ "flags": {
+  "obs": {
+   "use_ax_tree": true
+  },
+  "action": {
+   "action_set": {
+    "subsets": [
+     "workarena"
+    ],
+    "multiaction": false
+   }
+  }
+ },
+ "summary_info": {
+  "n_steps": 2,
+  "cum_reward": 0.0,
+  "cum_raw_reward": 0,
+  "err_msg": null,
+  "stack_trace": null,
+  "stats.cum_steps": 3,
+  "terminated": true,
+  "truncated": false
+ },
+ "package_version": "synthetic==0.0.0\n",
+ "goal": [
+  {
+   "type": "text",
+   "text": "Order the synthetic laptop"
+  }
+ ],
+ "steps": [
+  {
+   "num": 0,
+   "reasoning": "Open the catalog.",
+   "action": "click('1')",
+   "screenshot_path": "trajectories/screenshots/synth/step_0.png",
+   "url": "https://shop.example/",
+   "open_pages_urls": [
+    "https://shop.example/"
+   ],
+   "focused_element": "",
+   "last_action_error": "",
+   "stats": {
+    "n_retry_llm": 1,
+    "n_retry": 0.0,
+    "busted_retry": 0,
+    "input_tokens": 100,
+    "output_tokens": 10,
+    "cost": 0.0
+   },
+   "axtree": "RootWebArea 'Shop 0', focused\n\t[12] link 'Mugs ☕ café', clickable, visible\n\t[7] searchbox 'Search', visible",
+   "axtree_obj": {
+    "nodes": [
+     {
+      "nodeId": "1"
+     }
+    ]
+   },
+   "bounding_boxes": {
+    "0": {
+     "bbox": [
+      0,
+      0,
+      1,
+      1
+     ]
+    }
+   },
+   "extra_element_properties": {
+    "0": {
+     "visibility": 1.0
+    }
+   },
+   "axtree_pruned": "[12] link 'Mugs'"
+  },
+  {
+   "num": 1,
+   "action": "select_option('2', ['a', 'b'])",
+   "screenshot_path": "trajectories/screenshots/synth/step_1.png",
+   "url": "https://shop.example/",
+   "open_pages_urls": [
+    "https://shop.example/"
+   ],
+   "focused_element": "",
+   "last_action_error": "",
+   "stats": {
+    "n_retry_llm": 1,
+    "n_retry": 0.0,
+    "busted_retry": 0,
+    "input_tokens": 101,
+    "output_tokens": 10,
+    "cost": 0.0
+   },
+   "axtree": "RootWebArea 'Shop 1', focused\n\t[12] link 'Mugs ☕ café', clickable, visible\n\t[7] searchbox 'Search', visible",
+   "axtree_obj": {
+    "nodes": [
+     {
+      "nodeId": "1"
+     }
+    ]
+   },
+   "bounding_boxes": {
+    "0": {
+     "bbox": [
+      0,
+      0,
+      1,
+      1
+     ]
+    }
+   },
+   "extra_element_properties": {
+    "0": {
+     "visibility": 1.0
+    }
+   },
+   "axtree_pruned": "[12] link 'Mugs'"
+  },
+  {
+   "num": 2,
+   "reasoning": null,
+   "action": null,
+   "screenshot_path": "trajectories/screenshots/synth/step_2.png",
+   "url": "https://shop.example/",
+   "open_pages_urls": [
+    "https://shop.example/"
+   ],
+   "focused_element": "",
+   "last_action_error": "",
+   "stats": null,
+   "axtree": "RootWebArea 'Shop 2', focused\n\t[12] link 'Mugs ☕ café', clickable, visible\n\t[7] searchbox 'Search', visible",
+   "axtree_obj": {
+    "nodes": [
+     {
+      "nodeId": "1"
+     }
+    ]
+   },
+   "bounding_boxes": {
+    "0": {
+     "bbox": [
+      0,
+      0,
+      1,
+      1
+     ]
+    }
+   },
+   "extra_element_properties": {
+    "0": {
+     "visibility": 1.0
+    }
+   },
+   "axtree_pruned": "[12] link 'Mugs'"
+  }
+ ]
+}

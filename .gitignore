@@ -1,0 +1,7 @@
+__pycache__/
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+.venv/
+.agentpile-cache/

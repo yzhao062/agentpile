@@ -1,0 +1,73 @@
+{
+  "name": "tau_bench",
+  "hf_id": "AgentSuite/tau-bench-trajectories",
+  "revision": "382e57d1784b55c5155f4ef394ef48f1c747a287",
+  "checked_at": "2026-10-20",
+  "license_on_card": "not declared",
+  "gated": false,
+  "allow_patterns": [
+    "*.jsonl"
+  ],
+  "configs_splits": [
+    {
+      "config": "default",
+      "split": "train",
+      "rows": 4950
+    }
+  ],
+  "unsupported": [
+    {
+      "what": "per-message or per-step timestamps"
+    },
+    {
+      "what": "tool definitions (tool names, parameter schemas)"
+    },
+    {
+      "what": "reasoning or thinking content"
+    },
+    {
+      "what": "per-step token, latency or cost metrics"
+    },
+    {
+      "what": "a tool_call_id on the result of 3655 calls in the 3 gemini-2.5 files"
+    },
+    {
+      "what": "steps for the 94 rows with messages == [] (each loads as a run with one empty_source placeholder step)"
+    },
+    {
+      "what": "parallel or multi-call turns"
+    }
+  ],
+  "counts": {
+    "source_rows": {
+      "value": 4950
+    },
+    "runs_after_load": {
+      "value": 4950
+    }
+  },
+  "count_note": "The stage-0 value was 4856 because it skipped the 94 rows with messages == []. The default load reads all 4950 rows; each of those 94 loads as a run with one empty_source placeholder step and the source's placeholder labels (flagged empty_run in every label's source_ref). Role user messages that hold a tool result without an id stay user steps as the source labels them, and their calls get no result: 3655 calls in the 3 gemini-2.5 files (each followed by exactly one such message). The 3 claude *-thinking-on-10k files add 3586 user steps ('The tool has finished running. Please continue your reasoning.') that the source also labels user. 10 calls (Kimi-K2-Instruct) have an empty function name, kept as ''.",
+  "labels": [
+    {
+      "field": "eval_result.db_match",
+      "level": "run"
+    },
+    {
+      "field": "eval_result.score",
+      "level": "run"
+    },
+    {
+      "field": "meta.reward_details.db_reward",
+      "level": "run"
+    },
+    {
+      "field": "meta.finish_reason",
+      "level": "run"
+    },
+    {
+      "field": "meta.task_description.actions",
+      "level": "run"
+    }
+  ],
+  "stage0_record": "agent-io/stage0/u3-tau/manifest-tau_bench.yaml"
+}

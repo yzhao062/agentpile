@@ -1,0 +1,58 @@
+{
+  "name": "swe_agent_nebius",
+  "hf_id": "nebius/SWE-agent-trajectories",
+  "revision": "68195a1450865274106246d0d0296a1d6807b88e",
+  "checked_at": "2026-10-20",
+  "license_on_card": "cc-by-4.0",
+  "gated": false,
+  "allow_patterns": [
+    "data/train-*.parquet",
+    "README.md"
+  ],
+  "configs_splits": [
+    {
+      "config": "default",
+      "split": "train",
+      "rows": 80036
+    }
+  ],
+  "unsupported": [
+    {
+      "what": "structured tool calls, call ids and per-call observation links"
+    },
+    {
+      "what": "timestamps, token usage, per-step cost"
+    }
+  ],
+  "counts": {
+    "source_rows": {
+      "value": 80036
+    },
+    "runs_after_load": {
+      "value": 80036
+    }
+  },
+  "labels": [
+    {
+      "field": "target",
+      "level": "run"
+    },
+    {
+      "field": "exit_status",
+      "level": "run"
+    },
+    {
+      "field": "eval_logs",
+      "level": "run"
+    },
+    {
+      "field": "generated_patch",
+      "level": "run"
+    },
+    {
+      "field": "trajectory[].mask",
+      "level": "step"
+    }
+  ],
+  "stage0_record": "agent-io/stage0/u5-swe-agent-smith/manifest-swe_agent_nebius.yaml"
+}

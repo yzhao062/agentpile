@@ -1,0 +1,703 @@
+{
+ "resourceSpans": [
+  {
+   "resource": {
+    "attributes": [
+     {
+      "key": "telemetry.sdk.language",
+      "value": {
+       "stringValue": "python"
+      }
+     },
+     {
+      "key": "telemetry.sdk.name",
+      "value": {
+       "stringValue": "opentelemetry"
+      }
+     },
+     {
+      "key": "telemetry.sdk.version",
+      "value": {
+       "stringValue": "1.45.1"
+      }
+     },
+     {
+      "key": "service.instance.id",
+      "value": {
+       "stringValue": "28dbbdfc-0002-4331-8cb0-7fb564c23e92"
+      }
+     },
+     {
+      "key": "service.name",
+      "value": {
+       "stringValue": "fixture-pydantic-ai"
+      }
+     }
+    ]
+   },
+   "scopeSpans": [
+    {
+     "scope": {
+      "name": "pydantic-ai",
+      "version": "2.58.0"
+     },
+     "spans": [
+      {
+       "traceId": "3a5605542c96b9179eb9de72cd6221ac",
+       "spanId": "9b7c69257cb2c18d",
+       "parentSpanId": "e98176d611877ec1",
+       "name": "chat fake-fn",
+       "kind": 3,
+       "startTimeUnixNano": "1792489224994417000",
+       "endTimeUnixNano": "1792489224999144000",
+       "attributes": [
+        {
+         "key": "gen_ai.provider.name",
+         "value": {
+          "stringValue": "function"
+         }
+        },
+        {
+         "key": "gen_ai.system",
+         "value": {
+          "stringValue": "function"
+         }
+        },
+        {
+         "key": "gen_ai.request.model",
+         "value": {
+          "stringValue": "fake-fn"
+         }
+        },
+        {
+         "key": "model_request_parameters",
+         "value": {
+          "stringValue": "{\"function_tools\":[{\"name\":\"get_weather\",\"parameters_json_schema\":{\"additionalProperties\":false,\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"description\":\"Weather for a city.\",\"outer_typed_dict_key\":null,\"strict\":null,\"sequential\":false,\"kind\":\"function\",\"metadata\":null,\"timeout\":null,\"defer_loading\":false,\"unless_native\":null,\"with_native\":null,\"tool_kind\":null,\"return_schema\":null,\"include_return_schema\":null,\"toolset_id\":\"<agent>\",\"capability_id\":null},{\"name\":\"get_time\",\"parameters_json_schema\":{\"additionalProperties\":false,\"properties\":{\"zone\":{\"type\":\"string\"}},\"required\":[\"zone\"],\"type\":\"object\"},\"description\":\"Current time in a zone.\",\"outer_typed_dict_key\":null,\"strict\":null,\"sequential\":false,\"kind\":\"function\",\"metadata\":null,\"timeout\":null,\"defer_loading\":false,\"unless_native\":null,\"with_native\":null,\"tool_kind\":null,\"return_schema\":null,\"include_return_schema\":null,\"toolset_id\":\"<agent>\",\"capability_id\":null}],\"native_tools\":[],\"tool_visibility\":{\"get_weather\":\"visible\",\"get_time\":\"visible\"},\"revealed_tool_names\":[],\"deferred_capability_ids\":[],\"output_mode\":\"text\",\"output_object\":null,\"output_tools\":[],\"prompted_output_template\":null,\"allow_text_output\":true,\"allow_image_output\":false,\"instruction_parts\":[{\"content\":\"You answer questions about weather and time.\",\"dynamic\":false,\"name\":null,\"id\":\"agent\",\"part_kind\":\"instruction\"}],\"thinking\":null,\"cache\":null}"
+         }
+        },
+        {
+         "key": "gen_ai.tool.definitions",
+         "value": {
+          "stringValue": "[{\"type\":\"function\",\"name\":\"get_weather\",\"description\":\"Weather for a city.\",\"parameters\":{\"additionalProperties\":false,\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"}},{\"type\":\"function\",\"name\":\"get_time\",\"description\":\"Current time in a zone.\",\"parameters\":{\"additionalProperties\":false,\"properties\":{\"zone\":{\"type\":\"string\"}},\"required\":[\"zone\"],\"type\":\"object\"}}]"
+         }
+        },
+        {
+         "key": "gen_ai.operation.name",
+         "value": {
+          "stringValue": "chat"
+         }
+        },
+        {
+         "key": "gen_ai.agent.name",
+         "value": {
+          "stringValue": "weather_agent"
+         }
+        },
+        {
+         "key": "gen_ai.agent.call.id",
+         "value": {
+          "stringValue": "01a158ae-fb1e-7517-8ac0-b24f69139361"
+         }
+        },
+        {
+         "key": "gen_ai.conversation.id",
+         "value": {
+          "stringValue": "01a158ae-fb1e-7517-8ac0-b25085cdb98c"
+         }
+        },
+        {
+         "key": "gen_ai.input.messages",
+         "value": {
+          "stringValue": "[{\"role\":\"user\",\"parts\":[{\"type\":\"text\",\"content\":\"What is the weather in Paris and what time is it?\"}]}]"
+         }
+        },
+        {
+         "key": "gen_ai.output.messages",
+         "value": {
+          "stringValue": "[{\"role\":\"assistant\",\"parts\":[{\"type\":\"text\",\"content\":\"Let me check both.\"},{\"type\":\"tool_call\",\"id\":\"call_weather_1\",\"name\":\"get_weather\",\"arguments\":{\"city\":\"Paris\"}},{\"type\":\"tool_call\",\"id\":\"call_time_1\",\"name\":\"get_time\",\"arguments\":{\"zone\":\"UTC\"}}]}]"
+         }
+        },
+        {
+         "key": "gen_ai.system_instructions",
+         "value": {
+          "stringValue": "[{\"type\":\"text\",\"content\":\"You answer questions about weather and time.\"}]"
+         }
+        },
+        {
+         "key": "logfire.json_schema",
+         "value": {
+          "stringValue": "{\"type\":\"object\",\"properties\":{\"gen_ai.input.messages\":{\"type\":\"array\"},\"gen_ai.output.messages\":{\"type\":\"array\"},\"gen_ai.system_instructions\":{\"type\":\"array\"},\"model_request_parameters\":{\"type\":\"object\"}}}"
+         }
+        },
+        {
+         "key": "gen_ai.usage.input_tokens",
+         "value": {
+          "intValue": "61"
+         }
+        },
+        {
+         "key": "gen_ai.usage.output_tokens",
+         "value": {
+          "intValue": "15"
+         }
+        },
+        {
+         "key": "gen_ai.response.model",
+         "value": {
+          "stringValue": "fake-fn"
+         }
+        }
+       ],
+       "status": {},
+       "flags": 256
+      },
+      {
+       "traceId": "3a5605542c96b9179eb9de72cd6221ac",
+       "spanId": "eb6466f97b554c7c",
+       "parentSpanId": "e98176d611877ec1",
+       "name": "execute_tool get_weather",
+       "kind": 1,
+       "startTimeUnixNano": "1792489224999600000",
+       "endTimeUnixNano": "1792489224999844000",
+       "attributes": [
+        {
+         "key": "gen_ai.operation.name",
+         "value": {
+          "stringValue": "execute_tool"
+         }
+        },
+        {
+         "key": "gen_ai.tool.name",
+         "value": {
+          "stringValue": "get_weather"
+         }
+        },
+        {
+         "key": "gen_ai.tool.call.id",
+         "value": {
+          "stringValue": "call_weather_1"
+         }
+        },
+        {
+         "key": "gen_ai.tool.call.arguments",
+         "value": {
+          "stringValue": "{\"city\":\"Paris\"}"
+         }
+        },
+        {
+         "key": "gen_ai.agent.name",
+         "value": {
+          "stringValue": "weather_agent"
+         }
+        },
+        {
+         "key": "gen_ai.agent.call.id",
+         "value": {
+          "stringValue": "01a158ae-fb1e-7517-8ac0-b24f69139361"
+         }
+        },
+        {
+         "key": "gen_ai.conversation.id",
+         "value": {
+          "stringValue": "01a158ae-fb1e-7517-8ac0-b25085cdb98c"
+         }
+        },
+        {
+         "key": "logfire.msg",
+         "value": {
+          "stringValue": "running tool: get_weather"
+         }
+        },
+        {
+         "key": "logfire.json_schema",
+         "value": {
+          "stringValue": "{\"type\":\"object\",\"properties\":{\"gen_ai.tool.call.arguments\":{\"type\":\"object\"},\"gen_ai.tool.call.result\":{\"type\":\"object\"},\"gen_ai.tool.name\":{},\"gen_ai.tool.call.id\":{}}}"
+         }
+        },
+        {
+         "key": "gen_ai.tool.call.result",
+         "value": {
+          "stringValue": "sunny in Paris"
+         }
+        }
+       ],
+       "status": {},
+       "flags": 256
+      },
+      {
+       "traceId": "3a5605542c96b9179eb9de72cd6221ac",
+       "spanId": "95edf421d6ef5d9c",
+       "parentSpanId": "e98176d611877ec1",
+       "name": "execute_tool get_time",
+       "kind": 1,
+       "startTimeUnixNano": "1792489224999659000",
+       "endTimeUnixNano": "1792489224999937000",
+       "attributes": [
+        {
+         "key": "gen_ai.operation.name",
+         "value": {
+          "stringValue": "execute_tool"
+         }
+        },
+        {
+         "key": "gen_ai.tool.name",
+         "value": {
+          "stringValue": "get_time"
+         }
+        },
+        {
+         "key": "gen_ai.tool.call.id",
+         "value": {
+          "stringValue": "call_time_1"
+         }
+        },
+        {
+         "key": "gen_ai.tool.call.arguments",
+         "value": {
+          "stringValue": "{\"zone\":\"UTC\"}"
+         }
+        },
+        {
+         "key": "gen_ai.agent.name",
+         "value": {
+          "stringValue": "weather_agent"
+         }
+        },
+        {
+         "key": "gen_ai.agent.call.id",
+         "value": {
+          "stringValue": "01a158ae-fb1e-7517-8ac0-b24f69139361"
+         }
+        },
+        {
+         "key": "gen_ai.conversation.id",
+         "value": {
+          "stringValue": "01a158ae-fb1e-7517-8ac0-b25085cdb98c"
+         }
+        },
+        {
+         "key": "logfire.msg",
+         "value": {
+          "stringValue": "running tool: get_time"
+         }
+        },
+        {
+         "key": "logfire.json_schema",
+         "value": {
+          "stringValue": "{\"type\":\"object\",\"properties\":{\"gen_ai.tool.call.arguments\":{\"type\":\"object\"},\"gen_ai.tool.call.result\":{\"type\":\"object\"},\"gen_ai.tool.name\":{},\"gen_ai.tool.call.id\":{}}}"
+         }
+        },
+        {
+         "key": "gen_ai.tool.call.result",
+         "value": {
+          "stringValue": "{\"zone\":\"UTC\",\"time\":\"12:00\"}"
+         }
+        }
+       ],
+       "status": {},
+       "flags": 256
+      },
+      {
+       "traceId": "3a5605542c96b9179eb9de72cd6221ac",
+       "spanId": "182d0eaf9a5a43b1",
+       "parentSpanId": "e98176d611877ec1",
+       "name": "chat fake-fn",
+       "kind": 3,
+       "startTimeUnixNano": "1792489225000346000",
+       "endTimeUnixNano": "1792489225000776000",
+       "attributes": [
+        {
+         "key": "gen_ai.provider.name",
+         "value": {
+          "stringValue": "function"
+         }
+        },
+        {
+         "key": "gen_ai.system",
+         "value": {
+          "stringValue": "function"
+         }
+        },
+        {
+         "key": "gen_ai.request.model",
+         "value": {
+          "stringValue": "fake-fn"
+         }
+        },
+        {
+         "key": "model_request_parameters",
+         "value": {
+          "stringValue": "{\"function_tools\":[{\"name\":\"get_weather\",\"parameters_json_schema\":{\"additionalProperties\":false,\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"description\":\"Weather for a city.\",\"outer_typed_dict_key\":null,\"strict\":null,\"sequential\":false,\"kind\":\"function\",\"metadata\":null,\"timeout\":null,\"defer_loading\":false,\"unless_native\":null,\"with_native\":null,\"tool_kind\":null,\"return_schema\":null,\"include_return_schema\":null,\"toolset_id\":\"<agent>\",\"capability_id\":null},{\"name\":\"get_time\",\"parameters_json_schema\":{\"additionalProperties\":false,\"properties\":{\"zone\":{\"type\":\"string\"}},\"required\":[\"zone\"],\"type\":\"object\"},\"description\":\"Current time in a zone.\",\"outer_typed_dict_key\":null,\"strict\":null,\"sequential\":false,\"kind\":\"function\",\"metadata\":null,\"timeout\":null,\"defer_loading\":false,\"unless_native\":null,\"with_native\":null,\"tool_kind\":null,\"return_schema\":null,\"include_return_schema\":null,\"toolset_id\":\"<agent>\",\"capability_id\":null}],\"native_tools\":[],\"tool_visibility\":{\"get_weather\":\"visible\",\"get_time\":\"visible\"},\"revealed_tool_names\":[],\"deferred_capability_ids\":[],\"output_mode\":\"text\",\"output_object\":null,\"output_tools\":[],\"prompted_output_template\":null,\"allow_text_output\":true,\"allow_image_output\":false,\"instruction_parts\":[{\"content\":\"You answer questions about weather and time.\",\"dynamic\":false,\"name\":null,\"id\":\"agent\",\"part_kind\":\"instruction\"}],\"thinking\":null,\"cache\":null}"
+         }
+        },
+        {
+         "key": "gen_ai.tool.definitions",
+         "value": {
+          "stringValue": "[{\"type\":\"function\",\"name\":\"get_weather\",\"description\":\"Weather for a city.\",\"parameters\":{\"additionalProperties\":false,\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"}},{\"type\":\"function\",\"name\":\"get_time\",\"description\":\"Current time in a zone.\",\"parameters\":{\"additionalProperties\":false,\"properties\":{\"zone\":{\"type\":\"string\"}},\"required\":[\"zone\"],\"type\":\"object\"}}]"
+         }
+        },
+        {
+         "key": "gen_ai.operation.name",
+         "value": {
+          "stringValue": "chat"
+         }
+        },
+        {
+         "key": "gen_ai.agent.name",
+         "value": {
+          "stringValue": "weather_agent"
+         }
+        },
+        {
+         "key": "gen_ai.agent.call.id",
+         "value": {
+          "stringValue": "01a158ae-fb1e-7517-8ac0-b24f69139361"
+         }
+        },
+        {
+         "key": "gen_ai.conversation.id",
+         "value": {
+          "stringValue": "01a158ae-fb1e-7517-8ac0-b25085cdb98c"
+         }
+        },
+        {
+         "key": "gen_ai.input.messages",
+         "value": {
+          "stringValue": "[{\"role\":\"user\",\"parts\":[{\"type\":\"text\",\"content\":\"What is the weather in Paris and what time is it?\"}]},{\"role\":\"assistant\",\"parts\":[{\"type\":\"text\",\"content\":\"Let me check both.\"},{\"type\":\"tool_call\",\"id\":\"call_weather_1\",\"name\":\"get_weather\",\"arguments\":{\"city\":\"Paris\"}},{\"type\":\"tool_call\",\"id\":\"call_time_1\",\"name\":\"get_time\",\"arguments\":{\"zone\":\"UTC\"}}]},{\"role\":\"user\",\"parts\":[{\"type\":\"tool_call_response\",\"id\":\"call_weather_1\",\"name\":\"get_weather\",\"result\":\"sunny in Paris\"},{\"type\":\"tool_call_response\",\"id\":\"call_time_1\",\"name\":\"get_time\",\"result\":{\"zone\":\"UTC\",\"time\":\"12:00\"}}]}]"
+         }
+        },
+        {
+         "key": "gen_ai.output.messages",
+         "value": {
+          "stringValue": "[{\"role\":\"assistant\",\"parts\":[{\"type\":\"text\",\"content\":\"It is sunny in Paris and 12:00 UTC.\"}]}]"
+         }
+        },
+        {
+         "key": "gen_ai.system_instructions",
+         "value": {
+          "stringValue": "[{\"type\":\"text\",\"content\":\"You answer questions about weather and time.\"}]"
+         }
+        },
+        {
+         "key": "logfire.json_schema",
+         "value": {
+          "stringValue": "{\"type\":\"object\",\"properties\":{\"gen_ai.input.messages\":{\"type\":\"array\"},\"gen_ai.output.messages\":{\"type\":\"array\"},\"gen_ai.system_instructions\":{\"type\":\"array\"},\"model_request_parameters\":{\"type\":\"object\"}}}"
+         }
+        },
+        {
+         "key": "gen_ai.usage.input_tokens",
+         "value": {
+          "intValue": "71"
+         }
+        },
+        {
+         "key": "gen_ai.usage.output_tokens",
+         "value": {
+          "intValue": "25"
+         }
+        },
+        {
+         "key": "gen_ai.response.model",
+         "value": {
+          "stringValue": "fake-fn"
+         }
+        }
+       ],
+       "status": {},
+       "flags": 256
+      },
+      {
+       "traceId": "3a5605542c96b9179eb9de72cd6221ac",
+       "spanId": "e98176d611877ec1",
+       "name": "invoke_agent weather_agent",
+       "kind": 1,
+       "startTimeUnixNano": "1792489224993722000",
+       "endTimeUnixNano": "1792489225001250000",
+       "attributes": [
+        {
+         "key": "model_name",
+         "value": {
+          "stringValue": "fake-fn"
+         }
+        },
+        {
+         "key": "agent_name",
+         "value": {
+          "stringValue": "weather_agent"
+         }
+        },
+        {
+         "key": "gen_ai.agent.name",
+         "value": {
+          "stringValue": "weather_agent"
+         }
+        },
+        {
+         "key": "gen_ai.agent.call.id",
+         "value": {
+          "stringValue": "01a158ae-fb1e-7517-8ac0-b24f69139361"
+         }
+        },
+        {
+         "key": "gen_ai.conversation.id",
+         "value": {
+          "stringValue": "01a158ae-fb1e-7517-8ac0-b25085cdb98c"
+         }
+        },
+        {
+         "key": "gen_ai.operation.name",
+         "value": {
+          "stringValue": "invoke_agent"
+         }
+        },
+        {
+         "key": "logfire.msg",
+         "value": {
+          "stringValue": "weather_agent run"
+         }
+        },
+        {
+         "key": "final_result",
+         "value": {
+          "stringValue": "It is sunny in Paris and 12:00 UTC."
+         }
+        },
+        {
+         "key": "gen_ai.aggregated_usage.input_tokens",
+         "value": {
+          "intValue": "132"
+         }
+        },
+        {
+         "key": "gen_ai.aggregated_usage.output_tokens",
+         "value": {
+          "intValue": "40"
+         }
+        },
+        {
+         "key": "pydantic_ai.all_messages",
+         "value": {
+          "stringValue": "[{\"role\":\"user\",\"parts\":[{\"type\":\"text\",\"content\":\"What is the weather in Paris and what time is it?\"}]},{\"role\":\"assistant\",\"parts\":[{\"type\":\"text\",\"content\":\"Let me check both.\"},{\"type\":\"tool_call\",\"id\":\"call_weather_1\",\"name\":\"get_weather\",\"arguments\":{\"city\":\"Paris\"}},{\"type\":\"tool_call\",\"id\":\"call_time_1\",\"name\":\"get_time\",\"arguments\":{\"zone\":\"UTC\"}}]},{\"role\":\"user\",\"parts\":[{\"type\":\"tool_call_response\",\"id\":\"call_weather_1\",\"name\":\"get_weather\",\"result\":\"sunny in Paris\"},{\"type\":\"tool_call_response\",\"id\":\"call_time_1\",\"name\":\"get_time\",\"result\":{\"zone\":\"UTC\",\"time\":\"12:00\"}}]},{\"role\":\"assistant\",\"parts\":[{\"type\":\"text\",\"content\":\"It is sunny in Paris and 12:00 UTC.\"}]}]"
+         }
+        },
+        {
+         "key": "gen_ai.system_instructions",
+         "value": {
+          "stringValue": "[{\"type\":\"text\",\"content\":\"You answer questions about weather and time.\"}]"
+         }
+        },
+        {
+         "key": "logfire.json_schema",
+         "value": {
+          "stringValue": "{\"type\":\"object\",\"properties\":{\"pydantic_ai.all_messages\":{\"type\":\"array\"},\"gen_ai.system_instructions\":{\"type\":\"array\"},\"final_result\":{\"type\":\"object\"}}}"
+         }
+        }
+       ],
+       "status": {},
+       "flags": 256
+      },
+      {
+       "traceId": "1ec4c4c2e2ed5a25a75ce90b68ee7ab4",
+       "spanId": "815413ee6ecfbe6d",
+       "parentSpanId": "99b573ac6ce5b3b5",
+       "name": "chat fake-fn",
+       "kind": 3,
+       "startTimeUnixNano": "1792489225002295000",
+       "endTimeUnixNano": "1792489225003114000",
+       "attributes": [
+        {
+         "key": "gen_ai.provider.name",
+         "value": {
+          "stringValue": "function"
+         }
+        },
+        {
+         "key": "gen_ai.system",
+         "value": {
+          "stringValue": "function"
+         }
+        },
+        {
+         "key": "gen_ai.request.model",
+         "value": {
+          "stringValue": "fake-fn"
+         }
+        },
+        {
+         "key": "model_request_parameters",
+         "value": {
+          "stringValue": "{\"function_tools\":[{\"name\":\"get_weather\",\"parameters_json_schema\":{\"additionalProperties\":false,\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"description\":\"Weather for a city.\",\"outer_typed_dict_key\":null,\"strict\":null,\"sequential\":false,\"kind\":\"function\",\"metadata\":null,\"timeout\":null,\"defer_loading\":false,\"unless_native\":null,\"with_native\":null,\"tool_kind\":null,\"return_schema\":null,\"include_return_schema\":null,\"toolset_id\":\"<agent>\",\"capability_id\":null},{\"name\":\"get_time\",\"parameters_json_schema\":{\"additionalProperties\":false,\"properties\":{\"zone\":{\"type\":\"string\"}},\"required\":[\"zone\"],\"type\":\"object\"},\"description\":\"Current time in a zone.\",\"outer_typed_dict_key\":null,\"strict\":null,\"sequential\":false,\"kind\":\"function\",\"metadata\":null,\"timeout\":null,\"defer_loading\":false,\"unless_native\":null,\"with_native\":null,\"tool_kind\":null,\"return_schema\":null,\"include_return_schema\":null,\"toolset_id\":\"<agent>\",\"capability_id\":null}],\"native_tools\":[],\"tool_visibility\":{\"get_weather\":\"visible\",\"get_time\":\"visible\"},\"revealed_tool_names\":[],\"deferred_capability_ids\":[],\"output_mode\":\"text\",\"output_object\":null,\"output_tools\":[],\"prompted_output_template\":null,\"allow_text_output\":true,\"allow_image_output\":false,\"instruction_parts\":[{\"content\":\"You answer questions about weather and time.\",\"dynamic\":false,\"name\":null,\"id\":\"agent\",\"part_kind\":\"instruction\"}],\"thinking\":null,\"cache\":null}"
+         }
+        },
+        {
+         "key": "gen_ai.tool.definitions",
+         "value": {
+          "stringValue": "[{\"type\":\"function\",\"name\":\"get_weather\",\"description\":\"Weather for a city.\",\"parameters\":{\"additionalProperties\":false,\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"}},{\"type\":\"function\",\"name\":\"get_time\",\"description\":\"Current time in a zone.\",\"parameters\":{\"additionalProperties\":false,\"properties\":{\"zone\":{\"type\":\"string\"}},\"required\":[\"zone\"],\"type\":\"object\"}}]"
+         }
+        },
+        {
+         "key": "gen_ai.operation.name",
+         "value": {
+          "stringValue": "chat"
+         }
+        },
+        {
+         "key": "gen_ai.agent.name",
+         "value": {
+          "stringValue": "weather_agent"
+         }
+        },
+        {
+         "key": "gen_ai.agent.call.id",
+         "value": {
+          "stringValue": "01a158ae-fb29-76f3-a031-774db62087c3"
+         }
+        },
+        {
+         "key": "gen_ai.conversation.id",
+         "value": {
+          "stringValue": "01a158ae-fb29-76f3-a031-774ea2a8962e"
+         }
+        },
+        {
+         "key": "gen_ai.input.messages",
+         "value": {
+          "stringValue": "[{\"role\":\"user\",\"parts\":[{\"type\":\"text\",\"content\":\"Thanks.\"}]}]"
+         }
+        },
+        {
+         "key": "gen_ai.output.messages",
+         "value": {
+          "stringValue": "[{\"role\":\"assistant\",\"parts\":[{\"type\":\"text\",\"content\":\"Anytime.\"}]}]"
+         }
+        },
+        {
+         "key": "gen_ai.system_instructions",
+         "value": {
+          "stringValue": "[{\"type\":\"text\",\"content\":\"You answer questions about weather and time.\"}]"
+         }
+        },
+        {
+         "key": "logfire.json_schema",
+         "value": {
+          "stringValue": "{\"type\":\"object\",\"properties\":{\"gen_ai.input.messages\":{\"type\":\"array\"},\"gen_ai.output.messages\":{\"type\":\"array\"},\"gen_ai.system_instructions\":{\"type\":\"array\"},\"model_request_parameters\":{\"type\":\"object\"}}}"
+         }
+        },
+        {
+         "key": "gen_ai.usage.input_tokens",
+         "value": {
+          "intValue": "52"
+         }
+        },
+        {
+         "key": "gen_ai.usage.output_tokens",
+         "value": {
+          "intValue": "2"
+         }
+        },
+        {
+         "key": "gen_ai.response.model",
+         "value": {
+          "stringValue": "fake-fn"
+         }
+        }
+       ],
+       "status": {},
+       "flags": 256
+      },
+      {
+       "traceId": "1ec4c4c2e2ed5a25a75ce90b68ee7ab4",
+       "spanId": "99b573ac6ce5b3b5",
+       "name": "invoke_agent weather_agent",
+       "kind": 1,
+       "startTimeUnixNano": "1792489225001839000",
+       "endTimeUnixNano": "1792489225003480000",
+       "attributes": [
+        {
+         "key": "model_name",
+         "value": {
+          "stringValue": "fake-fn"
+         }
+        },
+        {
+         "key": "agent_name",
+         "value": {
+          "stringValue": "weather_agent"
+         }
+        },
+        {
+         "key": "gen_ai.agent.name",
+         "value": {
+          "stringValue": "weather_agent"
+         }
+        },
+        {
+         "key": "gen_ai.agent.call.id",
+         "value": {
+          "stringValue": "01a158ae-fb29-76f3-a031-774db62087c3"
+         }
+        },
+        {
+         "key": "gen_ai.conversation.id",
+         "value": {
+          "stringValue": "01a158ae-fb29-76f3-a031-774ea2a8962e"
+         }
+        },
+        {
+         "key": "gen_ai.operation.name",
+         "value": {
+          "stringValue": "invoke_agent"
+         }
+        },
+        {
+         "key": "logfire.msg",
+         "value": {
+          "stringValue": "weather_agent run"
+         }
+        },
+        {
+         "key": "final_result",
+         "value": {
+          "stringValue": "Anytime."
+         }
+        },
+        {
+         "key": "gen_ai.aggregated_usage.input_tokens",
+         "value": {
+          "intValue": "52"
+         }
+        },
+        {
+         "key": "gen_ai.aggregated_usage.output_tokens",
+         "value": {
+          "intValue": "2"
+         }
+        },
+        {
+         "key": "pydantic_ai.all_messages",
+         "value": {
+          "stringValue": "[{\"role\":\"user\",\"parts\":[{\"type\":\"text\",\"content\":\"Thanks.\"}]},{\"role\":\"assistant\",\"parts\":[{\"type\":\"text\",\"content\":\"Anytime.\"}]}]"
+         }
+        },
+        {
+         "key": "gen_ai.system_instructions",
+         "value": {
+          "stringValue": "[{\"type\":\"text\",\"content\":\"You answer questions about weather and time.\"}]"
+         }
+        },
+        {
+         "key": "logfire.json_schema",
+         "value": {
+          "stringValue": "{\"type\":\"object\",\"properties\":{\"pydantic_ai.all_messages\":{\"type\":\"array\"},\"gen_ai.system_instructions\":{\"type\":\"array\"},\"final_result\":{\"type\":\"object\"}}}"
+         }
+        }
+       ],
+       "status": {},
+       "flags": 256
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,793 @@
+{
+ "resourceSpans": [
+  {
+   "resource": {
+    "attributes": [
+     {
+      "key": "telemetry.sdk.language",
+      "value": {
+       "stringValue": "python"
+      }
+     },
+     {
+      "key": "telemetry.sdk.name",
+      "value": {
+       "stringValue": "opentelemetry"
+      }
+     },
+     {
+      "key": "telemetry.sdk.version",
+      "value": {
+       "stringValue": "1.45.1"
+      }
+     },
+     {
+      "key": "service.instance.id",
+      "value": {
+       "stringValue": "28dbbdfc-0002-4331-8cb0-7fb564c23e92"
+      }
+     },
+     {
+      "key": "service.name",
+      "value": {
+       "stringValue": "fixture-openai-agents-as-tool"
+      }
+     }
+    ]
+   },
+   "scopeSpans": [
+    {
+     "scope": {
+      "name": "openinference.instrumentation.openai_agents",
+      "version": "2.5.3"
+     },
+     "spans": [
+      {
+       "traceId": "16aa8735b05683511a3155571e0be5c3",
+       "spanId": "88191b55b2c10cb4",
+       "parentSpanId": "2d758ee0ff753436",
+       "name": "response",
+       "kind": 1,
+       "startTimeUnixNano": "1792489225494446080",
+       "endTimeUnixNano": "1792489225494482944",
+       "attributes": [
+        {
+         "key": "llm.system",
+         "value": {
+          "stringValue": "openai"
+         }
+        },
+        {
+         "key": "output.mime_type",
+         "value": {
+          "stringValue": "application/json"
+         }
+        },
+        {
+         "key": "output.value",
+         "value": {
+          "stringValue": "{\"id\":\"resp_4418141456_1\",\"access_programs\":null,\"created_at\":0.0,\"error\":null,\"incomplete_details\":null,\"instructions\":\"Delegate.\",\"metadata\":null,\"model\":\"fake-model\",\"object\":\"response\",\"output\":[{\"arguments\":\"{\\\"input\\\": \\\"answer?\\\"}\",\"call_id\":\"call_ask_1\",\"name\":\"ask_helper\",\"type\":\"function_call\",\"id\":\"fc_call_ask_1\",\"async_\":null,\"caller\":null,\"namespace\":null,\"status\":null}],\"parallel_tool_calls\":false,\"temperature\":null,\"tool_choice\":\"auto\",\"tools\":[{\"name\":\"ask_helper\",\"parameters\":{\"description\":\"Default input schema for agent-as-tool calls.\",\"properties\":{\"input\":{\"title\":\"Input\",\"type\":\"string\"}},\"required\":[\"input\"],\"title\":\"AgentAsToolInput\",\"type\":\"object\",\"additionalProperties\":false},\"strict\":true,\"type\":\"function\",\"allowed_callers\":null,\"async_\":null,\"defer_loading\":null,\"description\":\"Ask the helper\",\"output_schema\":null}],\"top_p\":null,\"background\":null,\"completed_at\":null,\"conversation\":null,\"max_output_tokens\":null,\"max_tool_calls\":null,\"moderation\":null,\"previous_response_id\":null,\"prompt\":null,\"prompt_cache_diagnostics\":null,\"prompt_cache_key\":null,\"prompt_cache_options\":null,\"prompt_cache_retention\":null,\"reasoning\":null,\"safety_identifier\":null,\"service_tier\":null,\"status\":null,\"text\":null,\"top_logprobs\":null,\"truncation\":null,\"usage\":{\"input_tokens\":30,\"input_tokens_details\":{\"cache_write_tokens\":0,\"cached_tokens\":0},\"output_tokens\":10,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":40},\"user\":null}"
+         }
+        },
+        {
+         "key": "llm.tools.0.tool.json_schema",
+         "value": {
+          "stringValue": "{\"type\": \"function\", \"function\": {\"name\": \"ask_helper\", \"description\": \"Ask the helper\", \"parameters\": {\"description\": \"Default input schema for agent-as-tool calls.\", \"properties\": {\"input\": {\"title\": \"Input\", \"type\": \"string\"}}, \"required\": [\"input\"], \"title\": \"AgentAsToolInput\", \"type\": \"object\", \"additionalProperties\": false}, \"strict\": true}}"
+         }
+        },
+        {
+         "key": "llm.token_count.completion",
+         "value": {
+          "intValue": "10"
+         }
+        },
+        {
+         "key": "llm.token_count.prompt",
+         "value": {
+          "intValue": "30"
+         }
+        },
+        {
+         "key": "llm.token_count.total",
+         "value": {
+          "intValue": "40"
+         }
+        },
+        {
+         "key": "llm.token_count.prompt_details.cache_read",
+         "value": {
+          "intValue": "0"
+         }
+        },
+        {
+         "key": "llm.token_count.prompt_details.cache_write",
+         "value": {
+          "intValue": "0"
+         }
+        },
+        {
+         "key": "llm.token_count.completion_details.reasoning",
+         "value": {
+          "intValue": "0"
+         }
+        },
+        {
+         "key": "llm.output_messages.0.message.role",
+         "value": {
+          "stringValue": "assistant"
+         }
+        },
+        {
+         "key": "llm.output_messages.0.message.tool_calls.0.tool_call.id",
+         "value": {
+          "stringValue": "call_ask_1"
+         }
+        },
+        {
+         "key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.name",
+         "value": {
+          "stringValue": "ask_helper"
+         }
+        },
+        {
+         "key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments",
+         "value": {
+          "stringValue": "{\"input\": \"answer?\"}"
+         }
+        },
+        {
+         "key": "llm.input_messages.0.message.role",
+         "value": {
+          "stringValue": "system"
+         }
+        },
+        {
+         "key": "llm.input_messages.0.message.content",
+         "value": {
+          "stringValue": "Delegate."
+         }
+        },
+        {
+         "key": "llm.model_name",
+         "value": {
+          "stringValue": "fake-model"
+         }
+        },
+        {
+         "key": "llm.invocation_parameters",
+         "value": {
+          "stringValue": "{\"id\": \"resp_4418141456_1\", \"created_at\": 0.0, \"instructions\": \"Delegate.\", \"model\": \"fake-model\", \"parallel_tool_calls\": false, \"tool_choice\": \"auto\"}"
+         }
+        },
+        {
+         "key": "input.mime_type",
+         "value": {
+          "stringValue": "application/json"
+         }
+        },
+        {
+         "key": "input.value",
+         "value": {
+          "stringValue": "[{\"content\": \"What is the answer?\", \"role\": \"user\"}]"
+         }
+        },
+        {
+         "key": "llm.input_messages.1.message.role",
+         "value": {
+          "stringValue": "user"
+         }
+        },
+        {
+         "key": "llm.input_messages.1.message.content",
+         "value": {
+          "stringValue": "What is the answer?"
+         }
+        },
+        {
+         "key": "openinference.span.kind",
+         "value": {
+          "stringValue": "LLM"
+         }
+        }
+       ],
+       "status": {
+        "code": 1
+       },
+       "flags": 256
+      },
+      {
+       "traceId": "16aa8735b05683511a3155571e0be5c3",
+       "spanId": "f30551fe27ab2673",
+       "parentSpanId": "3a3f33827cdbbcc6",
+       "name": "response",
+       "kind": 1,
+       "startTimeUnixNano": "1792489225495655936",
+       "endTimeUnixNano": "1792489225495699968",
+       "attributes": [
+        {
+         "key": "llm.system",
+         "value": {
+          "stringValue": "openai"
+         }
+        },
+        {
+         "key": "output.mime_type",
+         "value": {
+          "stringValue": "application/json"
+         }
+        },
+        {
+         "key": "output.value",
+         "value": {
+          "stringValue": "{\"id\":\"resp_4481165424_1\",\"access_programs\":null,\"created_at\":0.0,\"error\":null,\"incomplete_details\":null,\"instructions\":\"Help.\",\"metadata\":null,\"model\":\"fake-model\",\"object\":\"response\",\"output\":[{\"id\":\"msg_h\",\"content\":[{\"annotations\":[],\"text\":\"42\",\"type\":\"output_text\",\"logprobs\":null}],\"role\":\"assistant\",\"status\":\"completed\",\"type\":\"message\",\"phase\":null}],\"parallel_tool_calls\":false,\"temperature\":null,\"tool_choice\":\"auto\",\"tools\":[],\"top_p\":null,\"background\":null,\"completed_at\":null,\"conversation\":null,\"max_output_tokens\":null,\"max_tool_calls\":null,\"moderation\":null,\"previous_response_id\":null,\"prompt\":null,\"prompt_cache_diagnostics\":null,\"prompt_cache_key\":null,\"prompt_cache_options\":null,\"prompt_cache_retention\":null,\"reasoning\":null,\"safety_identifier\":null,\"service_tier\":null,\"status\":null,\"text\":null,\"top_logprobs\":null,\"truncation\":null,\"usage\":{\"input_tokens\":30,\"input_tokens_details\":{\"cache_write_tokens\":0,\"cached_tokens\":0},\"output_tokens\":10,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":40},\"user\":null}"
+         }
+        },
+        {
+         "key": "llm.token_count.completion",
+         "value": {
+          "intValue": "10"
+         }
+        },
+        {
+         "key": "llm.token_count.prompt",
+         "value": {
+          "intValue": "30"
+         }
+        },
+        {
+         "key": "llm.token_count.total",
+         "value": {
+          "intValue": "40"
+         }
+        },
+        {
+         "key": "llm.token_count.prompt_details.cache_read",
+         "value": {
+          "intValue": "0"
+         }
+        },
+        {
+         "key": "llm.token_count.prompt_details.cache_write",
+         "value": {
+          "intValue": "0"
+         }
+        },
+        {
+         "key": "llm.token_count.completion_details.reasoning",
+         "value": {
+          "intValue": "0"
+         }
+        },
+        {
+         "key": "llm.output_messages.0.message.role",
+         "value": {
+          "stringValue": "assistant"
+         }
+        },
+        {
+         "key": "llm.output_messages.0.message.contents.0.message_content.type",
+         "value": {
+          "stringValue": "text"
+         }
+        },
+        {
+         "key": "llm.output_messages.0.message.contents.0.message_content.text",
+         "value": {
+          "stringValue": "42"
+         }
+        },
+        {
+         "key": "llm.output_messages.0.message.content",
+         "value": {
+          "stringValue": "42"
+         }
+        },
+        {
+         "key": "llm.input_messages.0.message.role",
+         "value": {
+          "stringValue": "system"
+         }
+        },
+        {
+         "key": "llm.input_messages.0.message.content",
+         "value": {
+          "stringValue": "Help."
+         }
+        },
+        {
+         "key": "llm.model_name",
+         "value": {
+          "stringValue": "fake-model"
+         }
+        },
+        {
+         "key": "llm.invocation_parameters",
+         "value": {
+          "stringValue": "{\"id\": \"resp_4481165424_1\", \"created_at\": 0.0, \"instructions\": \"Help.\", \"model\": \"fake-model\", \"parallel_tool_calls\": false, \"tool_choice\": \"auto\"}"
+         }
+        },
+        {
+         "key": "input.mime_type",
+         "value": {
+          "stringValue": "application/json"
+         }
+        },
+        {
+         "key": "input.value",
+         "value": {
+          "stringValue": "[{\"content\": \"answer?\", \"role\": \"user\"}]"
+         }
+        },
+        {
+         "key": "llm.input_messages.1.message.role",
+         "value": {
+          "stringValue": "user"
+         }
+        },
+        {
+         "key": "llm.input_messages.1.message.content",
+         "value": {
+          "stringValue": "answer?"
+         }
+        },
+        {
+         "key": "openinference.span.kind",
+         "value": {
+          "stringValue": "LLM"
+         }
+        }
+       ],
+       "status": {
+        "code": 1
+       },
+       "flags": 256
+      },
+      {
+       "traceId": "16aa8735b05683511a3155571e0be5c3",
+       "spanId": "3a3f33827cdbbcc6",
+       "parentSpanId": "8f357bb3aea1cc37",
+       "name": "turn",
+       "kind": 1,
+       "startTimeUnixNano": "1792489225495273216",
+       "endTimeUnixNano": "1792489225496030976",
+       "attributes": [
+        {
+         "key": "openinference.span.kind",
+         "value": {
+          "stringValue": "CHAIN"
+         }
+        }
+       ],
+       "status": {
+        "code": 1
+       },
+       "flags": 256
+      },
+      {
+       "traceId": "16aa8735b05683511a3155571e0be5c3",
+       "spanId": "8f357bb3aea1cc37",
+       "parentSpanId": "6025077495448684",
+       "name": "Helper",
+       "kind": 1,
+       "startTimeUnixNano": "1792489225495239936",
+       "endTimeUnixNano": "1792489225496100864",
+       "attributes": [
+        {
+         "key": "graph.node.id",
+         "value": {
+          "stringValue": "Helper"
+         }
+        },
+        {
+         "key": "agent.name",
+         "value": {
+          "stringValue": "Helper"
+         }
+        },
+        {
+         "key": "openinference.span.kind",
+         "value": {
+          "stringValue": "AGENT"
+         }
+        }
+       ],
+       "status": {
+        "code": 1
+       },
+       "flags": 256
+      },
+      {
+       "traceId": "16aa8735b05683511a3155571e0be5c3",
+       "spanId": "6025077495448684",
+       "parentSpanId": "9f70304d4005df4b",
+       "name": "Agent workflow",
+       "kind": 1,
+       "startTimeUnixNano": "1792489225495153920",
+       "endTimeUnixNano": "1792489225496120064",
+       "attributes": [
+        {
+         "key": "openinference.span.kind",
+         "value": {
+          "stringValue": "CHAIN"
+         }
+        }
+       ],
+       "status": {
+        "code": 1
+       },
+       "flags": 256
+      },
+      {
+       "traceId": "16aa8735b05683511a3155571e0be5c3",
+       "spanId": "9f70304d4005df4b",
+       "parentSpanId": "2d758ee0ff753436",
+       "name": "ask_helper",
+       "kind": 1,
+       "startTimeUnixNano": "1792489225494857984",
+       "endTimeUnixNano": "1792489225496243968",
+       "attributes": [
+        {
+         "key": "tool.name",
+         "value": {
+          "stringValue": "ask_helper"
+         }
+        },
+        {
+         "key": "input.value",
+         "value": {
+          "stringValue": "{\"input\": \"answer?\"}"
+         }
+        },
+        {
+         "key": "input.mime_type",
+         "value": {
+          "stringValue": "application/json"
+         }
+        },
+        {
+         "key": "output.value",
+         "value": {
+          "stringValue": "42"
+         }
+        },
+        {
+         "key": "tool.description",
+         "value": {
+          "stringValue": "Ask the helper"
+         }
+        },
+        {
+         "key": "tool.parameters",
+         "value": {
+          "stringValue": "{\"description\": \"Default input schema for agent-as-tool calls.\", \"properties\": {\"input\": {\"title\": \"Input\", \"type\": \"string\"}}, \"required\": [\"input\"], \"title\": \"AgentAsToolInput\", \"type\": \"object\", \"additionalProperties\": false}"
+         }
+        },
+        {
+         "key": "openinference.span.kind",
+         "value": {
+          "stringValue": "TOOL"
+         }
+        }
+       ],
+       "status": {
+        "code": 1
+       },
+       "flags": 256
+      },
+      {
+       "traceId": "16aa8735b05683511a3155571e0be5c3",
+       "spanId": "2d758ee0ff753436",
+       "parentSpanId": "eac81ae7e756f832",
+       "name": "turn",
+       "kind": 1,
+       "startTimeUnixNano": "1792489225494068992",
+       "endTimeUnixNano": "1792489225496374016",
+       "attributes": [
+        {
+         "key": "openinference.span.kind",
+         "value": {
+          "stringValue": "CHAIN"
+         }
+        }
+       ],
+       "status": {
+        "code": 1
+       },
+       "flags": 256
+      },
+      {
+       "traceId": "16aa8735b05683511a3155571e0be5c3",
+       "spanId": "1d67dc10cef16bc7",
+       "parentSpanId": "468134b07e2ca521",
+       "name": "response",
+       "kind": 1,
+       "startTimeUnixNano": "1792489225496716032",
+       "endTimeUnixNano": "1792489225496748032",
+       "attributes": [
+        {
+         "key": "llm.system",
+         "value": {
+          "stringValue": "openai"
+         }
+        },
+        {
+         "key": "output.mime_type",
+         "value": {
+          "stringValue": "application/json"
+         }
+        },
+        {
+         "key": "output.value",
+         "value": {
+          "stringValue": "{\"id\":\"resp_4418141456_2\",\"access_programs\":null,\"created_at\":0.0,\"error\":null,\"incomplete_details\":null,\"instructions\":\"Delegate.\",\"metadata\":null,\"model\":\"fake-model\",\"object\":\"response\",\"output\":[{\"id\":\"msg_b\",\"content\":[{\"annotations\":[],\"text\":\"The answer is 42.\",\"type\":\"output_text\",\"logprobs\":null}],\"role\":\"assistant\",\"status\":\"completed\",\"type\":\"message\",\"phase\":null}],\"parallel_tool_calls\":false,\"temperature\":null,\"tool_choice\":\"auto\",\"tools\":[{\"name\":\"ask_helper\",\"parameters\":{\"description\":\"Default input schema for agent-as-tool calls.\",\"properties\":{\"input\":{\"title\":\"Input\",\"type\":\"string\"}},\"required\":[\"input\"],\"title\":\"AgentAsToolInput\",\"type\":\"object\",\"additionalProperties\":false},\"strict\":true,\"type\":\"function\",\"allowed_callers\":null,\"async_\":null,\"defer_loading\":null,\"description\":\"Ask the helper\",\"output_schema\":null}],\"top_p\":null,\"background\":null,\"completed_at\":null,\"conversation\":null,\"max_output_tokens\":null,\"max_tool_calls\":null,\"moderation\":null,\"previous_response_id\":null,\"prompt\":null,\"prompt_cache_diagnostics\":null,\"prompt_cache_key\":null,\"prompt_cache_options\":null,\"prompt_cache_retention\":null,\"reasoning\":null,\"safety_identifier\":null,\"service_tier\":null,\"status\":null,\"text\":null,\"top_logprobs\":null,\"truncation\":null,\"usage\":{\"input_tokens\":60,\"input_tokens_details\":{\"cache_write_tokens\":0,\"cached_tokens\":0},\"output_tokens\":10,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":70},\"user\":null}"
+         }
+        },
+        {
+         "key": "llm.tools.0.tool.json_schema",
+         "value": {
+          "stringValue": "{\"type\": \"function\", \"function\": {\"name\": \"ask_helper\", \"description\": \"Ask the helper\", \"parameters\": {\"description\": \"Default input schema for agent-as-tool calls.\", \"properties\": {\"input\": {\"title\": \"Input\", \"type\": \"string\"}}, \"required\": [\"input\"], \"title\": \"AgentAsToolInput\", \"type\": \"object\", \"additionalProperties\": false}, \"strict\": true}}"
+         }
+        },
+        {
+         "key": "llm.token_count.completion",
+         "value": {
+          "intValue": "10"
+         }
+        },
+        {
+         "key": "llm.token_count.prompt",
+         "value": {
+          "intValue": "60"
+         }
+        },
+        {
+         "key": "llm.token_count.total",
+         "value": {
+          "intValue": "70"
+         }
+        },
+        {
+         "key": "llm.token_count.prompt_details.cache_read",
+         "value": {
+          "intValue": "0"
+         }
+        },
+        {
+         "key": "llm.token_count.prompt_details.cache_write",
+         "value": {
+          "intValue": "0"
+         }
+        },
+        {
+         "key": "llm.token_count.completion_details.reasoning",
+         "value": {
+          "intValue": "0"
+         }
+        },
+        {
+         "key": "llm.output_messages.0.message.role",
+         "value": {
+          "stringValue": "assistant"
+         }
+        },
+        {
+         "key": "llm.output_messages.0.message.contents.0.message_content.type",
+         "value": {
+          "stringValue": "text"
+         }
+        },
+        {
+         "key": "llm.output_messages.0.message.contents.0.message_content.text",
+         "value": {
+          "stringValue": "The answer is 42."
+         }
+        },
+        {
+         "key": "llm.output_messages.0.message.content",
+         "value": {
+          "stringValue": "The answer is 42."
+         }
+        },
+        {
+         "key": "llm.input_messages.0.message.role",
+         "value": {
+          "stringValue": "system"
+         }
+        },
+        {
+         "key": "llm.input_messages.0.message.content",
+         "value": {
+          "stringValue": "Delegate."
+         }
+        },
+        {
+         "key": "llm.model_name",
+         "value": {
+          "stringValue": "fake-model"
+         }
+        },
+        {
+         "key": "llm.invocation_parameters",
+         "value": {
+          "stringValue": "{\"id\": \"resp_4418141456_2\", \"created_at\": 0.0, \"instructions\": \"Delegate.\", \"model\": \"fake-model\", \"parallel_tool_calls\": false, \"tool_choice\": \"auto\"}"
+         }
+        },
+        {
+         "key": "input.mime_type",
+         "value": {
+          "stringValue": "application/json"
+         }
+        },
+        {
+         "key": "input.value",
+         "value": {
+          "stringValue": "[{\"content\": \"What is the answer?\", \"role\": \"user\"}, {\"arguments\": \"{\\\"input\\\": \\\"answer?\\\"}\", \"call_id\": \"call_ask_1\", \"name\": \"ask_helper\", \"type\": \"function_call\", \"id\": \"fc_call_ask_1\"}, {\"call_id\": \"call_ask_1\", \"output\": \"42\", \"type\": \"function_call_output\"}]"
+         }
+        },
+        {
+         "key": "llm.input_messages.1.message.role",
+         "value": {
+          "stringValue": "user"
+         }
+        },
+        {
+         "key": "llm.input_messages.1.message.content",
+         "value": {
+          "stringValue": "What is the answer?"
+         }
+        },
+        {
+         "key": "llm.input_messages.2.message.role",
+         "value": {
+          "stringValue": "assistant"
+         }
+        },
+        {
+         "key": "llm.input_messages.2.message.tool_calls.0.tool_call.id",
+         "value": {
+          "stringValue": "call_ask_1"
+         }
+        },
+        {
+         "key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.name",
+         "value": {
+          "stringValue": "ask_helper"
+         }
+        },
+        {
+         "key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments",
+         "value": {
+          "stringValue": "{\"input\": \"answer?\"}"
+         }
+        },
+        {
+         "key": "llm.input_messages.3.message.role",
+         "value": {
+          "stringValue": "tool"
+         }
+        },
+        {
+         "key": "llm.input_messages.3.message.tool_call_id",
+         "value": {
+          "stringValue": "call_ask_1"
+         }
+        },
+        {
+         "key": "llm.input_messages.3.message.content",
+         "value": {
+          "stringValue": "42"
+         }
+        },
+        {
+         "key": "openinference.span.kind",
+         "value": {
+          "stringValue": "LLM"
+         }
+        }
+       ],
+       "status": {
+        "code": 1
+       },
+       "flags": 256
+      },
+      {
+       "traceId": "16aa8735b05683511a3155571e0be5c3",
+       "spanId": "468134b07e2ca521",
+       "parentSpanId": "eac81ae7e756f832",
+       "name": "turn",
+       "kind": 1,
+       "startTimeUnixNano": "1792489225496404992",
+       "endTimeUnixNano": "1792489225497170944",
+       "attributes": [
+        {
+         "key": "openinference.span.kind",
+         "value": {
+          "stringValue": "CHAIN"
+         }
+        }
+       ],
+       "status": {
+        "code": 1
+       },
+       "flags": 256
+      },
+      {
+       "traceId": "16aa8735b05683511a3155571e0be5c3",
+       "spanId": "eac81ae7e756f832",
+       "parentSpanId": "43f58590a36e529e",
+       "name": "Boss",
+       "kind": 1,
+       "startTimeUnixNano": "1792489225494027008",
+       "endTimeUnixNano": "1792489225497265152",
+       "attributes": [
+        {
+         "key": "graph.node.id",
+         "value": {
+          "stringValue": "Boss"
+         }
+        },
+        {
+         "key": "agent.name",
+         "value": {
+          "stringValue": "Boss"
+         }
+        },
+        {
+         "key": "openinference.span.kind",
+         "value": {
+          "stringValue": "AGENT"
+         }
+        }
+       ],
+       "status": {
+        "code": 1
+       },
+       "flags": 256
+      },
+      {
+       "traceId": "16aa8735b05683511a3155571e0be5c3",
+       "spanId": "43f58590a36e529e",
+       "parentSpanId": "21362c365959d595",
+       "name": "Agent workflow",
+       "kind": 1,
+       "startTimeUnixNano": "1792489225493864960",
+       "endTimeUnixNano": "1792489225497284864",
+       "attributes": [
+        {
+         "key": "openinference.span.kind",
+         "value": {
+          "stringValue": "CHAIN"
+         }
+        }
+       ],
+       "status": {
+        "code": 1
+       },
+       "flags": 256
+      },
+      {
+       "traceId": "16aa8735b05683511a3155571e0be5c3",
+       "spanId": "21362c365959d595",
+       "name": "Agent workflow",
+       "kind": 1,
+       "startTimeUnixNano": "1792489225493837000",
+       "endTimeUnixNano": "1792489225497299000",
+       "attributes": [
+        {
+         "key": "openinference.span.kind",
+         "value": {
+          "stringValue": "AGENT"
+         }
+        }
+       ],
+       "status": {
+        "code": 1
+       },
+       "flags": 256
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

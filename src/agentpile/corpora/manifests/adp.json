@@ -1,0 +1,667 @@
+{
+  "name": "adp",
+  "hf_id": "neulab/agent-data-collection",
+  "revision": "31a76bfb0124d77ae7322eabbb0171bf11ee2c67",
+  "checked_at": "2026-10-20",
+  "license_on_card": "not declared",
+  "gated": false,
+  "allow_patterns": [
+    "agenttuning_alfworld/full_std.jsonl",
+    "agenttuning_db/full_std.jsonl",
+    "agenttuning_kg/full_std.jsonl",
+    "agenttuning_mind2web/full_std.jsonl",
+    "agenttuning_os/full_std.jsonl",
+    "agenttuning_webshop/full_std.jsonl",
+    "code_feedback/full_std.jsonl",
+    "codeactinstruct/full_std.jsonl",
+    "go-browse-wa/full_std.jsonl",
+    "nebius_SWE-agent-trajectories/full_std.jsonl",
+    "nnetnav-wa/full_std.jsonl",
+    "openhands/full_std.jsonl",
+    "swe-gym_openhands_sampled_trajectories/full_std.jsonl",
+    "synatra/full_std.jsonl"
+  ],
+  "configs_splits": [
+    {
+      "config": "agenttuning_alfworld",
+      "split": "raw",
+      "rows": 336
+    },
+    {
+      "config": "agenttuning_alfworld",
+      "split": "std",
+      "rows": 336
+    },
+    {
+      "config": "agenttuning_alfworld",
+      "split": "sft_openhands",
+      "rows": 336
+    },
+    {
+      "config": "agenttuning_alfworld",
+      "split": "sft_sweagent",
+      "rows": 336
+    },
+    {
+      "config": "agenttuning_db",
+      "split": "raw",
+      "rows": 538
+    },
+    {
+      "config": "agenttuning_db",
+      "split": "std",
+      "rows": 532
+    },
+    {
+      "config": "agenttuning_db",
+      "split": "sft_openhands",
+      "rows": 532
+    },
+    {
+      "config": "agenttuning_db",
+      "split": "sft_sweagent",
+      "rows": 5
+    },
+    {
+      "config": "agenttuning_kg",
+      "split": "raw",
+      "rows": 324
+    },
+    {
+      "config": "agenttuning_kg",
+      "split": "std",
+      "rows": 305
+    },
+    {
+      "config": "agenttuning_kg",
+      "split": "sft_openhands",
+      "rows": 305
+    },
+    {
+      "config": "agenttuning_kg",
+      "split": "sft_sweagent",
+      "rows": 305
+    },
+    {
+      "config": "agenttuning_mind2web",
+      "split": "raw",
+      "rows": 122
+    },
+    {
+      "config": "agenttuning_mind2web",
+      "split": "std",
+      "rows": 118
+    },
+    {
+      "config": "agenttuning_mind2web",
+      "split": "sft_openhands",
+      "rows": 118
+    },
+    {
+      "config": "agenttuning_mind2web",
+      "split": "sft_sweagent",
+      "rows": 118
+    },
+    {
+      "config": "agenttuning_os",
+      "split": "raw",
+      "rows": 195
+    },
+    {
+      "config": "agenttuning_os",
+      "split": "std",
+      "rows": 195
+    },
+    {
+      "config": "agenttuning_os",
+      "split": "sft_openhands",
+      "rows": 195
+    },
+    {
+      "config": "agenttuning_os",
+      "split": "sft_sweagent",
+      "rows": 195
+    },
+    {
+      "config": "agenttuning_webshop",
+      "split": "raw",
+      "rows": 351
+    },
+    {
+      "config": "agenttuning_webshop",
+      "split": "std",
+      "rows": 351
+    },
+    {
+      "config": "agenttuning_webshop",
+      "split": "sft_openhands",
+      "rows": 351
+    },
+    {
+      "config": "agenttuning_webshop",
+      "split": "sft_sweagent",
+      "rows": 351
+    },
+    {
+      "config": "code_feedback",
+      "split": "raw",
+      "rows": null
+    },
+    {
+      "config": "code_feedback",
+      "split": "std",
+      "rows": 66383
+    },
+    {
+      "config": "code_feedback",
+      "split": "sft_openhands",
+      "rows": null
+    },
+    {
+      "config": "code_feedback",
+      "split": "sft_sweagent",
+      "rows": null
+    },
+    {
+      "config": "codeactinstruct",
+      "split": "raw",
+      "rows": null
+    },
+    {
+      "config": "codeactinstruct",
+      "split": "std",
+      "rows": 7139
+    },
+    {
+      "config": "codeactinstruct",
+      "split": "sft_openhands",
+      "rows": null
+    },
+    {
+      "config": "codeactinstruct",
+      "split": "sft_sweagent",
+      "rows": null
+    },
+    {
+      "config": "go-browse-wa",
+      "split": "raw",
+      "rows": null
+    },
+    {
+      "config": "go-browse-wa",
+      "split": "std",
+      "rows": 7882
+    },
+    {
+      "config": "go-browse-wa",
+      "split": "sft_openhands",
+      "rows": null
+    },
+    {
+      "config": "go-browse-wa",
+      "split": "sft_agentlab",
+      "rows": null
+    },
+    {
+      "config": "mind2web",
+      "split": "raw",
+      "rows": null
+    },
+    {
+      "config": "mind2web",
+      "split": "std",
+      "rows": null
+    },
+    {
+      "config": "mind2web",
+      "split": "sft_openhands",
+      "rows": null
+    },
+    {
+      "config": "mind2web",
+      "split": "sft_agentlab",
+      "rows": null
+    },
+    {
+      "config": "nebius_SWE-agent-trajectories",
+      "split": "raw",
+      "rows": null
+    },
+    {
+      "config": "nebius_SWE-agent-trajectories",
+      "split": "std",
+      "rows": 13389
+    },
+    {
+      "config": "nebius_SWE-agent-trajectories",
+      "split": "sft_openhands",
+      "rows": null
+    },
+    {
+      "config": "nebius_SWE-agent-trajectories",
+      "split": "sft_sweagent",
+      "rows": null
+    },
+    {
+      "config": "nnetnav-live",
+      "split": "raw",
+      "rows": null
+    },
+    {
+      "config": "nnetnav-live",
+      "split": "std",
+      "rows": null
+    },
+    {
+      "config": "nnetnav-live",
+      "split": "sft_openhands",
+      "rows": null
+    },
+    {
+      "config": "nnetnav-live",
+      "split": "sft_agentlab",
+      "rows": null
+    },
+    {
+      "config": "nnetnav-wa",
+      "split": "raw",
+      "rows": null
+    },
+    {
+      "config": "nnetnav-wa",
+      "split": "std",
+      "rows": 3745
+    },
+    {
+      "config": "nnetnav-wa",
+      "split": "sft_openhands",
+      "rows": null
+    },
+    {
+      "config": "nnetnav-wa",
+      "split": "sft_agentlab",
+      "rows": null
+    },
+    {
+      "config": "openhands",
+      "split": "raw",
+      "rows": null
+    },
+    {
+      "config": "openhands",
+      "split": "std",
+      "rows": 127
+    },
+    {
+      "config": "openhands",
+      "split": "sft_openhands",
+      "rows": null
+    },
+    {
+      "config": "openhands",
+      "split": "sft_sweagent",
+      "rows": null
+    },
+    {
+      "config": "orca_agentinstruct",
+      "split": "raw",
+      "rows": null
+    },
+    {
+      "config": "orca_agentinstruct",
+      "split": "std",
+      "rows": null
+    },
+    {
+      "config": "orca_agentinstruct",
+      "split": "sft_openhands",
+      "rows": null
+    },
+    {
+      "config": "orca_agentinstruct",
+      "split": "sft_sweagent",
+      "rows": null
+    },
+    {
+      "config": "swe-gym_openhands_sampled_trajectories",
+      "split": "raw",
+      "rows": null
+    },
+    {
+      "config": "swe-gym_openhands_sampled_trajectories",
+      "split": "std",
+      "rows": 491
+    },
+    {
+      "config": "swe-gym_openhands_sampled_trajectories",
+      "split": "sft_openhands",
+      "rows": null
+    },
+    {
+      "config": "swe-gym_openhands_sampled_trajectories",
+      "split": "sft_sweagent",
+      "rows": null
+    },
+    {
+      "config": "swe-smith",
+      "split": "raw",
+      "rows": null
+    },
+    {
+      "config": "swe-smith",
+      "split": "std",
+      "rows": null
+    },
+    {
+      "config": "swe-smith",
+      "split": "sft_openhands",
+      "rows": null
+    },
+    {
+      "config": "swe-smith",
+      "split": "sft_sweagent",
+      "rows": null
+    },
+    {
+      "config": "synatra",
+      "split": "raw",
+      "rows": null
+    },
+    {
+      "config": "synatra",
+      "split": "std",
+      "rows": 99921
+    },
+    {
+      "config": "synatra",
+      "split": "sft_openhands",
+      "rows": null
+    },
+    {
+      "config": "synatra",
+      "split": "sft_agentlab",
+      "rows": null
+    },
+    {
+      "config": "coderforge_preview",
+      "split": "raw",
+      "rows": null
+    },
+    {
+      "config": "coderforge_preview",
+      "split": "std",
+      "rows": null
+    },
+    {
+      "config": "coderforge_preview",
+      "split": "sft_openhands",
+      "rows": null
+    },
+    {
+      "config": "coderforge_preview",
+      "split": "sft_sweagent",
+      "rows": null
+    },
+    {
+      "config": "mini-coder",
+      "split": "raw",
+      "rows": null
+    },
+    {
+      "config": "mini-coder",
+      "split": "std",
+      "rows": null
+    },
+    {
+      "config": "mini-coder",
+      "split": "sft_openhands",
+      "rows": null
+    },
+    {
+      "config": "mini-coder",
+      "split": "sft_sweagent",
+      "rows": null
+    },
+    {
+      "config": "nemotron_terminal_corpus",
+      "split": "raw",
+      "rows": null
+    },
+    {
+      "config": "nemotron_terminal_corpus",
+      "split": "std",
+      "rows": null
+    },
+    {
+      "config": "nemotron_terminal_corpus",
+      "split": "sft_openhands",
+      "rows": null
+    },
+    {
+      "config": "nemotron_terminal_corpus",
+      "split": "sft_sweagent",
+      "rows": null
+    },
+    {
+      "config": "swe-play-trajectories",
+      "split": "raw",
+      "rows": null
+    },
+    {
+      "config": "swe-play-trajectories",
+      "split": "std",
+      "rows": null
+    },
+    {
+      "config": "swe-play-trajectories",
+      "split": "sft_openhands",
+      "rows": null
+    },
+    {
+      "config": "swe-play-trajectories",
+      "split": "sft_sweagent",
+      "rows": null
+    },
+    {
+      "config": "toucan_1_5m",
+      "split": "raw",
+      "rows": null
+    },
+    {
+      "config": "toucan_1_5m",
+      "split": "std",
+      "rows": null
+    },
+    {
+      "config": "toucan_1_5m",
+      "split": "sft_openhands",
+      "rows": null
+    },
+    {
+      "config": "toucan_1_5m",
+      "split": "sft_sweagent",
+      "rows": null
+    }
+  ],
+  "unsupported": [
+    {
+      "what": "mind2web (std split; declared config)",
+      "config": "mind2web",
+      "reason": "count check not possible: row count not obtained (std file 3221701753 bytes exceeds the ~3 GB unit budget; datasets-server /size failed). Sample validation done on the first 4194304 bytes only (2 of 2 complete rows valid legacy ADP, evidence/s26_head_validity.json and s24_format_classify.json). Label check done on that head window only (evidence/s12_head_scalars.json)."
+    },
+    {
+      "what": "nnetnav-live (std split; declared config)",
+      "config": "nnetnav-live",
+      "reason": "count check not possible: row count not obtained (std file 1029443160 bytes exceeds the ~3 GB unit budget; datasets-server /size failed). Sample validation done on the first 524288 bytes only (1 of 1 complete rows valid legacy ADP, evidence/s26_head_validity.json and s24_format_classify.json). Label check done on that head window only (evidence/s12_head_scalars.json)."
+    },
+    {
+      "what": "orca_agentinstruct (std split; declared config)",
+      "config": "orca_agentinstruct",
+      "reason": "count check not possible: row count not obtained (std file 4812628099 bytes exceeds the ~3 GB unit budget; datasets-server /size failed). Sample validation done on the first 524288 bytes only (98 of 98 complete rows valid legacy ADP, evidence/s26_head_validity.json and s24_format_classify.json). Label check done on that head window only (evidence/s12_head_scalars.json)."
+    },
+    {
+      "what": "swe-smith (std split; declared config)",
+      "config": "swe-smith",
+      "reason": "count check not possible: row count not obtained (std file 1504520320 bytes exceeds the ~3 GB unit budget; datasets-server /size failed). Sample validation done on the first 524288 bytes only (6 of 6 complete rows valid legacy ADP, evidence/s26_head_validity.json and s24_format_classify.json). Label check done on that head window only (evidence/s12_head_scalars.json)."
+    },
+    {
+      "what": "coderforge_preview (directory with all four splits; NOT declared in the card configs at this revision)",
+      "config": "coderforge_preview",
+      "reason": "no card config entry, no README.md and no LICENSE in the directory, so license and source are unknown; std file 28751472425 bytes, row count not obtained; head-window sample only (2 of 2 head rows valid legacy ADP, evidence/s26_head_validity.json). Not loadable by config name through load_dataset."
+    },
+    {
+      "what": "mini-coder (directory with all four splits; NOT declared in the card configs at this revision)",
+      "config": "mini-coder",
+      "reason": "no card config entry, no README.md and no LICENSE in the directory, so license and source are unknown; std file 3646332634 bytes, row count not obtained; head-window sample only (9 of 9 head rows valid legacy ADP, evidence/s26_head_validity.json). Not loadable by config name through load_dataset."
+    },
+    {
+      "what": "nemotron_terminal_corpus (directory with all four splits; NOT declared in the card configs at this revision)",
+      "config": "nemotron_terminal_corpus",
+      "reason": "no card config entry, no README.md and no LICENSE in the directory, so license and source are unknown; std file 1938362955 bytes, row count not obtained; head-window sample only (12 of 12 head rows valid legacy ADP, evidence/s26_head_validity.json). Not loadable by config name through load_dataset."
+    },
+    {
+      "what": "swe-play-trajectories (directory with all four splits; NOT declared in the card configs at this revision)",
+      "config": "swe-play-trajectories",
+      "reason": "no card config entry, no README.md and no LICENSE in the directory, so license and source are unknown; std file 138908426 bytes, row count not obtained; head-window sample only (2 of 2 head rows valid legacy ADP, evidence/s26_head_validity.json). Not loadable by config name through load_dataset."
+    },
+    {
+      "what": "toucan_1_5m (directory with all four splits; NOT declared in the card configs at this revision)",
+      "config": "toucan_1_5m",
+      "reason": "no card config entry, no README.md and no LICENSE in the directory, so license and source are unknown; std file 26527742019 bytes, row count not obtained; head-window sample only (34 of 34 head rows valid legacy ADP, evidence/s26_head_validity.json). Not loadable by config name through load_dataset."
+    },
+    {
+      "what": "raw splits of all configs",
+      "reason": "native source formats that differ per config (conversations, messages, trajectory, graph_data, ...); not ATIF and not ADP; counted only for the six agenttuning_* configs. Needed only to recover failure labels (see open_issues)."
+    },
+    {
+      "what": "sft_openhands, sft_sweagent, sft_agentlab splits of all configs",
+      "reason": "training-format conversions (ShareGPT-like: id, system, conversations[{from, value}]) with tool calls rendered as XML text in the assistant turn; no structured tool calls; not ATIF; duplicates of std content. Counted only for the six agenttuning_* configs. toucan_1_5m/full_sft/full_sft_openhands.jsonl contains JSON null lines in its head window."
+    }
+  ],
+  "counts": {
+    "source_rows": {
+      "value": 200914
+    },
+    "runs_after_load": {
+      "value": 200914,
+      "count_note": "The stage-0 record leaves both values null because the whole-dataset total was not obtained (4 declared configs and 5 undeclared directories have no counted std file). 200914 is the sum of the std rows of the 14 supported configs, each counted by line count of its fully downloaded full_std.jsonl; one std row is one run and the loader skips no row."
+    }
+  },
+  "labels": [
+    {
+      "field": "details.resolved (swe-gym_openhands_sampled_trajectories, std)",
+      "level": "run"
+    },
+    {
+      "field": "details.feedback and details.polarity (openhands, std)",
+      "level": "run"
+    },
+    {
+      "field": "details.exit_status (nebius_SWE-agent-trajectories, std)",
+      "level": "run"
+    },
+    {
+      "field": "details.eval_logs and details.generated_patch (nebius_SWE-agent-trajectories, std)",
+      "level": "run"
+    },
+    {
+      "field": "details.reward (coderforge_preview, std; undeclared directory)",
+      "level": "run"
+    },
+    {
+      "field": "raw-only: swe-smith raw resolved, mini-coder raw verified, nebius raw target, swe-gym raw resolved, openhands raw feedback",
+      "level": "run"
+    }
+  ],
+  "stage0_record": "agent-io/stage0/u6-adp/manifest-adp.yaml",
+  "supported_configs": [
+    {
+      "config": "agenttuning_alfworld",
+      "file": "agenttuning_alfworld/full_std.jsonl",
+      "rows": 336
+    },
+    {
+      "config": "agenttuning_db",
+      "file": "agenttuning_db/full_std.jsonl",
+      "rows": 532
+    },
+    {
+      "config": "agenttuning_kg",
+      "file": "agenttuning_kg/full_std.jsonl",
+      "rows": 305
+    },
+    {
+      "config": "agenttuning_mind2web",
+      "file": "agenttuning_mind2web/full_std.jsonl",
+      "rows": 118
+    },
+    {
+      "config": "agenttuning_os",
+      "file": "agenttuning_os/full_std.jsonl",
+      "rows": 195
+    },
+    {
+      "config": "agenttuning_webshop",
+      "file": "agenttuning_webshop/full_std.jsonl",
+      "rows": 351
+    },
+    {
+      "config": "code_feedback",
+      "file": "code_feedback/full_std.jsonl",
+      "rows": 66383
+    },
+    {
+      "config": "codeactinstruct",
+      "file": "codeactinstruct/full_std.jsonl",
+      "rows": 7139
+    },
+    {
+      "config": "go-browse-wa",
+      "file": "go-browse-wa/full_std.jsonl",
+      "rows": 7882
+    },
+    {
+      "config": "nebius_SWE-agent-trajectories",
+      "file": "nebius_SWE-agent-trajectories/full_std.jsonl",
+      "rows": 13389
+    },
+    {
+      "config": "nnetnav-wa",
+      "file": "nnetnav-wa/full_std.jsonl",
+      "rows": 3745
+    },
+    {
+      "config": "openhands",
+      "file": "openhands/full_std.jsonl",
+      "rows": 127
+    },
+    {
+      "config": "swe-gym_openhands_sampled_trajectories",
+      "file": "swe-gym_openhands_sampled_trajectories/full_std.jsonl",
+      "rows": 491
+    },
+    {
+      "config": "synatra",
+      "file": "synatra/full_std.jsonl",
+      "rows": 99921
+    }
+  ],
+  "count_note": "The stage-0 record leaves both values null because the whole-dataset total was not obtained (4 declared configs and 5 undeclared directories have no counted std file). 200914 is the sum of the std rows of the 14 supported configs, each counted by line count of its fully downloaded full_std.jsonl; one std row is one run and the loader skips no row.",
+  "support_checks": {
+    "checked_at": "2026-10-20",
+    "sample_validation": "every one of the 200914 runs of the 14 supported configs passes agentpile.validate (0 problems) and the pinned Harbor 0.22.0 ATIF v1.7 models (200914 checked, 0 invalid), and rebuilds the source content list exactly (0 mismatches).",
+    "label_check": "ADP has no failure labels: the loader emits no label. The only success-like std values are swe-gym details.resolved ('True' in every row, as is the parsed test_result report.resolved) and openhands details.feedback ('positive' in every row); nebius details.exit_status holds three submission outcomes. They are echoed in outcome.raw, only resolved sets outcome.success, and no value maps to a failure.",
+    "count_check": "rows read equal the stage-0 rows for all 14 supported configs (14 of 14 equal; 200914 runs in total)."
+  },
+  "adp_conversion_reference": {
+    "repo": "https://github.com/neulab/agent-data-protocol",
+    "commit_read": "396133a9357a5a0041c39eb26e3642e93f23473f",
+    "files_read": [
+      "schema/atif.py (adp_trajectory_to_atif, code_action_to_tool_call)",
+      "schema/tool_call_links.py (backfill_adjacent_tool_call_links)",
+      "schema/trajectory.py (validate_tool_call_links)",
+      "scripts/adp_to_atif.py"
+    ],
+    "note": "The ADP-to-ATIF code was removed from main by the squash merge 3824726390ea1e556b6bea2c9826934f2e308d85 (PR 256, 2026-06-14); the last PR commit that still holds it is 396133a9, its first is a091e831551811574d952e252f14c7bebc45be64, and tool_call_links.py came with 9a2afd6760d73224bf5dd082e78d29525dd87dbc (PR 234). main at 040a279b46b2388ae42b43449f8645b9781c7bf7 (2026-08-17) holds the reverse mapping (scripts/atif_input.py) and legacy_atif.py, which agree on the code_action function names and the web_observation content order."
+  }
+}

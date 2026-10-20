@@ -1,0 +1,32 @@
+{
+ "history": [
+  {
+   "content": "Find the synthetic shop.",
+   "role": "human"
+  },
+  {
+   "content": "Initial plan: search.",
+   "role": "Orchestrator (thought)"
+  },
+  {
+   "content": "Please search the web.",
+   "role": "Orchestrator (-> WebSurfer)"
+  },
+  {
+   "content": "I clicked an unrelated page.",
+   "role": "WebSurfer"
+  },
+  {
+   "content": "Stop.",
+   "role": "Orchestrator (termination condition)"
+  }
+ ],
+ "question": "Find the synthetic shop.",
+ "groundtruth": "Shop A",
+ "is_corrected": false,
+ "question_ID": "q-synth-2",
+ "mistake_agent": "Websurfer",
+ "mistake_step": "3",
+ "mistake_reason": "Clicked an unrelated page.",
+ "mistake_type": "Tool failure"
+}

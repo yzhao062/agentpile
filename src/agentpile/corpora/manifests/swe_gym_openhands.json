@@ -1,0 +1,72 @@
+{
+  "name": "swe_gym_openhands",
+  "hf_id": "SWE-Gym/OpenHands-Sampled-Trajectories",
+  "revision": "baf3a4e4bff514d48ddc08a93a2ade5c126212c7",
+  "checked_at": "2026-10-20",
+  "license_on_card": "not declared",
+  "gated": false,
+  "allow_patterns": [
+    "data/train.raw-*-of-00003.parquet"
+  ],
+  "configs_splits": [
+    {
+      "config": "default",
+      "split": "train.raw",
+      "rows": 6055
+    }
+  ],
+  "unsupported": [
+    {
+      "what": "per-step timestamps"
+    },
+    {
+      "what": "per-step model name, token usage, cost, latency (ATIF metrics)"
+    },
+    {
+      "what": "ToolCall.arguments as a dict for 7 calls"
+    },
+    {
+      "what": "a result for every tool call"
+    },
+    {
+      "what": "call/definition consistency for 8 calls"
+    },
+    {
+      "what": "a unique run identifier"
+    },
+    {
+      "what": "multi-agent structure"
+    }
+  ],
+  "counts": {
+    "source_rows": {
+      "value": 6055
+    },
+    "runs_after_load": {
+      "value": 6055
+    }
+  },
+  "labels": [
+    {
+      "field": "resolved",
+      "level": "run"
+    },
+    {
+      "field": "test_result.report.{empty_generation, error_eval, failed_apply_patch, test_timeout}",
+      "level": "run"
+    },
+    {
+      "field": "test_result.git_patch",
+      "level": "run"
+    },
+    {
+      "field": "test_result.apply_patch_output, test_result.test_output",
+      "level": "run"
+    },
+    {
+      "field": "run_id",
+      "level": "run"
+    }
+  ],
+  "stage0_record": "agent-io/stage0/u4-openhands/manifest-swe_gym_openhands.yaml"
+}

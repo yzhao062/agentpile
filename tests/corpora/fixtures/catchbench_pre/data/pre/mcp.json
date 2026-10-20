@@ -1,0 +1,41 @@
+[
+ {
+  "instance_id": "mcp-x1",
+  "source": "mcp",
+  "provenance": {
+   "repo": "https://example.invalid/synthetic",
+   "commit": "0000000000000000000000000000000000000000",
+   "path": ".",
+   "license": "MIT"
+  },
+  "declared_capabilities": [
+   {
+    "name": "scan",
+    "type": "execution",
+    "permission_level": "execute"
+   },
+   {
+    "name": "list",
+    "type": "fs",
+    "permission_level": "unknown"
+   }
+  ],
+  "minimal_reference": [
+   "scan",
+   "list"
+  ],
+  "labels": {
+   "excess_set": [],
+   "label_source": "llm_judge",
+   "judges": [
+    "judge-a",
+    "judge-b"
+   ],
+   "merge_rule": "both agree"
+  },
+  "spec_tokens": [
+   "synthetic"
+  ],
+  "spec_token_overrides": {}
+ }
+]

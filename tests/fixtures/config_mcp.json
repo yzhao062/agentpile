@@ -1,0 +1,95 @@
+{
+  "schema": "agentpile-config/0",
+  "source": {
+    "format": "mcp-tools-list",
+    "dataset": null,
+    "record_key": "fx-config-1",
+    "reader": "fixture",
+    "reader_version": "0",
+    "lost_fields": []
+  },
+  "task": {
+    "id": null,
+    "text": null
+  },
+  "agents": [
+    {
+      "id": "assistant",
+      "name": "assistant",
+      "instructions": "Help with files.",
+      "model": null,
+      "tools": [
+        "fs.read_file",
+        "fs.delete_file"
+      ],
+      "handoffs": []
+    }
+  ],
+  "tools": {
+    "fs.read_file": {
+      "name": "read_file",
+      "agent_or_server": "fs",
+      "type": "filesystem",
+      "definition": {
+        "name": "read_file",
+        "description": "Read a file.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string"
+            }
+          }
+        },
+        "annotations": {
+          "readOnlyHint": true
+        }
+      },
+      "definition_format": "mcp",
+      "atif_index": null,
+      "permission": "read",
+      "permission_from": "annotation"
+    },
+    "fs.delete_file": {
+      "name": "delete_file",
+      "agent_or_server": "fs",
+      "type": "filesystem",
+      "definition": {
+        "name": "delete_file",
+        "description": "Delete a file.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string"
+            }
+          }
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true
+        }
+      },
+      "definition_format": "mcp",
+      "atif_index": null,
+      "permission": "write",
+      "permission_from": "annotation"
+    }
+  },
+  "labels": [
+    {
+      "name": "excess_permission",
+      "target": {
+        "kind": "agent",
+        "address": {
+          "agent": "assistant"
+        }
+      },
+      "value": true,
+      "label_source": "fixture"
+    }
+  ],
+  "dataset": {
+    "server": "fs"
+  }
+}

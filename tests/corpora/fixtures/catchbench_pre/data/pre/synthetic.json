@@ -1,0 +1,30 @@
+[
+ {
+  "instance_id": "synthetic-x1",
+  "source": "synthetic",
+  "provenance": {
+   "repo": "https://example.invalid/synthetic",
+   "commit": "0000000000000000000000000000000000000000",
+   "path": ".",
+   "license": "MIT"
+  },
+  "declared_capabilities": [
+   {
+    "name": "pay",
+    "type": "payment",
+    "permission_level": "write"
+   }
+  ],
+  "minimal_reference": [],
+  "labels": {
+   "excess_set": [
+    "pay"
+   ],
+   "label_source": "synthetic_inject"
+  },
+  "spec_tokens": [
+   "synthetic"
+  ],
+  "spec_token_overrides": {}
+ }
+]

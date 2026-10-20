@@ -1,0 +1,28 @@
+{
+ "sample": "a_openhands_event_order",
+ "corpus": "swe_rebench_openhands",
+ "grade_rule": "agent_graph_openhands.py:50-73 at 3839a57: only assistant messages emit steps; the tool_call step is emitted at the assistant call; user and tool messages emit nothing; a file event depends on the previous event on the same path",
+ "raw": {
+  "trajectory_id": "sample-a",
+  "instance_id": "demo__repo-1",
+  "resolved": 1,
+  "trajectory": [
+   {"role": "system", "content": "You are OpenHands.", "name": null, "tool_call_id": null, "tool_calls": null},
+   {"role": "user", "content": "Fix the bug in a.py.", "name": null, "tool_call_id": null, "tool_calls": null},
+   {"role": "assistant", "content": "", "name": null, "tool_call_id": null, "tool_calls": [{"id": "t1", "type": "function", "function": {"name": "str_replace_editor", "arguments": "{\"command\": \"view\", \"path\": \"/repo/a.py\"}"}}]},
+   {"role": "tool", "content": "file contents", "name": "str_replace_editor", "tool_call_id": "t1", "tool_calls": null},
+   {"role": "assistant", "content": "", "name": null, "tool_call_id": null, "tool_calls": [{"id": "t2", "type": "function", "function": {"name": "str_replace_editor", "arguments": "{\"command\": \"str_replace\", \"path\": \"/repo/a.py\", \"old_str\": \"x\", \"new_str\": \"y\"}"}}]},
+   {"role": "tool", "content": "edited", "name": "str_replace_editor", "tool_call_id": "t2", "tool_calls": null},
+   {"role": "assistant", "content": "", "name": null, "tool_call_id": null, "tool_calls": [{"id": "t3", "type": "function", "function": {"name": "finish", "arguments": "{}"}}]}
+  ]
+ },
+ "expected_steps_hand": [
+  {"idx": 0, "agent": "agent", "kind": "decision", "deps": []},
+  {"idx": 1, "agent": "env", "kind": "tool_call", "deps": []},
+  {"idx": 2, "agent": "agent", "kind": "decision", "deps": []},
+  {"idx": 3, "agent": "env", "kind": "tool_call", "deps": [1]},
+  {"idx": 4, "agent": "agent", "kind": "decision", "deps": []},
+  {"idx": 5, "agent": "env", "kind": "tool_call", "deps": []}
+ ],
+ "hand_reasoning": "System, user and tool messages are skipped. Assistant message 1: decision step 0 then its call as step 1 (view of /repo/a.py, first event on that path, deps empty). Assistant message 2: decision step 2, then the str_replace call as step 3 on the same path, so deps [1]. Assistant message 3: decision step 4, then finish as step 5 (finish carries no path, so no dependency). Contrast with tau-bench sample a: the same story there puts the tool step after the tool message and shifts every index because user turns also emit decision steps."
+}

@@ -1,0 +1,18 @@
+{
+ "generated_with": {
+  "pydantic-ai-slim": "2.58.0",
+  "openai-agents": "0.24.0",
+  "openinference-instrumentation-openai-agents": "2.5.3",
+  "opentelemetry-sdk": "1.45.1",
+  "opentelemetry-proto": "1.45.1",
+  "opentelemetry-exporter-otlp-proto-common": "1.45.1",
+  "python": "3.12.14"
+ },
+ "sha256": {
+  "pydantic_ai_2.58.0.json": "11d1769b31d86e12893df722e49fc7db2cc77177129199544d5a89249e6e1311",
+  "pydantic_ai_2.58.0_delegation.json": "882e83a2a507b2a6c862f3b6d382988a4628220cec56c317ea187a3b6da51f63",
+  "openai_agents_0.24.0_oi_2.5.3.jsonl": "95a9667d8ea21963eef17148eb2bf2d6c41b039b617ad17de33af80a8eb8cb1c",
+  "openai_agents_0.24.0_oi_2.5.3_as_tool.json": "c1ccccc68a1e8e0e35f6ffaa311f84e6194a1c21700bdbf3412cab08af7bb467"
+ },
+ "note": "fake models only; no network, no API key, no dataset content"
+}

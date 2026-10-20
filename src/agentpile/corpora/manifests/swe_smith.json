@@ -1,0 +1,75 @@
+{
+  "name": "swe_smith",
+  "hf_id": "SWE-bench/SWE-smith-trajectories",
+  "revision": "08e109b4a59eaeebf80e4675cd125d42e7ac99a4",
+  "checked_at": "2026-10-20",
+  "license_on_card": "mit",
+  "gated": false,
+  "allow_patterns": [
+    "data/tool-*.parquet"
+  ],
+  "configs_splits": [
+    {
+      "config": "default",
+      "split": "tool",
+      "rows": 24100
+    },
+    {
+      "config": "default",
+      "split": "xml",
+      "rows": 26076
+    },
+    {
+      "config": "default",
+      "split": "ticks",
+      "rows": 25826
+    },
+    {
+      "config": null,
+      "split": "train (files data/train-*.parquet, not declared in the card config)",
+      "rows": 26076
+    }
+  ],
+  "unsupported": [
+    {
+      "what": "xml split (26,076 rows, 23,821 distinct traj_ids)"
+    },
+    {
+      "what": "ticks split (25,826 rows)"
+    },
+    {
+      "what": "unlisted data/train-*.parquet shards (26,076 rows)"
+    },
+    {
+      "what": "Structured tool calls and results for the 14,984 rows of the tool split (62.2% of 24,100) that encode every action as text: they load as plain messages, no call is parsed from the <function=...> blocks and nothing is paired"
+    },
+    {
+      "what": "patch column as a trajectory outcome or output"
+    }
+  ],
+  "counts": {
+    "source_rows": {
+      "value": 24100
+    },
+    "runs_after_load": {
+      "value": 24100,
+      "count_note": "Same as the stage-0 value: all 24,100 rows of the tool split load, one run per row. Of these, 9,116 are native-format rows with structured tool_calls (277,520 calls, 269,242 results, all paired by id) and 14,984 are text-format rows that write every action as <function=...> text (loaded as plain messages, no call parsed, user turns stay user steps; 0 calls). Whether to keep the text rows is open for the plan owner; load(message_format='native') returns the 9,116 native rows only."
+    }
+  },
+  "label_note": "Only resolved is emitted as a label (run level, also the outcome). patch stays in dataset and is never read as an outcome or output; message_type is a structural tag that stays in the step source_fields and result_fields of native rows.",
+  "labels": [
+    {
+      "field": "resolved",
+      "level": "run"
+    },
+    {
+      "field": "patch",
+      "level": "run"
+    },
+    {
+      "field": "messages[].message_type (native rows only)",
+      "level": "step"
+    }
+  ],
+  "stage0_record": "agent-io/stage0/u5-swe-agent-smith/manifest-swe_smith.yaml"
+}

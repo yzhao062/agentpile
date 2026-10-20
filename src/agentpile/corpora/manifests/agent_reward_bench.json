@@ -1,0 +1,95 @@
+{
+  "name": "agent_reward_bench",
+  "hf_id": "McGill-NLP/agent-reward-bench",
+  "revision": "b6d17e646009d6cb63d5dd7be78807b680693f61",
+  "checked_at": "2026-10-20",
+  "license_on_card": "not declared",
+  "gated": false,
+  "allow_patterns": [
+    "data/annotations.csv",
+    "cleaned/*.json"
+  ],
+  "configs_splits": [
+    {
+      "config": "annotations",
+      "split": "full",
+      "rows": 1408
+    },
+    {
+      "config": "(file layout, not a card config)",
+      "split": "cleaned/webarena",
+      "rows": 398
+    },
+    {
+      "config": "(file layout, not a card config)",
+      "split": "cleaned/visualwebarena",
+      "rows": 300
+    },
+    {
+      "config": "(file layout, not a card config)",
+      "split": "cleaned/workarena",
+      "rows": 472
+    },
+    {
+      "config": "(file layout, not a card config)",
+      "split": "cleaned/assistantbench",
+      "rows": 132
+    }
+  ],
+  "unsupported": [
+    {
+      "what": "screenshots/ (27,299 PNG files, 4.2 GB; one per step)"
+    },
+    {
+      "what": "judgments/ (19,530 JSON files: 15 automatic judges x 1,302 runs)"
+    },
+    {
+      "what": "Per-step axtree_obj, bounding_boxes, extra_element_properties, axtree_pruned (dropped by the reader; the axtree text is kept as the observation)"
+    },
+    {
+      "what": "Step-level labels"
+    },
+    {
+      "what": "Structured tool schema"
+    },
+    {
+      "what": "Full step-level scan of workarena (472 runs) and assistantbench (132 runs)"
+    }
+  ],
+  "counts": {
+    "source_rows": {
+      "value": 1408
+    },
+    "runs_after_load": {
+      "value": 1302,
+      "count_note": "One run per cleaned/ run file, none skipped: allow_patterns select 1,302 run files plus data/annotations.csv from the pinned file list, and every file joins to at least one of the 1,408 annotation rows (106 runs have two rows, which stay separate labels of one run). Same as the stage-0 value."
+    }
+  },
+  "labels": [
+    {
+      "field": "annotations.csv:trajectory_success",
+      "level": "run"
+    },
+    {
+      "field": "annotations.csv:trajectory_side_effect",
+      "level": "run"
+    },
+    {
+      "field": "annotations.csv:trajectory_optimality",
+      "level": "run"
+    },
+    {
+      "field": "annotations.csv:trajectory_looping",
+      "level": "run"
+    },
+    {
+      "field": "annotations.csv:annotator_name",
+      "level": "run"
+    },
+    {
+      "field": "cleaned/*.json:summary_info.cum_reward and cum_raw_reward",
+      "level": "run"
+    }
+  ],
+  "stage0_record": "agent-io/stage0/u2-trail-arb/manifest-agent_reward_bench.yaml"
+}

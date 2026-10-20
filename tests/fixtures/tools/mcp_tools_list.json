@@ -1,0 +1,36 @@
+{
+  "tools": [
+    {
+      "name": "read_file",
+      "title": "Read File",
+      "description": "Read a file.",
+      "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]},
+      "outputSchema": {"type": "object", "properties": {"text": {"type": "string"}}},
+      "annotations": {"readOnlyHint": true, "openWorldHint": false}
+    },
+    {
+      "name": "delete_file",
+      "description": "Delete a file.",
+      "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]},
+      "annotations": {"readOnlyHint": false, "destructiveHint": true}
+    },
+    {
+      "name": "fetch_url",
+      "description": "Fetch a page.",
+      "inputSchema": {"type": "object", "properties": {"url": {"type": "string"}}},
+      "annotations": {"title": "Fetch", "openWorldHint": true}
+    },
+    {
+      "name": "echo",
+      "description": "Return the input.",
+      "inputSchema": {"type": "object", "properties": {"text": {"type": "string"}}}
+    },
+    {
+      "name": "contradiction",
+      "description": "Hints that disagree.",
+      "inputSchema": {"type": "object"},
+      "annotations": {"readOnlyHint": true, "destructiveHint": true}
+    }
+  ],
+  "nextCursor": "page-2"
+}
