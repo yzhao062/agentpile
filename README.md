@@ -21,13 +21,13 @@ ap.show(run)                          # every step, call and result, with the so
 ```
 
 <p align="center">
-  <img src="assets/show.svg" alt="ap.show output for a Who&When run: the task, four agents, the outcome, and five steps, with the expert's mistake labels in color beside step 1" width="100%">
+  <img src="https://raw.githubusercontent.com/yzhao062/agentpile/main/assets/show.svg" alt="ap.show output for a Who&When run: the task, four agents, the outcome, and five steps, with the expert's mistake labels in color beside step 1" width="100%">
 </p>
 
 Public datasets store agent runs in their own schemas (e.g., chat messages in tau-bench, OpenTelemetry spans in TRAIL, raw log text in MAST), and each analysis tool expects its own input. agentpile sits between the two. It reads datasets, trace files and live runs into [ATIF v1.7](https://github.com/harbor-framework/harbor) records that keep what the source recorded. You can then use those records with pandas, networkx or a tracing UI such as Phoenix. It downloads each dataset from its publisher at a pinned revision and redistributes nothing.
 
 <p align="center">
-  <img src="assets/overview.png" alt="Three kinds of input (13 public datasets, trace and tool files, live agent runs) go into one run record, an ATIF v1.7 trajectory or a config record with no steps. Three kinds of use come out: read a run with ap.show, analyze many runs with pandas tables and networkx graphs, and hand a run on as JSON or as OTLP spans to Phoenix or Jaeger." width="100%">
+  <img src="https://raw.githubusercontent.com/yzhao062/agentpile/main/assets/overview.png" alt="Three kinds of input (13 public datasets, trace and tool files, live agent runs) go into one run record, an ATIF v1.7 trajectory or a config record with no steps. Three kinds of use come out: read a run with ap.show, analyze many runs with pandas tables and networkx graphs, and hand a run on as JSON or as OTLP spans to Phoenix or Jaeger." width="100%">
 </p>
 
 ## 1. What You Can Do
@@ -41,7 +41,7 @@ run = next(ap.load("tau_bench", limit=1))
 ap.send_otlp(run, "http://localhost:6006/v1/traces")   # Phoenix; Jaeger listens on :4318
 ```
 
-<p align="center"><img src="assets/phoenix.png" alt="A tau-bench run in Arize Phoenix: system and user messages, chat steps and tool calls in a span tree, with the customer's request and the agent's final answer" width="85%"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/yzhao062/agentpile/main/assets/phoenix.png" alt="A tau-bench run in Arize Phoenix: system and user messages, chat steps and tool calls in a span tree, with the customer's request and the agent's final answer" width="85%"></p>
 
 A run whose source has no timestamps gets synthetic ones that only order its spans. The durations a tracing UI shows for such a run are therefore not runtime measurements.
 
@@ -54,7 +54,7 @@ runs = [run for name in ("who_and_when", "trail", "mast") for run in ap.load(nam
 labels = ap.to_pandas(runs, "labels")   # run_id, name, value, target_kind, step, span, ...
 ```
 
-<p align="center"><img src="assets/compare_failures.png" alt="Left: cumulative share of labels by the position of their step in the run, for Who&When's decisive step, TRAIL's first error and all TRAIL errors. Right: share of MAST runs flagged with each of 14 failure modes" width="100%"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/yzhao062/agentpile/main/assets/compare_failures.png" alt="Left: cumulative share of labels by the position of their step in the run, for Who&When's decisive step, TRAIL's first error and all TRAIL errors. Right: share of MAST runs flagged with each of 14 failure modes" width="100%"></p>
 
 ### 1.3 Follow Values Through a Run
 
@@ -65,7 +65,7 @@ deps = ap.derive_deps(run, rules=["value_flow"])        # each entry names its r
 graph = ap.to_networkx(run, rules=["value_flow"])       # events as nodes, dependencies as edges
 ```
 
-<p align="center"><img src="assets/value_flow.png" alt="Left: one tau-bench run drawn as a graph, with arcs from the calls whose results supplied reservation ids to the later calls that reused them. Right: how many steps back each dependency reaches in tau-bench and tau2-bench" width="100%"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/yzhao062/agentpile/main/assets/value_flow.png" alt="Left: one tau-bench run drawn as a graph, with arcs from the calls whose results supplied reservation ids to the later calls that reused them. Right: how many steps back each dependency reaches in tau-bench and tau2-bench" width="100%"></p>
 
 ## 2. Quick Start
 

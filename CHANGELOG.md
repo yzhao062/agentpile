@@ -2,7 +2,7 @@
 
 All notable changes to agentpile are listed here. Versions follow [Semantic Versioning](https://semver.org/); before 1.0, a minor version may change the record format, and the entry says how.
 
-## 0.1.0 (2026-10-21)
+## 0.1.0 (2026-10-22)
 
 The first release.
 
