@@ -79,23 +79,26 @@ def test_a_dependency_may_name_several_resources():
     assert ap.validate(record) == []
 
 
-def _readme_block(n):
-    return re.findall(r"```python\n(.*?)```", README.read_text(encoding="utf-8"), re.S)[n]
+def _readme_block(marker):
+    """The README's Python block that contains ``marker``; blocks are found by content so they can move."""
+    blocks = [b for b in re.findall(r"```python\n(.*?)```", README.read_text(encoding="utf-8"), re.S) if marker in b]
+    assert blocks, f"no Python block in README.md contains {marker!r}"
+    return blocks[0]
 
 
 def test_readme_core_example_runs_without_extras(tmp_path, monkeypatch):
-    """The first Python block of the README needs only the core and writes run.json to the working directory."""
+    """The README's in-memory example needs only the core and writes run.json to the working directory."""
     monkeypatch.chdir(tmp_path)
-    exec(compile(_readme_block(0), "README.md", "exec"), {"print": lambda *a, **k: None})
+    exec(compile(_readme_block("messages = ["), "README.md", "exec"), {"print": lambda *a, **k: None})
     record = json.loads((tmp_path / "run.json").read_text(encoding="utf-8"))
     assert record["schema_version"] == "ATIF-v1.7" and ap.validate(record) == []
 
 
 @pytest.mark.network
 def test_readme_dataset_example_runs(tmp_path):
-    """The second Python block of the README, with its placeholder file pointed at a real trace."""
+    """The README's dataset example, with its placeholder file pointed at a real trace."""
     trace = Path(__file__).parent / "fixtures" / "atif_multiagent.json"
-    code = _readme_block(1).replace('"my_trace.json"', repr(str(trace)))
+    code = _readme_block('"my_trace.json"').replace('"my_trace.json"', repr(str(trace)))
     data = os.environ.get("AGENTPILE_DATA")
     if data:  # read the pinned copy instead of downloading
         code = code.replace('ap.load("who_and_when", ', f'ap.load("who_and_when", root={str(Path(data) / "who_and_when")!r}, ')

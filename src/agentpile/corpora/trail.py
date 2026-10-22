@@ -772,6 +772,7 @@ class _Conversion:
 class Trail(Dataset):
     name = "trail"
     format = "trail-parquet"
+    incremental = True
 
     def records(self, root: Path, split: Optional[str] = None, **options: Any) -> Iterator[Tuple[str, Any, Dict[str, Any]]]:
         if options:
@@ -785,10 +786,10 @@ class Trail(Dataset):
         for sp in SPLITS:
             if split is not None and sp != split:
                 continue
-            for path in sorted((root / "data").glob(f"{sp}-*.parquet")):
+            for path in self.paths(root, f"data/{sp}-*.parquet"):
                 rel = path.relative_to(root).as_posix()
                 row = 0
-                for batch in pq.ParquetFile(str(path)).iter_batches(batch_size=1, columns=["trace", "labels"]):
+                for batch in pq.ParquetFile(str(self.ready(path))).iter_batches(batch_size=1, columns=["trace", "labels"]):
                     cells = batch.to_pydict()
                     text = cells["trace"][0]
                     try:

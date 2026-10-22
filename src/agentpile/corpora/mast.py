@@ -43,11 +43,12 @@ FAILURE_MODES = {
 class Mast(Dataset):
     name = "mast"
     format = "mast-json"
+    incremental = True  # one 200 MB array: a limit saves only the README
 
     def records(self, root: Path, **options: Any) -> Iterator[Tuple[str, Any, Dict[str, Any]]]:
         if options:
             raise TypeError(f"mast takes no options, got {sorted(options)}")
-        with (root / FILE).open("r", encoding="utf-8") as fh:
+        with self.ready(root / FILE).open("r", encoding="utf-8") as fh:
             rows = json.load(fh)  # one 200 MB array; the file has no record-level framing
         for row in rows:
             trace = row.get("trace") or {}

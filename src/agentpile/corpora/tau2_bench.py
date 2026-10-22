@@ -83,15 +83,16 @@ def _label(key: str, name: str, value: Any, field: str, **note: Any) -> Dict[str
 class Tau2Bench(Dataset):
     name = "tau2_bench"
     format = "tau2_bench-jsonl"
+    incremental = True
 
     def records(self, root: Path, model: Optional[str] = None, domain: Optional[str] = None,
                 **options: Any) -> Iterator[Tuple[str, Any, Dict[str, Any]]]:
         if options:
             raise TypeError(f"tau2_bench takes model= and domain= only, got {sorted(options)}")
-        for path in sorted(root.glob("*.jsonl")):
+        for path in self.paths(root, "*.jsonl"):
             if model is not None and path.stem != model:
                 continue
-            with path.open("r", encoding="utf-8") as fh:
+            with self.ready(path).open("r", encoding="utf-8") as fh:
                 index = -1
                 for line in fh:
                     line = line.strip()

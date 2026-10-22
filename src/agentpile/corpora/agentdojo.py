@@ -72,17 +72,18 @@ def _prepare(messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 class AgentDojo(Dataset):
     name = "agentdojo"
     format = "agentdojo-json"
+    incremental = True
 
     def records(self, root: Path, suite: str = None, **options: Any) -> Iterator[Tuple[str, Any, Dict[str, Any]]]:
         if options:
             raise TypeError(f"agentdojo takes suite= only, got {sorted(options)}")
-        paths = sorted(p for p in root.glob("*/*/*/*/*.json") if not p.relative_to(root).parts[0].startswith("."))
+        paths = [p for p in self.paths(root, "*/*/*/*/*.json") if not p.relative_to(root).parts[0].startswith(".")]
         for path in paths:
             rel = path.relative_to(root).as_posix()
             model, suite_name = rel.split("/")[:2]
             if suite is not None and suite_name != suite:
                 continue
-            with path.open("r", encoding="utf-8") as fh:
+            with self.ready(path).open("r", encoding="utf-8") as fh:
                 raw = json.load(fh)
             yield rel[: -len(".json")], raw, {"file": rel, "config": f"{model}/{suite_name}", "split": None}
 

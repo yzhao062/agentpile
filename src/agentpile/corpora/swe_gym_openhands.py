@@ -104,6 +104,7 @@ def _first_user_text(messages: List[Any]) -> Optional[str]:
 class SweGymOpenHands(Dataset):
     name = "swe_gym_openhands"
     format = "swe_gym_openhands-parquet"
+    incremental = True
 
     def records(self, root: Path, **options: Any) -> Iterator[Tuple[str, Any, Dict[str, Any]]]:
         if options:
@@ -112,14 +113,14 @@ class SweGymOpenHands(Dataset):
             import pyarrow.parquet as pq
         except ImportError as exc:
             raise ImportError("reading swe_gym_openhands needs the hf extra: pip install 'agentpile[hf]'") from exc
-        shards = sorted(root.glob(SHARDS))
+        shards = self.paths(root, SHARDS)
         if not shards:
             raise FileNotFoundError(f"swe_gym_openhands: no {SHARDS} under {root}")
         index = 0
         for path in shards:
             rel = path.relative_to(root).as_posix()
             row_in_file = 0
-            with pq.ParquetFile(path) as pf:
+            with pq.ParquetFile(self.ready(path)) as pf:
                 for batch in pf.iter_batches(batch_size=BATCH_ROWS):
                     for row in batch.to_pylist():
                         yield str(index), row, {"file": rel, "config": "default", "split": "train.raw",

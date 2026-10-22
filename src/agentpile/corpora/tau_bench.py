@@ -62,13 +62,14 @@ def _names(value: Union[None, str, Iterable[str]]) -> Optional[List[str]]:
 class TauBench(Dataset):
     name = "tau_bench"
     format = "tau_bench-jsonl"
+    incremental = True
 
     def records(self, root: Path, model: Union[None, str, Iterable[str]] = None,
                 task_name: Optional[str] = None, **options: Any) -> Iterator[Tuple[str, Any, Dict[str, Any]]]:
         if options:
             raise TypeError(f"tau_bench takes model= and task_name= only, got {sorted(options)}")
         wanted = _names(model)
-        paths = sorted(Path(root).glob("*.jsonl"))
+        paths = self.paths(root, "*.jsonl")
         if wanted is not None:
             missing = sorted(set(wanted) - {p.stem for p in paths})
             if missing:
@@ -76,7 +77,7 @@ class TauBench(Dataset):
         for path in paths:
             if wanted is not None and path.stem not in wanted:
                 continue
-            with path.open("r", encoding="utf-8") as fh:
+            with self.ready(path).open("r", encoding="utf-8") as fh:
                 for row, line in enumerate(fh):
                     if not line.strip():
                         continue

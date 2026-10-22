@@ -167,6 +167,7 @@ def _tools(details: Dict[str, Any]) -> Tuple[Optional[List[Dict[str, Any]]], Dic
 class Adp(Dataset):
     name = "adp"
     format = "adp-std-jsonl"
+    incremental = True
 
     @property
     def manifest(self) -> Dict[str, Any]:
@@ -184,7 +185,7 @@ class Adp(Dataset):
             if config is not None and entry["config"] != config:
                 continue
             rel, row = entry["file"], 0
-            with (root / rel).open("r", encoding="utf-8") as fh:
+            with self.ready(root / rel).open("r", encoding="utf-8") as fh:
                 for number, line in enumerate(fh, start=1):
                     if not line.strip():
                         continue

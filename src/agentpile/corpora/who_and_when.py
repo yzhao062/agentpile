@@ -51,6 +51,7 @@ def _actor(entry: Dict[str, Any], subset: str) -> Optional[str]:
 class WhoAndWhen(Dataset):
     name = "who_and_when"
     format = "who_and_when-json"
+    incremental = True
 
     def records(self, root: Path, subset: Optional[str] = None, **options: Any) -> Iterator[Tuple[str, Any, Dict[str, Any]]]:
         if options:
@@ -60,9 +61,9 @@ class WhoAndWhen(Dataset):
         for sub in SUBSETS:
             if subset is not None and sub != subset:
                 continue
-            for path in sorted((root / "Who&When" / sub).glob("*.json"), key=_number):
+            for path in self.paths(root, f"Who&When/{sub}/*.json", key=_number):
                 rel = path.relative_to(root).as_posix()
-                with path.open("r", encoding="utf-8") as fh:
+                with self.ready(path).open("r", encoding="utf-8") as fh:
                     raw = json.load(fh)
                 yield f"{sub}/{path.stem}", raw, {"file": rel, "config": sub, "split": "train"}
 

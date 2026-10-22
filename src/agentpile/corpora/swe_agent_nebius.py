@@ -71,16 +71,17 @@ def _message(turn: Dict[str, Any], role: str) -> Dict[str, Any]:
 class SweAgentNebius(Dataset):
     name = "swe_agent_nebius"
     format = "swe_agent_nebius-parquet"
+    incremental = True
 
     def records(self, root: Path, **options: Any) -> Iterator[Tuple[str, Any, Dict[str, Any]]]:
         if options:
             raise TypeError(f"swe_agent_nebius takes no options, got {sorted(options)}")
         pq = _require_pyarrow()
-        for path in sorted((root / "data").glob("train-*.parquet")):
+        for path in self.paths(root, "data/train-*.parquet"):
             rel = path.relative_to(root).as_posix()
             where = {"file": rel, "config": "default", "split": "train"}
             row = 0
-            for batch in pq.ParquetFile(path).iter_batches(batch_size=BATCH_ROWS):
+            for batch in pq.ParquetFile(self.ready(path)).iter_batches(batch_size=BATCH_ROWS):
                 for raw in batch.to_pylist():
                     yield f"{path.stem}:{row}", raw, where
                     row += 1

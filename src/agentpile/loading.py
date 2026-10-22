@@ -43,6 +43,10 @@ def load(source: Any, reader: Optional[str] = None, **options: Any) -> Iterator[
     format is never guessed. ``reader=`` skips detection. Options are passed to
     the dataset loader or reader. Errors about the input are raised here, at
     call time; the returned iterator yields ``Run`` objects lazily.
+
+    ``limit=N`` on a built-in Hugging Face dataset that is not downloaded yet
+    fetches only the files its first N runs come from (plus any table every
+    run needs), and a later load without ``limit`` fetches the rest.
     """
     if isinstance(source, Run):
         return iter([source])

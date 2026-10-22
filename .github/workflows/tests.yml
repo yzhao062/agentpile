@@ -40,7 +40,7 @@ jobs:
       - name: Install with extras and the pinned Harbor models
         run: |
           python -m pip install --upgrade pip
-          python -m pip install ".[hf,pydantic-ai,openai-agents,dev]"
+          python -m pip install ".[hf,view,pandas,graph,otel,pydantic-ai,openai-agents,dev]"
           python -m pip install --no-deps "harbor==0.22.0"
           python -m pip install "pydantic>=2.11.7"
       - name: Offline tests with every optional dependency

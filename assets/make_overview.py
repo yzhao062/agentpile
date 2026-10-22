@@ -29,9 +29,9 @@ INPUTS = [
     ("Live agent runs", "Pydantic AI and the OpenAI Agents SDK,\nwith the agent's configuration", "ap.capture(agent)"),
 ]
 OUTPUTS = [
-    ("Events in source order", "a trajectory's messages, tool calls\nand results, each with its address", "run.events()"),
-    ("Dependencies on request", "inferred between steps by named,\nversioned rules; the run is unchanged", "ap.derive_deps(run, rules)"),
-    ("Standard files", "JSON for both kinds of record;\nOTLP spans for trajectories", "run.to_json()  run.to_otlp()"),
+    ("Read a run", "messages, calls and results in source\norder, labels beside what they target", "ap.show(run)"),
+    ("Analyze many runs", "pandas tables, networkx graphs,\ndependencies inferred on request", "ap.to_pandas(runs)"),
+    ("Hand it on", "JSON for either kind of record;\ntrajectory spans to Phoenix or Jaeger", "run.to_json()  ap.send_otlp(run)"),
 ]
 
 

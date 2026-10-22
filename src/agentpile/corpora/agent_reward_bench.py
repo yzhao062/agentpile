@@ -309,18 +309,20 @@ def _benchmarks(benchmark: Any) -> Optional[Tuple[str, ...]]:
 class AgentRewardBench(Dataset):
     name = "agent_reward_bench"
     format = "agent_reward_bench-json"
+    incremental = True
+    upfront = (ANNOTATIONS,)  # joined to every run, so read before the first
 
     def records(self, root: Path, benchmark: Any = None, **options: Any) -> Iterator[Tuple[str, Any, Dict[str, Any]]]:
         if options:
             raise TypeError(f"agent_reward_bench takes benchmark= only, got {sorted(options)}")
         wanted = _benchmarks(benchmark)
         rows = _annotations(root)
-        for path in sorted((root / "cleaned").glob("*/*/*/*.json"), key=lambda p: p.as_posix()):
+        for path in self.paths(root, "cleaned/*/*/*/*.json", key=lambda p: p.as_posix()):
             rel = path.relative_to(root).as_posix()
             bench, agent_dir = rel.split("/")[1:3]
             if wanted is not None and bench not in wanted:
                 continue
-            head, steps = read_run_file(path)
+            head, steps = read_run_file(self.ready(path))
             raw = {"head": head, "steps": steps, "annotations": rows.get((bench, agent_dir, path.stem), [])}
             yield (f"{bench}/{agent_dir}/{path.stem}", raw,
                    {"file": rel, "config": bench, "split": "full", "task_id": path.stem})

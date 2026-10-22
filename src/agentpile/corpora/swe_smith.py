@@ -124,6 +124,7 @@ def _tools(system_text: Any) -> Dict[str, Dict[str, Any]]:
 class SweSmith(Dataset):
     name = "swe_smith"
     format = "swe_smith-parquet"
+    incremental = True
 
     def records(self, root: Path, message_format: Optional[str] = None,
                 **options: Any) -> Iterator[Tuple[str, Any, Dict[str, Any]]]:
@@ -132,10 +133,10 @@ class SweSmith(Dataset):
         if message_format is not None and message_format not in FORMATS:
             raise ValueError(f"message_format must be one of {list(FORMATS)}, got {message_format!r}")
         pq = _pyarrow()
-        for path in sorted((root / "data").glob("tool-*.parquet")):
+        for path in self.paths(root, "data/tool-*.parquet"):
             rel = path.relative_to(root).as_posix()
             row_no = 0
-            with pq.ParquetFile(path) as pf:
+            with pq.ParquetFile(self.ready(path)) as pf:
                 for batch in pf.iter_batches(batch_size=BATCH):
                     for raw in batch.to_pylist():
                         where = {"file": rel, "config": "default", "split": "tool", "row": row_no}

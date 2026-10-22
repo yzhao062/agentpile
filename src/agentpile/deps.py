@@ -550,8 +550,9 @@ def value_flow_v1(run: Run) -> List[Dep]:
     - **Ids.** A value is id-like when it is a string that matches
       ``^[A-Za-z]{0,4}[-_]?\\d[\\w\\-]{2,}$``. They are read from every nested string
       value of a call's arguments (an object; any other arguments give none) and of
-      the result (parsed as JSON when it is a string, the string itself when it
-      does not parse). The heuristic can match non-ids such as phone numbers.
+      the result (parsed as JSON when it is a string; a result that does not
+      parse, such as plain text, gives none). The heuristic can match non-ids
+      such as phone numbers and dates.
     - **Producer.** A result produces its ids for the call it answers, as
       recorded in the result's ``source_call_id``; a result with no paired call
       produces nothing. When several results contain an id, the latest one

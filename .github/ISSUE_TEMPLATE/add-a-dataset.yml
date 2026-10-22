@@ -1,0 +1,40 @@
+name: Add a dataset or trace format
+description: Point us at agent trajectories or a trace format agentpile should load. We write the loader, the manifest and the tests.
+title: "Add: "
+labels: ["dataset"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A link is enough to start. If you already wrote a loader, open a pull request instead and mention this form's fields in its description.
+  - type: input
+    id: link
+    attributes:
+      label: Where the data lives
+      description: A Hugging Face dataset, a GitHub repository, a paper's release page, or an example trace file.
+      placeholder: https://huggingface.co/datasets/<org>/<name>
+    validations:
+      required: true
+  - type: input
+    id: license
+    attributes:
+      label: License
+      description: What the dataset card or repository says, or "not declared".
+    validations:
+      required: true
+  - type: textarea
+    id: shape
+    attributes:
+      label: What one run looks like
+      description: The file format and the fields of one trajectory (messages, spans, log text). A short excerpt helps.
+      render: text
+  - type: textarea
+    id: labels
+    attributes:
+      label: Labels or outcomes
+      description: Anything the source judges, such as success, a blamed step or agent, error spans, or rewards, and where those fields are.
+  - type: textarea
+    id: why
+    attributes:
+      label: What you want to do with it
+      description: Optional. It helps us decide what the loader must keep.

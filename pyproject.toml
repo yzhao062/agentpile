@@ -30,9 +30,13 @@ dependencies = []
 
 [project.optional-dependencies]
 hf = ["huggingface_hub>=0.23", "pyarrow>=14"]
+view = ["rich>=13"]
+pandas = ["pandas>=1.5"]
+graph = ["networkx>=3.0"]
 # Lower bounds are the versions the capture tests ran against (2026-10-20); nothing older is tested.
 # pydantic-ai-slim needs Python 3.11, openai-agents and the OpenInference instrumentor need 3.10.
-otel = ["opentelemetry-sdk>=1.45.1; python_version >= '3.10'"]
+# opentelemetry-proto lets ap.send_otlp reach a receiver that takes only protobuf (Arize Phoenix).
+otel = ["opentelemetry-sdk>=1.45.1; python_version >= '3.10'", "opentelemetry-proto>=1.45.1; python_version >= '3.10'"]
 pydantic-ai = ["pydantic-ai-slim>=2.58.0; python_version >= '3.11'", "opentelemetry-sdk>=1.45.1; python_version >= '3.10'"]
 openai-agents = [
   "openai-agents>=0.24.0; python_version >= '3.10'",

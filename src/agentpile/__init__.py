@@ -16,6 +16,10 @@ list and remove them.
 """
 
 from ._capture import CaptureError, capture, config_from
+from ._graph import to_networkx
+from ._send import send_otlp
+from ._show import show
+from ._tables import table, to_pandas
 from .cache import cache_info, cache_root, clear_cache
 from .deps import derive_deps
 from .errors import AgentpileError, AmbiguousSource, UnrecognizedSource, UnsupportedVersion
@@ -74,6 +78,11 @@ __all__ = [
     "load",
     "readers",
     "register",
+    "send_otlp",
+    "show",
+    "table",
+    "to_networkx",
+    "to_pandas",
     "validate",
     "writers",
 ]

@@ -106,6 +106,8 @@ def _tool_entries(defs: List[Dict[str, Any]]) -> Tuple[Dict[str, Dict[str, Any]]
 class SweRebenchOpenHands(Dataset):
     name = "swe_rebench_openhands"
     format = "swe_rebench_openhands-parquet"
+    incremental = True  # one Parquet file: a limit saves README.md and config.toml
+    upfront = (TOOLS,)  # the tool definitions are shared by every run
     batch_rows = 64  # rows per Parquet batch: one row is about 250 KB uncompressed, a row group up to 1 GB
 
     def records(self, root: Path, **options: Any) -> Iterator[Tuple[str, Any, Dict[str, Any]]]:
@@ -117,7 +119,7 @@ class SweRebenchOpenHands(Dataset):
             raise ImportError("loading swe_rebench_openhands needs the hf extra: pip install 'agentpile[hf]'") from exc
         defs = json.loads((root / TOOLS).read_text(encoding="utf-8"))
         row = 0
-        with pq.ParquetFile(root / TRAJECTORIES) as pf:
+        with pq.ParquetFile(self.ready(root / TRAJECTORIES)) as pf:
             for batch in pf.iter_batches(batch_size=self.batch_rows, columns=list(COLUMNS)):
                 for rec in batch.to_pylist():
                     yield rec["trajectory_id"], rec, {"file": TRAJECTORIES, "config": "default", "split": "train",
