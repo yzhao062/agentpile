@@ -228,3 +228,19 @@ def test_validate_checks_the_arguments_state_marker():
     del calls["c1"]["arguments_raw"]
     calls["c1"]["arguments_state"] = "null"
     assert any("arguments_state: 'null' is not 'missing'" in e for e in ap.validate(r))
+
+
+def test_validate_checks_the_unparsed_marker():
+    r = _record()
+    step = r["steps"][3]  # call c3 carries the source text of arguments that were no JSON object
+    cx = step["extra"]["agentpile"]["calls"]["c3"]
+    assert cx["arguments_state"] == "unparsed" and ap.validate(r) == []
+    cx["arguments_raw"] = None  # a null is no failed parse
+    assert any("needs the source value in arguments_raw" in e for e in ap.validate(r))
+    del cx["arguments_raw"]
+    assert any("needs the source value in arguments_raw" in e for e in ap.validate(r))
+    cx["arguments_raw"] = "{bad"
+    step["tool_calls"][0]["arguments"] = {"offer_id": 7}  # the marker says ATIF holds the stand-in {}
+    assert any("says ATIF holds {}" in e for e in ap.validate(r))
+    step["tool_calls"][0]["arguments"] = {}
+    assert ap.validate(r) == []

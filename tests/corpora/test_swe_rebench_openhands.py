@@ -130,7 +130,7 @@ def test_arguments_that_are_not_an_object_keep_the_source_string():
     step = _runs()[3].steps[2]
     assert step["tool_calls"][0]["arguments"] == {}
     cx = _sx(step)["calls"]["syn-call-4a"]
-    assert cx["arguments_raw"] == "not json" and cx["tool_id"] == "openhands.think"
+    assert cx["arguments_raw"] == "not json" and cx["arguments_state"] == "unparsed" and cx["tool_id"] == "openhands.think"
     call = next(e for e in _runs()[3].events() if e.kind == "call")
     assert call.content == "not json"
 

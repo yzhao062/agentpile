@@ -25,14 +25,16 @@ events and links. Source span fields with no schema slot (the raw ``timestamp``
 and ``duration``, OTel ``span_kind``, service, scope, resource attributes,
 ``logs``) stay under ``source_fields``. Event times carry no zone in the source
 and are read as UTC (all 437 fall inside their span). A span that became a step
-has ``address`` ``{"trajectory", "step"}``. CHAIN, TOOL, AGENT and kind-less
-spans are not steps and keep ``address`` null: a TOOL span carries no call id,
-so it is not tied to a call (its Step CHAIN parent also holds the LLM span).
+has ``address`` ``{"trajectory", "step"}``. CHAIN, AGENT and kind-less spans are
+not steps and keep ``address`` null. A TOOL span carries no call id, so it is
+tied to a call only on a strict, unique match (see Tool spans below) and keeps
+``address`` null otherwise.
 A repeated span id is kept once (the repeat is recorded in ``dataset``), and a
 parent id absent from the file is kept as given. The ``logs`` of the harness
 spans hold the task id (GAIA ``task_id``, SWE-Bench ``instance_id``), which
 becomes ``task.id``, and also the GAIA reference answer and the SWE-Bench gold
-patch and tests, so strip them before showing spans to an agent under test.
+patch and tests, so strip them before showing spans to an agent under test (the
+manifest's ``gold_note`` names the spans and fields; the loader keeps them as recorded).
 
 Steps. The span tree is walked depth first in start order. An agent run is the
 AGENT span above an LLM span, with only CHAIN spans between them. An LLM span
@@ -85,6 +87,45 @@ step and call extension carries ``span_id`` and a ``source_ref`` with the
 message index, to go back to the span. ``actor`` and ``agent`` are the AGENT
 span id of the owning run, listed in ``agents``.
 
+Tool spans. A ToolCallingAgent step is a Step CHAIN span that holds the LLM span
+and one TOOL span per executed call, and a TOOL span names no call. It is tied to a
+call only when all of these hold: the call was read from the output of an LLM span
+(never from a history message) whose parent is the TOOL span's parent; the call
+has a function name and arguments that parsed to an object; the ``tool.name`` of
+the TOOL span equals the function name; and its ``input.value`` is a JSON object
+whose ``args`` is an empty list and whose ``kwargs`` equals the call's arguments
+(object keys in any order). The tie is made when exactly one call and exactly one
+TOOL span share parent, name and arguments, so two identical calls in one step
+tie neither, and a call whose arguments the loader could not parse never ties
+(its ``{}`` is a stand-in). A span whose id repeats with different content is
+never tied. A tie is an inference, not something the source records, and both
+sides say so: the span's ``address`` becomes ``{"trajectory", "step", "call"}`` with
+``paired_by`` ``unique_tool_span`` beside it, and the call extension gets
+``tool_span_id`` and the same ``paired_by``. Source values, ``source_ref``, call
+ids and the call's ``span_id`` (the LLM span) and ``parent`` stay as they were.
+On the pinned data 490 of the 648 TOOL spans tie, all ToolCallingAgent calls, and
+none of the 548 structured calls is ambiguous. The other 158 TOOL spans are
+CodeAgent calls and stay untied: 142 are ``final_answer`` calls with a positional
+argument, 15 are ``inspect_file_as_text`` (13) and ``visualizer`` (2) calls made
+from code, where the only call under their parent is a history-message
+``python_interpreter`` call, and 1 is a ``visualizer`` call in a step with no call
+under it. Another 58 structured calls (``final_answer``) have no TOOL span.
+
+Order. Every message the loader reads from an LLM span (a first-seen input
+message, then each output message, spans in walk order) takes the next integer
+as its ``source_pos``; a step carries the position of the message it came from
+and each result carries the position of its tool-response message in
+``result_pos``, parallel to ``result_refs``. ATIF puts a result on the step that
+holds its call, but the source records it in the input of a later LLM span, after
+every span a delegated helper agent ran in between, so ``Run.events()`` orders
+by these positions and ``source_ref`` keeps its address form. The walk order is
+the start-time order: siblings sort by their timestamp text (one without a
+timestamp first, equal ones in file order) and a parent comes before its
+children. On the pinned data that equals the numeric start order for all 4,625
+spans (every timestamp is ``YYYY-MM-DDTHH:MM:SS.ffffffZ``, none is missing, none
+ties among LLM spans) and no LLM span starts before the previous one has ended,
+so one clock fits the whole trace.
+
 Labels. Each entry of ``errors`` is a label named ``error`` on the span named by
 its ``location``, with the entry as the value (category, evidence, description,
 impact and any other key, raw, with no category normalization). A location that
@@ -116,6 +157,7 @@ OUTPUT = re.compile(r"llm\.output_messages\.(\d+)\.message\.(.+)")
 OUTPUT_CALL = re.compile(r"tool_calls\.(\d+)\.tool_call\.(.+)")
 TOOL_DEF = re.compile(r"llm\.tools\.(\d+)\.tool\.(json_schema)")
 KIND = "openinference.span.kind"
+PAIRED_TOOL_SPAN = "unique_tool_span"  # the paired_by value of a TOOL span tied to a call
 CALLING = "Calling tools:\n"
 CALL_ID = re.compile(r"Call id: (\S+)\n")
 TIMESTAMP = re.compile(r"(\d{4})-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d)(?:\.(\d+))?(Z|[+-]\d\d:\d\d)?")
@@ -240,6 +282,7 @@ class _Conversion:
         self.tools: Dict[str, Dict[str, Any]] = {}
         self.groups: Dict[Tuple[str, str], _Group] = {}
         self.seen: Counter = Counter()  # message text -> occurrences read in any run of the trace
+        self.pos = -1  # source_pos of the message being read; each message read takes the next integer
 
     # -- span tree ---------------------------------------------------------
 
@@ -325,7 +368,8 @@ class _Conversion:
         return content
 
     def base(self, group: _Group, sid: str, part: str, index: int) -> Dict[str, Any]:
-        sx: Dict[str, Any] = {"span_id": sid, "source_ref": {"span_id": sid, "part": part, "index": index}}
+        sx: Dict[str, Any] = {"span_id": sid, "source_ref": {"span_id": sid, "part": part, "index": index},
+                              "source_pos": self.pos}
         if group.agent is not None:
             sx["agent"] = group.agent
         return sx
@@ -349,6 +393,7 @@ class _Conversion:
             known[ident] += 1
             if known is not self.seen:
                 self.seen[ident] += 1
+            self.pos += 1
             self.read_message(group, sid, n, msg)
         self.read_output(group, sid, span)
 
@@ -436,6 +481,8 @@ class _Conversion:
             args, raw = _parse_arguments(fn.get("arguments"))
             if raw is not _ABSENT:
                 cx["arguments_raw"] = raw
+                if raw is not None:  # {} stands in for a value that is not an object (an explicit null is no failed parse)
+                    cx["arguments_state"] = "unparsed"
             name = fn.get("name")
             if not isinstance(name, str):
                 cx["function_name_raw"] = name
@@ -475,6 +522,7 @@ class _Conversion:
             {"source_call_id": cid if paired else None, "content": result})
         sx = step["extra"][EXT]
         sx.setdefault("result_refs", []).append({"span_id": sid, "index": n})
+        sx.setdefault("result_pos", []).append(self.pos)
         sx.setdefault("result_fields", []).append(fields)
 
     def read_output(self, group: _Group, sid: str, span: Dict[str, Any]) -> None:
@@ -487,6 +535,7 @@ class _Conversion:
         first = None
         for n in sorted(outputs):
             out = outputs[n]
+            self.pos += 1
             sx = self.base(group, sid, "output_message", n)
             if group.agent is not None:
                 sx["actor"] = group.agent
@@ -517,6 +566,8 @@ class _Conversion:
                 args, raw = _parse_arguments(tc.get("function.arguments"))
                 if raw is not _ABSENT:
                     cx["arguments_raw"] = raw
+                    if raw is not None:  # {} stands in for a value that is not an object (an explicit null is no failed parse)
+                        cx["arguments_state"] = "unparsed"
                 name = tc.get("function.name")
                 if not isinstance(name, str):
                     cx["function_name_raw"] = name
@@ -647,6 +698,67 @@ class _Conversion:
                 return attrs["smolagents.task"] if isinstance(attrs.get("smolagents.task"), str) else None
         return None
 
+    # -- TOOL spans ----------------------------------------------------------
+
+    def repeated(self, sid: Any) -> bool:
+        """Whether the span id occurs more than once in the file with different content."""
+        return sid in self.duplicates and not self.duplicates[sid]["identical"]
+
+    def call_key(self, call: Dict[str, Any], cx: Dict[str, Any]) -> Optional[Tuple[str, str, str]]:
+        """(parent, function name, arguments) of a call a TOOL span may be tied to; None for any other call."""
+        ref, parent, name = cx.get("source_ref"), cx.get("parent"), call["function_name"]
+        if not (isinstance(ref, dict) and ref.get("part") == "output_message"):  # a history-message call has no span of its own
+            return None
+        if not isinstance(parent, str) or not name:
+            return None
+        if "function_name_raw" in cx or "arguments_raw" in cx or "arguments_state" in cx:  # the name or the arguments are stand-ins
+            return None
+        return parent, name, json.dumps(call["arguments"], sort_keys=True, ensure_ascii=False)
+
+    def tool_key(self, span: Dict[str, Any]) -> Optional[Tuple[str, str, str]]:
+        """(parent, tool name, keyword arguments) of a TOOL span that was called with keyword arguments only."""
+        attrs = span["attributes"]
+        name, parent = attrs.get("tool.name"), span["parent"]
+        if span["kind"] != "TOOL" or not isinstance(parent, str) or not isinstance(name, str) or not name:
+            return None
+        given = _parse_arguments(attrs.get("input.value"))[0]
+        kwargs = given.get("kwargs")
+        if given.get("args") != [] or not isinstance(kwargs, dict):
+            return None
+        return parent, name, json.dumps(kwargs, sort_keys=True, ensure_ascii=False)
+
+    def pair_tool_spans(self) -> None:
+        """Tie a TOOL span to its call where exactly one call and one TOOL span share parent, name and arguments.
+
+        A span whose id repeats with different content still counts as a match for the others (so it can make a match
+        ambiguous) but is never tied itself, since the file does not say which of its two forms ran.
+        """
+        calls: Dict[Tuple[str, str, str], List[Tuple[Dict[str, Any], str, Dict[str, Any]]]] = {}
+        for step in self.steps:
+            sx = step["extra"][EXT]
+            for call in step.get("tool_calls") or []:
+                cid = call["tool_call_id"]
+                key = self.call_key(call, sx["calls"][cid])
+                if key is not None:
+                    calls.setdefault(key, []).append((step, cid, sx["calls"][cid]))
+        tools: Dict[Tuple[str, str, str], List[str]] = {}
+        for sid, span in self.spans.items():
+            key = self.tool_key(span)
+            if key is not None:
+                tools.setdefault(key, []).append(sid)
+        for key, sids in tools.items():
+            found = calls.get(key, [])
+            if len(sids) != 1 or len(found) != 1:
+                continue
+            step, cid, cx = found[0]
+            if self.repeated(sids[0]) or self.repeated(cx.get("span_id")):
+                continue
+            span = self.spans[sids[0]]
+            span["address"] = {"trajectory": self.key, "step": step["step_id"], "call": cid}
+            span["paired_by"] = PAIRED_TOOL_SPAN
+            cx["tool_span_id"] = sids[0]
+            cx["paired_by"] = PAIRED_TOOL_SPAN
+
     def run(self) -> None:
         self.walk()
         self.collect_tools()
@@ -654,6 +766,7 @@ class _Conversion:
         for sid, span in list(self.spans.items()):
             if span["kind"] == "LLM":
                 self.read_llm(sid)
+        self.pair_tool_spans()
 
 
 class Trail(Dataset):

@@ -79,13 +79,24 @@ def test_a_dependency_may_name_several_resources():
     assert ap.validate(record) == []
 
 
+def _readme_block(n):
+    return re.findall(r"```python\n(.*?)```", README.read_text(encoding="utf-8"), re.S)[n]
+
+
+def test_readme_core_example_runs_without_extras(tmp_path, monkeypatch):
+    """The first Python block of the README needs only the core and writes run.json to the working directory."""
+    monkeypatch.chdir(tmp_path)
+    exec(compile(_readme_block(0), "README.md", "exec"), {"print": lambda *a, **k: None})
+    record = json.loads((tmp_path / "run.json").read_text(encoding="utf-8"))
+    assert record["schema_version"] == "ATIF-v1.7" and ap.validate(record) == []
+
+
 @pytest.mark.network
-def test_readme_quick_start_runs(tmp_path):
-    """The first Python block of the README, with its placeholder file pointed at a real trace."""
-    block = re.search(r"```python\n(.*?)```", README.read_text(), re.S).group(1)
+def test_readme_dataset_example_runs(tmp_path):
+    """The second Python block of the README, with its placeholder file pointed at a real trace."""
     trace = Path(__file__).parent / "fixtures" / "atif_multiagent.json"
-    code = block.replace('"trace.json"', repr(str(trace)))
+    code = _readme_block(1).replace('"my_trace.json"', repr(str(trace)))
     data = os.environ.get("AGENTPILE_DATA")
     if data:  # read the pinned copy instead of downloading
-        code = code.replace('ap.load("who_and_when")', f'ap.load("who_and_when", root={str(Path(data) / "who_and_when")!r})')
-    exec(compile(code, "README.md", "exec"), {"print": lambda *a, **k: None})
+        code = code.replace('ap.load("who_and_when", ', f'ap.load("who_and_when", root={str(Path(data) / "who_and_when")!r}, ')
+    exec(compile(code, "README.md", "exec"), {"ap": ap, "print": lambda *a, **k: None})  # the block follows the first

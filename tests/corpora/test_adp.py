@@ -319,7 +319,7 @@ def test_api_action_arguments_absent_null_and_empty_stay_different():
     assert calls[0]["arguments_state"] == "missing" and "arguments_raw" not in calls[0]
     assert calls[1]["arguments_raw"] is None and "arguments_state" not in calls[1]
     assert "arguments_raw" not in calls[2] and "arguments_state" not in calls[2]
-    assert calls[3]["arguments_raw"] == ["x"]
+    assert calls[3]["arguments_raw"] == ["x"] and calls[3]["arguments_state"] == "unparsed"  # {} stands in for the list
     assert all(s["tool_calls"][0]["arguments"] == {} for s in run.steps if "tool_calls" in s)
     assert ap.validate(run) == []
     assert [e.content for e in ap.Run(json.loads(run.to_json())).events() if e.kind == "call"] == args

@@ -1,21 +1,27 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentpile"
-version = "0.0.1.dev0"
+version = "0.1.0"
 description = "Load public agent-trajectory datasets and agent traces into one run record based on ATIF v1.7."
 readme = "README.md"
 requires-python = ">=3.9"
-license = { text = "MIT" }
-authors = [{ name = "Yue Zhao" }]
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Yue Zhao", email = "yzhao010@usc.edu" }]
 keywords = ["agent", "trajectory", "trace", "dataset", "atif", "opentelemetry"]
 classifiers = [
-  "Development Status :: 2 - Pre-Alpha",
+  "Development Status :: 3 - Alpha",
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: MIT License",
+  "Intended Audience :: Developers",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 # The core reads ATIF, OTLP JSON and agentpile config files with the standard
@@ -37,9 +43,9 @@ dev = ["pytest>=7.0"]
 
 [project.urls]
 Homepage = "https://github.com/yzhao062/agentpile"
-
-[tool.setuptools]
-license-files = ["LICENSE"]
+Repository = "https://github.com/yzhao062/agentpile"
+Issues = "https://github.com/yzhao062/agentpile/issues"
+Changelog = "https://github.com/yzhao062/agentpile/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -163,6 +163,7 @@
             "c3": {
               "tool_id": "t.book",
               "arguments_raw": "{'offer_id': 7",
+              "arguments_state": "unparsed",
               "error": {
                 "type": "tool_error",
                 "message": "malformed arguments"

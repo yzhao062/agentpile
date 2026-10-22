@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -44,6 +45,54 @@ def test_custom_rule_and_unknown_rule():
 
 def test_config_record_has_no_deps():
     assert ap.derive_deps(next(ap.load(FIX / "config_mcp.json")), rules=["full_context"]) == []
+
+
+# -- Run.with_deps ----------------------------------------------------------------------------------------
+
+def _held(run):
+    return {s["step_id"]: s.get("extra", {}).get("agentpile", {}).get("deps") for s in run.steps}
+
+
+def test_with_deps_puts_each_entry_on_its_destination_step_and_leaves_the_run_alone():
+    run = _run()
+    before = run.to_dict()
+    wired = run.with_deps(["tool_call_id_v1"])
+    assert run.record == before  # the original view is unchanged
+    held = _held(wired)
+    assert [(d["src"]["call"], step) for step, deps in held.items() for d in deps or []] == [("c1", 4), ("c2", 4), ("c3", 5)]
+    assert all(d["rule"] == "tool_call_id" for deps in held.values() for d in deps or [])
+    assert ap.validate(wired) == [] and ap.derive_deps(wired) == ap.derive_deps(run)
+
+
+def test_with_deps_does_not_add_an_entry_twice_and_keeps_entries_already_held():
+    once = _run().with_deps()
+    assert once.with_deps() == once
+    both = once.with_deps(["full_context"])
+    assert sum(len(d or []) for d in _held(both).values()) == 3 + 10
+    assert {d["rule"] for deps in _held(both).values() for d in deps or []} == {"tool_call_id", "full_context"}
+
+
+def test_with_deps_entries_reach_the_otlp_export_as_links():
+    wired = _run().with_deps()
+    doc = json.loads(wired.to_otlp())
+    links = [lk for rs in doc["resourceSpans"] for ss in rs["scopeSpans"] for s in ss["spans"] for lk in s.get("links", [])]
+    assert len(links) == 3
+    assert next(ap.load(doc, reader="otlp-json")) == wired
+
+
+def test_with_deps_rejects_an_entry_for_a_step_the_run_does_not_have():
+    def elsewhere(run):
+        return [{"src": {"trajectory": run.id, "step": 1}, "dst": {"trajectory": "other", "step": 1},
+                 "rule": "custom", "rule_version": "1", "resource": None}]
+
+    with pytest.raises(ValueError, match="destination step"):
+        _run().with_deps([elsewhere])
+
+
+def test_with_deps_on_a_config_record_is_an_equal_copy():
+    config = next(ap.load(FIX / "config_mcp.json"))
+    copied = config.with_deps(["full_context"])
+    assert copied == config and copied.record is not config.record
 
 
 # -- recorded source order ------------------------------------------------------------------------------

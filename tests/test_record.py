@@ -46,6 +46,68 @@ def test_events_keep_the_step_order_where_positions_are_not_integers():
         assert [e.call_id for e in results] == ["c2", "c1"], ref  # the ATIF order
 
 
+def _span_addressed():
+    """The fixture as a reader with span addresses writes it: references are dicts, integer sort positions sit beside them."""
+    record = _run().to_dict()
+    for step in record["steps"]:
+        sx = step.get("extra", {}).get("agentpile", {})
+        if sx.get("source_ref") is not None:
+            sx["source_pos"], sx["source_ref"] = sx["source_ref"], {"span": f"s{sx['source_ref']}"}
+        if sx.get("result_refs") is not None:
+            sx["result_pos"] = sx["result_refs"]
+            sx["result_refs"] = [{"span": f"s{r}", "index": 0} for r in sx["result_refs"]]
+    return record
+
+
+def _shape(run):
+    return [(e.kind, e.address.get("step"), e.call_id) for e in run.events()]
+
+
+def test_sort_positions_order_events_whose_references_are_not_integers():
+    # The source order of the integer-addressed fixture, though no reference is an integer.
+    record = _span_addressed()
+    assert isinstance(record["steps"][2]["extra"]["agentpile"]["source_ref"], dict)
+    assert _shape(ap.Run(record)) == _shape(_run())
+    results = [e for e in ap.Run(record).events() if e.kind == "result" and e.address["step"] == 3]
+    assert [(e.call_id, e.address["result"]) for e in results] == [("c1", 1), ("c2", 0)]
+    assert [e.source_ref for e in results] == [{"span": "s2", "index": 0}, {"span": "s3", "index": 0}]  # the address, as stored
+
+
+def test_a_sort_position_wins_over_an_integer_reference():
+    record = _run().to_dict()
+    record["steps"][4]["extra"]["agentpile"]["source_pos"] = -5  # the last step's reference is 6
+    first = next(ap.Run(record).events())
+    assert (first.kind, first.address["step"]) == ("message", 5)
+    assert next(_run().events()).address["step"] == 1
+
+
+def test_events_keep_the_step_order_where_a_reference_has_no_usable_sort_position():
+    plain = _run().to_dict()
+    for step in plain["steps"]:
+        for key in ("source_ref", "result_refs"):
+            step.get("extra", {}).get("agentpile", {}).pop(key, None)
+    atif = _shape(ap.Run(plain))
+    assert [c for k, s, c in atif if k == "result" and s == 3] == ["c2", "c1"]
+    cases = {"fewer sort positions than results": ("result_pos", [3]),
+             "a sort position that is not an integer": ("result_pos", ["x", 2]),
+             "a bool": ("result_pos", [3, True]),
+             "a step sort position that is not an integer": ("source_pos", 1.5)}
+    for why, (key, value) in cases.items():
+        record = _span_addressed()
+        record["steps"][2]["extra"]["agentpile"][key] = value
+        assert _shape(ap.Run(record)) == atif, why
+    record = _span_addressed()
+    del record["steps"][2]["extra"]["agentpile"]["result_pos"]  # dict references and no sort position
+    assert _shape(ap.Run(record)) == atif
+
+
+def test_a_null_sort_position_leaves_the_result_beside_its_step():
+    record = _span_addressed()
+    sx = record["steps"][3]["extra"]["agentpile"]  # step 4, one result
+    sx["result_refs"], sx["result_pos"] = [None], [None]
+    assert [(k, s) for k, s, _ in _shape(ap.Run(record)) if s == 4] == [("message", 4), ("call", 4), ("result", 4)]
+
+
 def test_events_give_source_values_where_atif_needed_stand_ins():
     events = list(_run().events())
     step4_message = [e for e in events if e.kind == "message" and e.address["step"] == 4][0]

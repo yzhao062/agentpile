@@ -940,7 +940,8 @@ def test_openinference_message_shapes_are_mapped_by_id_and_odd_ones_are_kept_raw
     assert (first["tool_call_id"], first["arguments"]) == ("x1", {"k": 1})
     assert second["tool_call_id"] == "ap-3-1" and second["arguments"] == {}  # no id in the source: one is generated, never guessed
     cx = agent["extra"]["agentpile"]["calls"]
-    assert cx["ap-3-1"] == {"id_generated": True, "arguments_raw": "[1]", "source_ref": "0000000000000002"}
+    assert cx["ap-3-1"] == {"id_generated": True, "arguments_raw": "[1]", "arguments_state": "unparsed",
+                            "source_ref": "0000000000000002"}
     assert agent["observation"]["results"] == [{"source_call_id": "x1", "content": "R1"}]
     assert run.steps[3]["message"] == "done" and len(run.steps) == 4
     assert any("function_call_name" in f for f in run.source["lost_fields"])
@@ -1410,6 +1411,111 @@ def test_the_view_shows_no_arguments_the_source_never_recorded():
     assert not any(k.endswith("tool_calls.0.tool_call.function.arguments") for k in chat)
     assert chat["llm.output_messages.0.message.tool_calls.1.tool_call.function.arguments"] == "null"
     assert write_read(run) == run
+
+
+# One call per kind of argument: (call id, the arguments ATIF holds, the call extension).
+ARGUMENT_CASES = [
+    ("parsed", {"k": 1}, {}),                                                   # recorded as an object
+    ("empty", {}, {}),                                                          # a genuine empty object
+    ("text", {}, {"arguments_raw": "{bad", "arguments_state": "unparsed"}),     # text that is no JSON object: {} stands in
+    ("list", {}, {"arguments_raw": ["x", 1], "arguments_state": "unparsed"}),   # a JSON value that is no object
+    ("browser", {"arg0": "7"}, {"arguments_raw": "fill('7')"}),                 # raw kept beside a faithful parse
+    ("null", {}, {"arguments_raw": None}),                                      # an explicit null
+    ("absent", {}, {"arguments_state": "missing"}),                             # no arguments member at all
+    ("legacy", {}, {"arguments_raw": "{bad"}),                                  # written before the "unparsed" mark existed
+]
+
+
+def arguments_run(cases=ARGUMENT_CASES):
+    """A run whose one agent step makes the calls of ``cases``."""
+    record = copy.deepcopy(next(ap.load(FIX / "atif_multiagent.json")).record)
+    step = record["steps"][2]
+    step["tool_calls"] = [{"tool_call_id": cid, "function_name": "f_" + cid, "arguments": args} for cid, args, _ in cases]
+    del step["observation"]
+    sx = step["extra"]["agentpile"]
+    del sx["result_refs"]
+    sx["calls"] = {cid: cx for cid, _, cx in cases if cx}
+    return ap.Run(record)
+
+
+def argument_views(run, cases=ARGUMENT_CASES):
+    """call id -> (model span in gen_ai.output.messages, model span in llm.output_messages, tool span); MISSING when absent."""
+    doc = otlp.to_document(run)
+    chat = attrs_of([s for s in spans_of(doc) if attrs_of(s).get("agentpile.kind") == "step" and attrs_of(s)["agentpile.index"] == 2][0])
+    parts = {p["id"]: p for p in json.loads(chat["gen_ai.output.messages"])[0]["parts"] if p["type"] == "tool_call"}
+    out = {}
+    for j, (cid, _, _) in enumerate(cases):
+        tool = attrs_of(by_name(doc, "execute_tool f_" + cid)[0])
+        key = "llm.output_messages.0.message.tool_calls.%d.tool_call.function.arguments" % j
+        out[cid] = (parts[cid].get("arguments", MISSING), chat.get(key, MISSING), tool.get("gen_ai.tool.call.arguments", MISSING))
+    return out
+
+
+def test_a_model_span_shows_the_source_arguments_exactly_when_atif_holds_a_stand_in():
+    run = arguments_run()
+    assert ap.validate(run) == []
+    views = argument_views(run)
+    # an object the source recorded: the model span shows it, the tool span shows its text
+    assert views["parsed"][0] == {"k": 1} and json.loads(views["parsed"][1]) == {"k": 1} and json.loads(views["parsed"][2]) == {"k": 1}
+    assert views["empty"] == ({}, "{}", "{}")  # a genuine empty object stays an empty object
+    # a stand-in {}: both spans show the source value, and the llm.* text is the source text itself, not a quoted copy
+    assert views["text"] == ("{bad", "{bad", "{bad")
+    assert views["list"][0] == ["x", 1] and json.loads(views["list"][1]) == ["x", 1] and json.loads(views["list"][2]) == ["x", 1]
+    # raw kept beside a faithful parse (AgentRewardBench): the model span keeps the parsed object, only the tool span shows the raw text
+    assert views["browser"][0] == {"arg0": "7"} and json.loads(views["browser"][1]) == {"arg0": "7"} and views["browser"][2] == "fill('7')"
+    assert views["null"] == (None, "null", "null")
+    assert views["absent"] == (MISSING, MISSING, MISSING)
+    assert views["legacy"] == ({}, "{}", "{bad")  # a record written before the mark exports as it did
+    assert write_read(run) == run and keep(write_read(run)) == keep(run)
+    harbor_valid(run.record)  # last: it skips when Harbor is not installed
+
+
+def test_the_fixture_call_with_malformed_arguments_shows_its_text_on_both_spans():
+    run = next(ap.load(FIX / "atif_multiagent.json"))
+    doc = otlp.to_document(run)
+    chat = attrs_of([s for s in spans_of(doc) if attrs_of(s).get("agentpile.kind") == "step" and attrs_of(s)["agentpile.index"] == 3][0])
+    (part,) = [p for p in json.loads(chat["gen_ai.output.messages"])[0]["parts"] if p["type"] == "tool_call"]
+    assert part["arguments"] == "{'offer_id': 7"
+    assert chat["llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments"] == "{'offer_id': 7"
+    assert attrs_of(by_name(doc, "execute_tool book_flight")[0])["gen_ai.tool.call.arguments"] == "{'offer_id': 7"
+    assert [c["arguments"] for c in run.steps[3]["tool_calls"]] == [{}]  # the record still holds the stand-in
+    legacy = copy.deepcopy(run.record)
+    del legacy["steps"][3]["extra"]["agentpile"]["calls"]["c3"]["arguments_state"]
+    (old,) = [p for p in json.loads(attrs_of([s for s in spans_of(otlp.to_document(ap.Run(legacy)))
+                                              if attrs_of(s).get("agentpile.kind") == "step"
+                                              and attrs_of(s)["agentpile.index"] == 3][0])["gen_ai.output.messages"])[0]["parts"]
+              if p["type"] == "tool_call"]
+    assert old["arguments"] == {}  # without the mark the model span shows what ATIF holds, as before
+
+
+def test_the_model_span_form_of_each_call_reads_back_as_the_same_call_in_both_dialects():
+    run = arguments_run()
+    chat = attrs_of([s for s in spans_of(otlp.to_document(run)) if attrs_of(s).get("agentpile.kind") == "step"
+                     and attrs_of(s)["agentpile.index"] == 2][0])
+    parts = json.loads(chat["gen_ai.output.messages"])[0]["parts"]
+    back = genai_call_run([p for p in parts if p["type"] == "tool_call"])  # the view alone, as a collector would keep it
+    assert ap.validate(back) == []
+    step = back.steps[1]
+    cxs = step["extra"]["agentpile"]["calls"]
+    held = {c["tool_call_id"]: c["arguments"] for c in step["tool_calls"]}
+    assert held == {"parsed": {"k": 1}, "empty": {}, "text": {}, "list": {}, "browser": {"arg0": "7"}, "null": {},
+                    "absent": {}, "legacy": {}}
+    assert {k: cxs.get(k, {}).get("arguments_state") for k in held} == {
+        "parsed": None, "empty": None, "text": "unparsed", "list": "unparsed", "browser": None, "null": None,
+        "absent": "missing", "legacy": None}
+    assert cxs["text"]["arguments_raw"] == "{bad" and cxs["list"]["arguments_raw"] == ["x", 1] and cxs["null"]["arguments_raw"] is None
+    assert write_read(back) == back
+    # the OpenInference form: arguments are text, so a source string comes back as the same string
+    oi = ("openinference.instrumentation.openai_agents", "2.5.3")
+    calls = [{"id": cid, "name": "f_" + cid, "args": chat["llm.output_messages.0.message.tool_calls.%d.tool_call.function.arguments" % j]}
+             for j, (cid, _, _) in enumerate(ARGUMENT_CASES) if cid in ("parsed", "text", "browser")]
+    attrs = {"openinference.span.kind": "LLM", **oi_messages("llm.input_messages", [{"role": "user", "content": "go"}]),
+             **oi_messages("llm.output_messages", [{"role": "assistant", "tool_calls": calls}])}
+    oi_run = next(otlp.read(make_doc([("0000000000000001", None, "response", attrs, 1)], scope=oi)))
+    oi_cx = oi_run.steps[1]["extra"]["agentpile"]["calls"]
+    assert oi_cx["text"] == {"arguments_raw": "{bad", "arguments_state": "unparsed", "source_ref": "0000000000000001"}
+    assert [c["arguments"] for c in oi_run.steps[1]["tool_calls"]] == [{"k": 1}, {}, {"arg0": "7"}]
+    assert "arguments_state" not in oi_cx.get("parsed", {}) and "arguments_state" not in oi_cx.get("browser", {})
 
 
 # -- AnyValue, ids and document shapes -------------------------------------------------------------------

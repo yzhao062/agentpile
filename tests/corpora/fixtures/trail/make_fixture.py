@@ -14,7 +14,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 HERE = Path(__file__).parent
-G1, G2 = "0000000000000000000000000000aaa1", "0000000000000000000000000000aaa2"
+G1, G2, G4 = "0000000000000000000000000000aaa1", "0000000000000000000000000000aaa2", "0000000000000000000000000000aaa4"
 S1, S2 = "0000000000000000000000000000bbb1", "0000000000000000000000000000bbb2"
 BASE = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
 RESOURCE = {"service.name": "synthetic/app", "telemetry.sdk.language": "python"}
@@ -84,12 +84,14 @@ def chain(trace, sid, parent, n, at, dur, children, status="Ok", message="", eve
                 status=status, message=message, events=events)
 
 
-def tool(trace, sid, parent, name, at, dur, with_output=True):
+def tool(trace, sid, parent, name, at, dur, with_output=True, kwargs=None, args=(), output="tool output text"):
+    """A TOOL span; `kwargs` and `args` are what the tool was called with (a query by default)."""
+    kw = {"query": "synthetic fact"} if kwargs is None else kwargs
     a = {"tool.name": name, "tool.description": f"Synthetic {name}.",
          "tool.parameters": json.dumps({"query": {"type": "string", "description": "query"}}),
-         "input.value": json.dumps({"args": [], "sanitize_inputs_outputs": False, "kwargs": {"query": "synthetic fact"}})}
+         "input.value": json.dumps({"args": list(args), "sanitize_inputs_outputs": False, "kwargs": kw})}
     if with_output:
-        a["output.value"] = "tool output text"
+        a["output.value"] = output
     return span(trace, sid, parent, name.title(), at, dur, a, "TOOL")
 
 
@@ -219,6 +221,74 @@ def gaia_two():
     return {"trace_id": t, "spans": [root, orphan]}, labels_text
 
 
+def eid(step, part):
+    """Span id of the Step CHAIN (part 0), its LLM span (1) or one of its TOOL spans (2 and up) in `gaia_four`."""
+    return f"e{0:011d}{step:02d}{part:02d}"
+
+
+def gaia_four():
+    """One ToolCallingAgent whose steps show when a TOOL span is tied to a call and when it is not.
+
+    Step 1 and 2: one call and one TOOL span with the same name and arguments, under two Step CHAIN spans (both tie).
+    Step 3: two identical calls and two identical TOOL spans (none tie). Step 4: one call and two identical TOOL
+    spans (none tie). Step 5: TOOL spans whose argument value or tool name differs from the call's, or that was also
+    given a positional argument (none tie).
+    Step 6: the arguments are equal with the keys in another order (ties). Step 7: the call's arguments are not
+    JSON, so ATIF holds a stand-in {} that never matches a TOOL span called with {} (none). Step 8: the call
+    carries the object {} (ties). Step 9 and 10: a history-message call with the name and arguments of a TOOL span
+    (never tied), and a TOOL span whose id appears twice with different content (never tied). Step 11: two identical
+    calls and one TOOL span (none tie).
+    """
+    t = G4
+    agent_id = "e000000000000003"
+    first = [("system", SUB_SYS), ("user", SUB_USER)]
+    args = lambda **kw: json.dumps(kw)  # noqa: E731
+    out_h = "Thought: search.\nCode:\n```py\nweb_search(query='hist')\n```"
+    call_h = ("Calling tools:\n[{'id': 'call_hist', 'type': 'function', 'function': "
+              "{'name': 'web_search', 'arguments': {'query': 'hist'}}}]")
+    resp_h = "Call id: call_hist\nObservation:\nhistory result"
+    history = [("assistant", out_h + "<end_code>"), ("tool-call", call_h), ("tool-response", resp_h)]
+
+    def step(k, calls, tools, inputs=first, output=None):
+        at = 10 * k
+        return chain(t, eid(k, 0), agent_id, k, at, "PT0.9S",
+                     [llm(t, eid(k, 1), eid(k, 0), at, "PT0.4S", inputs, output, calls)] + tools)
+
+    def call_of(k, j, name, kwargs, **kw):
+        return tool(t, eid(k, j), eid(k, 0), name, 10 * k + j, "PT0.1S", kwargs=kwargs, **kw)
+
+    twin = [("call_twin1", "visit_page", args(url="u-twin")), ("call_twin2", "visit_page", args(url="u-twin"))]
+    steps = [
+        step(1, [("call_tie", "web_search", args(query="alpha"))], [call_of(1, 2, "web_search", {"query": "alpha"})]),
+        step(2, [("call_tie2", "web_search", args(query="alpha"))], [call_of(2, 2, "web_search", {"query": "alpha"})]),
+        step(3, twin, [call_of(3, 2, "visit_page", {"url": "u-twin"}), call_of(3, 3, "visit_page", {"url": "u-twin"})]),
+        step(4, [("call_one", "find_on_page_ctrl_f", args(search_string="s"))],
+             [call_of(4, 2, "find_on_page_ctrl_f", {"search_string": "s"}),
+              call_of(4, 3, "find_on_page_ctrl_f", {"search_string": "s"})]),
+        step(5, [("call_diff", "visit_page", args(url="u-call"))],
+             [call_of(5, 2, "visit_page", {"url": "u-other"}), call_of(5, 3, "page_down", {"url": "u-call"}),
+              call_of(5, 4, "visit_page", {"url": "u-call"}, args=["u-call"])]),
+        step(6, [("call_order", "find_archived_url", args(url="u-arch", date="20230831"))],
+             [call_of(6, 2, "find_archived_url", {"date": "20230831", "url": "u-arch"})]),
+        step(7, [("call_raw", "page_down", "not json")], [call_of(7, 2, "page_down", {})]),
+        step(8, [("call_empty", "page_up", "{}")], [call_of(8, 2, "page_up", {})]),
+        step(9, [], [call_of(9, 2, "web_search", {"query": "hist"})], output=out_h),
+        step(10, [("call_dup", "inspect_file_as_text", args(file_path="f", question="q"))],
+             [call_of(10, 2, "inspect_file_as_text", {"file_path": "f", "question": "q"}),
+              call_of(10, 2, "inspect_file_as_text", {"file_path": "f", "question": "q"}, output="another output")],
+             inputs=first + history),
+        step(11, [("call_pair1", "page_down", args(q="x")), ("call_pair2", "page_down", args(q="x"))],
+             [call_of(11, 2, "page_down", {"q": "x"})]),
+    ]
+    agent_span = agent(t, agent_id, "e000000000000002", "ToolCallingAgent.run", 1, "PT20S",
+                       ["web_search", "visit_page", "final_answer"], steps, task="Synthetic tool task.")
+    root = wrapper(t, "e000000000000001", None, "main", 0, "PT30S", {}, [
+        wrapper(t, "e000000000000002", "e000000000000001", "answer_single_question", 1, "PT25S",
+                {"example": {"task_id": "synthetic-task-4", "question": "Synthetic tool question.", "true_answer": "B"}},
+                [agent_span])])
+    return {"trace_id": t, "spans": [root]}, json.dumps({"trace_id": t, "errors": [], "scores": []})
+
+
 def swe_one():
     t = S1
     o1, o2, o3 = "Plan: look at the repo.\nCode:\n```py\nprint('one')\n```", "Next.\nCode:\n```py\nprint('two')\n```", "Done."
@@ -257,9 +327,9 @@ def swe_two():
 
 
 def main():
-    g1, g2 = gaia_one(), gaia_two()
-    gaia = {"trace": [json.dumps(g1[0], indent=4), json.dumps(g2[0]), "this row is not JSON"],
-            "labels": [g1[1], g2[1], None]}
+    g1, g2, g4 = gaia_one(), gaia_two(), gaia_four()
+    gaia = {"trace": [json.dumps(g1[0], indent=4), json.dumps(g2[0]), "this row is not JSON", json.dumps(g4[0])],
+            "labels": [g1[1], g2[1], None, g4[1]]}
     s1, s2 = swe_one(), swe_two()
     swe = {"trace": [json.dumps(s1[0]), json.dumps(s2[0])], "labels": [s1[1], s2[1]]}
     data = HERE / "data"

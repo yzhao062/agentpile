@@ -25,7 +25,9 @@ reader parses one record at a time and drops the dumps (``source.lost_fields``).
   and keyword ones keep their name. ``arguments_raw`` is always the whole action
   string, and text after the closing parenthesis (a ``#`` comment, or an HTML
   comment in one run) goes to the call's ``source_fields``. A string that does
-  not parse leaves ``arguments`` empty and sets ``arguments_parsed`` false.
+  not parse leaves ``arguments`` empty, sets ``arguments_parsed`` false and marks the call
+  ``arguments_state: "unparsed"``; only then does a model span of the OTLP export show the action
+  string instead of the parsed arguments.
 - Results. The source has no call ids and no result field. By BrowserGym's step
   semantics the page after action ``i`` is the observation of record ``i + 1``,
   so that record's AXTree text is the result of call ``i`` and its url, tabs,
@@ -434,6 +436,7 @@ class AgentRewardBench(Dataset):
                     cx["function_name_raw"] = action
                 if not ok:
                     cf["arguments_parsed"] = False
+                    cx["arguments_state"] = "unparsed"  # {} stands in for the action string; a parsed one has no mark
                 if trailing:
                     cf["trailing"] = trailing
                 if cf:

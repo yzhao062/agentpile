@@ -34,7 +34,8 @@ references.
   a synatra row). The result keeps the observation's class and its raw ``source``; ADP's own output relabels a
   linked ``user`` source as ``environment``, which is not done here. An ``api_action`` whose item has no
   ``kwargs`` member keeps ``arguments_state: "missing"`` in the call extension, a null ``kwargs`` keeps
-  ``arguments_raw: null``, and ``{}`` is the empty object, so the three stay different.
+  ``arguments_raw: null``, and ``{}`` is the empty object, so the three stay different. Any other ``kwargs``
+  that is not an object (a list, a string) is kept in ``arguments_raw`` and marks the call ``arguments_state: "unparsed"``.
 - Any other observation has no call to attach to and becomes its own step: ATIF source ``agent`` when the item
   says ``source: "agent"`` (390 items), else ``user`` (``source`` is ``user`` or ``environment``; ATIF has no
   environment source, and ADP's own output makes an environment-sourced one an empty agent step instead). The
@@ -113,6 +114,8 @@ def _call(item: Dict[str, Any]) -> Tuple[str, Dict[str, Any], Dict[str, Any]]:
             args = kwargs if isinstance(kwargs, dict) else {}
             if not isinstance(kwargs, dict):
                 cx["arguments_raw"] = kwargs
+                if kwargs is not None:  # {} stands in for a value that is not an object (an explicit null is no failed parse)
+                    cx["arguments_state"] = "unparsed"
     else:  # ADP's code_action_to_tool_call
         language, content = item.get("language"), item.get("content")
         if language in BASH:

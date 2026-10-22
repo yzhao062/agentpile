@@ -184,6 +184,7 @@ def _args_conversation():
             {"id": "dojo-null", "function": "g", "args": None},
             {"id": "flat-absent", "name": "h"},
             {"id": "flat-null", "name": "h", "arguments": None},
+            {"id": "list", "type": "function", "function": {"name": "f", "arguments": "[1]"}},
         ]},
     ]
 
@@ -204,6 +205,10 @@ def test_absent_null_and_empty_arguments_stay_three_different_things():
     assert calls["absent"] == {"arguments_state": "missing"}  # a JSON-safe marker, never the MISSING object
     assert calls["null"] == {"arguments_raw": None}
     assert "empty" not in calls and "object" not in calls  # an explicit empty object needs no marker
+    # arguments that are no JSON object (text, a JSON list) stay as given, and the call says ATIF holds a stand-in
+    assert calls["text"] == {"arguments_raw": "not json", "arguments_state": "unparsed"}
+    assert calls["list"] == {"arguments_raw": "[1]", "arguments_state": "unparsed"} and args["list"] == "[1]"
+    assert "arguments_state" not in calls["null"]  # a null is not a failed parse
     assert all(c["arguments"] == {} for c in run.steps[1]["tool_calls"][:4])  # ATIF holds {} in every case
     assert ap.validate(run) == []
 

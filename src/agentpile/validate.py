@@ -190,11 +190,20 @@ def _check_trajectory(traj: Dict[str, Any], path: str, errors: List[str]) -> Non
                 if cid not in call_ids:
                     errors.append(f"{sp}.extra.{EXT}.calls: {cid!r} matches no call on this step")
                 if isinstance(cx, dict) and "arguments_state" in cx:
-                    if cx["arguments_state"] != "missing":
-                        errors.append(f"{sp}.extra.{EXT}.calls[{cid!r}].arguments_state: {cx['arguments_state']!r} is not 'missing'")
-                    elif "arguments_raw" in cx:
+                    state = cx["arguments_state"]
+                    if state not in ("missing", "unparsed"):
+                        errors.append(f"{sp}.extra.{EXT}.calls[{cid!r}].arguments_state: {state!r} is not 'missing' or 'unparsed'")
+                    elif state == "missing" and "arguments_raw" in cx:
                         errors.append(f"{sp}.extra.{EXT}.calls[{cid!r}]: arguments_state 'missing' and arguments_raw "
                                       "cannot both be set (absent is not null)")
+                    elif state == "unparsed":
+                        held = next((c.get("arguments") for c in step.get("tool_calls") or [] if c.get("tool_call_id") == cid), None)
+                        if cx.get("arguments_raw") is None:
+                            errors.append(f"{sp}.extra.{EXT}.calls[{cid!r}]: arguments_state 'unparsed' needs the source "
+                                          "value in arguments_raw (null is not a failed parse)")
+                        elif cid in call_ids and held != {}:
+                            errors.append(f"{sp}.extra.{EXT}.calls[{cid!r}]: arguments_state 'unparsed' says ATIF holds "
+                                          "{} for the arguments, but the call holds something else")
     ext = (traj.get("extra") or {}).get(EXT)
     if ext is not None:
         _check(ext, schema()["$defs"]["trajectory_ext"], f"{path}.extra.{EXT}", errors)

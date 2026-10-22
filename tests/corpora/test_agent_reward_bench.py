@@ -8,6 +8,7 @@ import pytest
 
 import agentpile as ap
 from agentpile.corpora._base import CountMismatch
+from agentpile.formats import otlp
 from agentpile.corpora.agent_reward_bench import parse_action, read_run_file
 
 ROOT = Path(__file__).parent / "fixtures" / "agent_reward_bench"
@@ -185,6 +186,36 @@ def test_odd_actions_keep_everything():
     # the run crashed before a final record, so the last call has no result
     assert "observation" not in run.steps[-1] and "result_refs" not in _ext(run.steps[-1])
     assert run.dataset["summary_info"]["err_msg"] == "KeyboardInterrupt: stop"
+
+
+def _exported_arguments(run, call_id):
+    """(what the OTLP model span shows, what the tool span shows) as the arguments of one call."""
+    spans = [otlp.decode_attributes(s["attributes"]) for rs in otlp.to_document(run)["resourceSpans"]
+             for ss in rs["scopeSpans"] for s in ss["spans"]]
+    (model,) = [p.get("arguments") for a in spans if "gen_ai.output.messages" in a
+                for p in json.loads(a["gen_ai.output.messages"])[0]["parts"] if p["type"] == "tool_call" and p["id"] == call_id]
+    (tool,) = [a["gen_ai.tool.call.arguments"] for a in spans if a.get("gen_ai.tool.call.id") == call_id]
+    return model, tool
+
+
+def test_a_model_span_shows_the_action_string_only_for_a_call_that_did_not_parse():
+    run = _runs()[TWO]
+    calls = {s["tool_calls"][0]["tool_call_id"]: _ext(s)["calls"][s["tool_calls"][0]["tool_call_id"]] for s in _agent_steps(run)}
+    # arguments_raw is the whole action string on every call, but only a string that did not parse is marked
+    assert all("arguments_raw" in cx for cx in calls.values())
+    assert [cid for cid, cx in calls.items() if cx.get("arguments_state") == "unparsed"] == ["ap-6-0", "ap-12-0", "ap-14-0"]
+    flagged = [cid for cid, cx in calls.items() if (cx.get("source_fields") or {}).get("arguments_parsed") is False]
+    assert flagged == ["ap-6-0", "ap-12-0", "ap-14-0"]  # the mark and the source flag name the same calls
+    parsed = _exported_arguments(run, "ap-4-0")
+    assert parsed[0] == {"arg0": "3"}  # the model span keeps the parsed object, with the trailing HTML comment left out
+    assert parsed[1] == "click('3')  <!-- the model added a comment -->"  # the tool span shows the action string
+    empty = _exported_arguments(run, "ap-10-0")
+    assert empty[0] == {} and empty[1] == calls["ap-10-0"]["arguments_raw"]  # a call with no arguments is an empty object, not a failure
+    for cid in ("ap-6-0", "ap-12-0", "ap-14-0"):  # {} in ATIF stands in for an action that did not parse: both spans show the string
+        assert _exported_arguments(run, cid) == (calls[cid]["arguments_raw"], calls[cid]["arguments_raw"])
+    assert _exported_arguments(run, "ap-6-0")[0] == "fill('4', some_variable)"
+    assert ap.validate(run) == []
+    assert next(otlp.read(otlp.to_document(run))) == run
 
 
 def test_retry_turns_and_a_reply_without_an_action():

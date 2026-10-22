@@ -22,13 +22,13 @@
   ],
   "unsupported": [
     {
-      "what": "TOOL spans are not tied to calls: they carry no call id, so their span address stays null (the Step CHAIN parent also holds the LLM span)"
+      "what": "TOOL spans carry no call id, so a TOOL span is tied to a call (span address with a call, tool_span_id and paired_by unique_tool_span on the call) only when exactly one call and one TOOL span share the Step CHAIN parent, the tool name and the keyword arguments: 490 of the 648 tie, all from ToolCallingAgent steps. The other 158 are CodeAgent calls and keep a null address: 142 final_answer calls with a positional argument, 15 inspect_file_as_text (13) and visualizer (2) calls made from code whose only call under their parent is a history-message python_interpreter call, and 1 visualizer call in a step with no call"
     },
     {
       "what": "Code written in a message (CodeAgent) is not parsed into calls; its call exists only through the next tool-call history message"
     },
     {
-      "what": "Task outcome: the source gives none (the GAIA reference answer and the SWE-Bench gold patch sit in the harness span logs, kept under spans[].source_fields.logs)"
+      "what": "Task outcome: the source gives none (the GAIA reference answer and the SWE-Bench gold patch sit in the harness span logs, kept under spans[].source_fields.logs; gold_note names the fields)"
     },
     {
       "what": "Error category normalization: categories stay raw (31 strings for 21 taxonomy names)"
@@ -51,6 +51,7 @@
       "value": 148
     }
   },
+  "gold_note": "The loader keeps the gold fields as recorded; strip them before showing a run to an agent under test. All of them sit in the log of a harness span (kind null), at spans[<span id>].source_fields.logs[0].body. GAIA, all 117 runs: span answer_single_question, body['function.arguments']['example'] holds true_answer (the reference answer, a string) and 'Annotator Metadata' (the annotators' worked solution: Steps, Number of steps, Tools, Number of tools, How long did this take?); span get_examples_to_answer, body['function.output'] is a list of one example that equals that dict in all 117 runs, so [0]['true_answer'] and [0]['Annotator Metadata'] repeat both. The rest of the example (task_id, question, task, file_name, file_path) is task input, and body['function.arguments']['eval_ds'] of get_examples_to_answer lists column names and num_rows only. SWE-Bench, 30 of 31 runs (swe_bench/72822db6e120878d916b515c2501246b has no process_item span): span process_item, body['function.arguments']['item'] holds patch (the gold patch), test_patch (the gold tests) and FAIL_TO_PASS and PASS_TO_PASS (the test names, each a JSON list as text); the rest of item (instance_id, repo, base_commit, environment_setup_commit, version, created_at, problem_statement, hints_text, question) is task input or metadata, and body['function.output'] is the patch the agent produced, which differs from item.patch in all 25 runs that have one (5 have none). The other harness spans (main, create_agent_hierarchy, create_agent) hold no gold, the evaluations and annotations of every log are empty, and the annotators' steps, the gold patch, the test patch and the test lists (PASS_TO_PASS is empty in 4 runs) occur nowhere else in a loaded run. A true_answer can recur in text the agent wrote or in an annotation's evidence when the agent found it; that is run content, not a gold field.",
   "labels": [
     {
       "field": "errors[].location",

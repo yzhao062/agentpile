@@ -1,11 +1,13 @@
 """TRAIL loader on a synthetic copy of the pinned file layout (no dataset content).
 
-The fixture is built by fixtures/trail/make_fixture.py: five Parquet rows (three
+The fixture is built by fixtures/trail/make_fixture.py: six Parquet rows (four
 GAIA, two SWE Bench) written by hand in the real trace and annotation schema.
 """
 
 import calendar
+import json
 import os
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -13,16 +15,32 @@ import pytest
 pytest.importorskip("pyarrow")
 
 import agentpile as ap  # noqa: E402
-from agentpile.corpora.trail import _duration_ns, _iso_ns, _loads_tolerant  # noqa: E402
+from agentpile.corpora.trail import _Conversion, _duration_ns, _iso_ns, _loads_tolerant  # noqa: E402
+from agentpile.formats import otlp  # noqa: E402
 
 ROOT = Path(__file__).parent / "fixtures" / "trail"
 G1, G2, G3 = ("gaia/0000000000000000000000000000aaa1", "gaia/0000000000000000000000000000aaa2", "gaia/row-2")
+G4 = "gaia/0000000000000000000000000000aaa4"
 S1, S2 = "swe_bench/0000000000000000000000000000bbb1", "swe_bench/0000000000000000000000000000bbb2"
 T0 = calendar.timegm((2025, 1, 1, 12, 0, 0)) * 10**9  # BASE of the fixture generator
 
 
 def _runs(**kw):
     return {r.id: r for r in ap.load("trail", root=str(ROOT), **kw)}
+
+
+def _e(step, part):
+    """Span id of the Step CHAIN (part 0), LLM span (1) or a TOOL span (2 and up) of step `step` in the G4 row."""
+    return f"e{0:011d}{step:02d}{part:02d}"
+
+
+def _call(run, call_id):
+    """(step, call extension) of the call with this id."""
+    for step in run.steps:
+        cx = (step["extra"]["agentpile"].get("calls") or {}).get(call_id)
+        if cx is not None:
+            return step, cx
+    raise AssertionError(f"no call {call_id}")
 
 
 def _step(run, span_id, part="output_message"):
@@ -36,7 +54,7 @@ def _step(run, span_id, part="output_message"):
 
 def test_rows_become_runs_in_split_order():
     runs = _runs()
-    assert list(runs) == [G1, G2, G3, S1, S2]
+    assert list(runs) == [G1, G2, G3, G4, S1, S2]
     assert all(ap.validate(r) == [] for r in runs.values())
     assert list(_runs(split="swe_bench")) == [S1, S2]
     with pytest.raises(ValueError, match="split must be one of"):
@@ -94,12 +112,14 @@ def test_failed_llm_span_keeps_status_and_events_but_makes_no_step():
     assert chain["kind"] == "CHAIN" and chain["address"] is None and chain["status"]["code"] == "Error"
 
 
-def test_only_llm_spans_with_output_have_an_address_and_it_points_back():
+def test_llm_spans_with_output_have_a_step_address_and_it_points_back():
     run = _runs()[G1]
     addressed = {sid: s["address"] for sid, s in run.spans.items() if s["address"]}
-    assert set(addressed) == {"a000000000000004", "a000000000000005", "a000000000000007", "a000000000000009",
-                              "a000000000000011", "a000000000000014", "a000000000000016", "a000000000000020"}
-    for sid, address in addressed.items():
+    llm = {sid: a for sid, a in addressed.items() if run.spans[sid]["kind"] == "LLM"}
+    assert set(llm) == {"a000000000000004", "a000000000000005", "a000000000000007", "a000000000000009",
+                        "a000000000000011", "a000000000000014", "a000000000000016", "a000000000000020"}
+    assert set(addressed) - set(llm) == {"a000000000000012"}  # the one TOOL span that ties to a call, see the tool span tests
+    for sid, address in llm.items():
         step = run.steps[address["step"] - 1]
         sx = step["extra"]["agentpile"]
         assert address["trajectory"] == G1 and sx["span_id"] == sid and sx["source_ref"]["part"] == "output_message"
@@ -165,6 +185,7 @@ def test_history_tool_call_becomes_a_flagged_call_on_the_latest_agent_step():
     assert call == {"tool_call_id": "call_1", "function_name": "python_interpreter", "arguments": {}}
     cx = step["extra"]["agentpile"]["calls"]["call_1"]
     assert cx["arguments_raw"] == "search_agent(task='q')" and cx["arguments_raw"] in step["message"]
+    assert cx["arguments_state"] == "unparsed"  # the text is no JSON object, so ATIF holds {}
     assert cx["call_from"] == "history_message" and cx["paired_by"] == "latest_agent_step"
     assert cx["span_id"] == "a000000000000007" and cx["parent"] == "a000000000000006"
     assert cx["source_ref"] == {"span_id": "a000000000000016", "index": 5, "part": "input_message"}
@@ -212,6 +233,7 @@ def test_odd_messages_keep_what_the_source_says():
     assert call == {"tool_call_id": "ap-7-0", "function_name": "mystery", "arguments": {}}
     cx = out["extra"]["agentpile"]["calls"]["ap-7-0"]
     assert cx["id_generated"] is True and cx["arguments_raw"] == "not json" and "source_id" not in cx
+    assert cx["arguments_state"] == "unparsed"
     assert "metrics" not in out and "model_name" not in out
     late = [s for s in run.steps if s["extra"]["agentpile"]["span_id"] == "b000000000000005" and s["source"] == "agent"]
     first = late[0]
@@ -302,9 +324,10 @@ def test_error_labels_sit_on_spans_that_exist():
                               "evidence": "search_agent(task='q')",
                               "description": "The code block has no final answer call.", "impact": "LOW"}
     assert first["source_ref"] == {"field": "errors", "index": 0, "location": "a000000000000007", "resolved": True}
-    # a label on a TOOL span targets that span; the span is not a step
+    # a label on a TOOL span targets that span, tied to a call or not; the span is not a step
     assert errors[1]["target"] == {"kind": "span", "address": {"trajectory": G1, "span": "a000000000000012"}}
-    assert runs[G1].spans["a000000000000012"]["address"] is None
+    assert runs[G1].spans["a000000000000012"]["address"] == {"trajectory": G1, "step": 12, "call": "call_sub1"}
+    assert runs[G1].spans["a000000000000017"]["address"] is None  # a final_answer TOOL span with no call under its parent
     # the sentinel location names no span: the annotation stays, at run level
     sentinel = errors[4]
     assert sentinel["target"] == {"kind": "run", "address": {"trajectory": G1}}
@@ -338,6 +361,189 @@ def test_events_walk_steps_calls_and_results():
     result = next(e for e in events if e.kind == "result" and e.call_id == "call_sub1")
     assert result.address["step"] == 12 and result.source_ref == {"span_id": "a000000000000014", "index": 4}
     assert not any(e.address.get("step") == 12 and e.kind == "message" for e in events)  # the output has no content
+
+
+def test_a_delegated_result_comes_after_the_helpers_steps():
+    # The manager's call_1 (step 7) delegates to the helper (steps 8 to 13); its tool-response is in the input of the
+    # manager's next model call (step 14). ATIF stores the result on step 7, but the source order puts it after step 13.
+    run = _runs()[G1]
+    shape = [(e.kind, e.address["step"], e.call_id) for e in run.events() if e.kind != "message"]
+    assert shape == [("call", 7, "call_1"), ("call", 12, "call_sub1"), ("result", 12, "call_sub1"),
+                     ("call", 13, "call_sub2"), ("result", 7, "call_1"), ("result", 7, None)]
+    order = [(e.kind, e.address["step"]) for e in run.events()]
+    delegated = order.index(("result", 7))
+    assert order.index(("call", 13)) < delegated < order.index(("message", 14))  # step 13 has no message event
+    deps = [(d["src"]["step"], d["src"]["call"], d["dst"]["step"]) for d in ap.derive_deps(run, rules=["tool_call_id_v1"])]
+    assert deps == [(12, "call_sub1", 13), (7, "call_1", 14)]  # not (7, call_1, 9), the helper's first step
+
+
+def test_every_step_and_result_carries_its_place_in_source_order():
+    for run in _runs().values():
+        placed = [s for s in run.steps if "source_pos" in s["extra"]["agentpile"]]
+        assert len(placed) == len(run.steps) - (1 if run.steps[0]["extra"]["agentpile"].get("empty_source") else 0)
+        positions = [s["extra"]["agentpile"]["source_pos"] for s in placed]
+        assert positions == sorted(set(positions))  # steps are made in source order, one per message
+        for step in placed:
+            sx = step["extra"]["agentpile"]
+            if "result_refs" in sx:
+                assert len(sx["result_pos"]) == len(sx["result_refs"]) == len(step["observation"]["results"])
+                assert all(p > sx["source_pos"] for p in sx["result_pos"])  # a result is read after the step it sits on
+                assert sx["result_pos"] == sorted(sx["result_pos"])
+            else:
+                assert "result_pos" not in sx
+            assert isinstance(sx["source_ref"], dict)  # the address into the source is unchanged
+    g1 = _runs()[G1]
+    manager = _step(g1, "a000000000000007")["extra"]["agentpile"]
+    helper = [s["extra"]["agentpile"]["source_pos"] for s in g1.steps if s["extra"]["agentpile"].get("actor") == "a000000000000008"
+              or s["extra"]["agentpile"].get("agent") == "a000000000000008"]
+    assert max(helper) < min(manager["result_pos"]) < _step(g1, "a000000000000016")["extra"]["agentpile"]["source_pos"]
+
+
+def test_single_agent_edges_follow_the_next_agent_step():
+    s1 = _runs()[S1]
+    assert [(d["src"]["step"], d["src"]["call"], d["dst"]["step"]) for d in ap.derive_deps(s1, rules=["tool_call_id_v1"])] \
+        == [(3, "call_1", 4), (4, "call_2", 5)]
+
+
+def test_trail_runs_survive_an_otlp_round_trip_with_their_source_order():
+    for run in _runs().values():
+        back = list(ap.load(json.loads(run.to_otlp()), reader="otlp-json"))
+        assert back == [run]
+        assert [(e.kind, e.address.get("step")) for e in back[0].events()] == [(e.kind, e.address.get("step")) for e in run.events()]
+
+
+def test_tool_span_ties_to_the_one_call_it_matches():
+    # the G1 helper: one web_search call and one web_search TOOL span, under the same Step CHAIN span
+    g1 = _runs()[G1]
+    step, cx = _call(g1, "call_sub1")
+    span = g1.spans["a000000000000012"]
+    assert span["address"] == {"trajectory": G1, "step": step["step_id"], "call": "call_sub1"} and step["step_id"] == 12
+    assert span["paired_by"] == "unique_tool_span" and span["kind"] == "TOOL" and span["parent"] == "a000000000000010"
+    assert cx["tool_span_id"] == "a000000000000012" and cx["paired_by"] == "unique_tool_span"
+    # the call keeps pointing at the LLM span it was read from; the tie adds fields and changes none
+    assert cx["span_id"] == "a000000000000011" and cx["parent"] == "a000000000000010" and "call_from" not in cx
+    assert cx["source_ref"] == {"span_id": "a000000000000011", "part": "output_message", "index": 0, "call": 0}
+    assert cx["history_refs"] == [{"span_id": "a000000000000014", "index": 3}] and cx["tool_id"] == "web_search"
+    assert set(span) == {"name", "kind", "parent", "trace_id", "start_time_unix_nano", "end_time_unix_nano", "status",
+                         "attributes", "events", "links", "address", "source_fields", "paired_by"}
+    # the pairing fixture: one tie per Step CHAIN span, also when another step makes the same call, and with the
+    # keys of the TOOL span's arguments in another order than the call's
+    g4 = _runs()[G4]
+    tied = {sid: s["address"]["call"] for sid, s in g4.spans.items() if s["kind"] == "TOOL" and s["address"]}
+    assert tied == {_e(1, 2): "call_tie", _e(2, 2): "call_tie2", _e(6, 2): "call_order", _e(8, 2): "call_empty"}
+    for sid, cid in tied.items():
+        step, cx = _call(g4, cid)
+        span = g4.spans[sid]
+        assert span["address"] == {"trajectory": G4, "step": step["step_id"], "call": cid}
+        assert span["paired_by"] == cx["paired_by"] == "unique_tool_span" and cx["tool_span_id"] == sid
+        assert span["parent"] == cx["parent"] and cx["source_ref"]["part"] == "output_message"
+        assert [c["tool_call_id"] for c in step["tool_calls"]] == [cid]
+    step, cx = _call(g4, "call_empty")
+    assert step["tool_calls"][0]["arguments"] == {} and "arguments_state" not in cx  # the object {} in the source, no stand-in
+
+
+def test_ambiguous_matches_tie_nothing():
+    run = _runs()[G4]
+    # two identical calls and two identical TOOL spans under one Step CHAIN span: each span has two candidate calls
+    twins = [_e(3, 2), _e(3, 3)]
+    assert run.spans[twins[0]]["attributes"]["input.value"] == run.spans[twins[1]]["attributes"]["input.value"]
+    assert [run.spans[s]["address"] for s in twins] == [None, None] and not any("paired_by" in run.spans[s] for s in twins)
+    for cid in ("call_twin1", "call_twin2"):
+        step, cx = _call(run, cid)
+        assert "tool_span_id" not in cx and "paired_by" not in cx
+    # one call and two identical TOOL spans: the call has two candidate spans
+    both = [_e(4, 2), _e(4, 3)]
+    assert [run.spans[s]["address"] for s in both] == [None, None]
+    assert "tool_span_id" not in _call(run, "call_one")[1]
+    # two identical calls and one TOOL span: the span has two candidate calls
+    assert run.spans[_e(11, 2)]["address"] is None
+    assert all("tool_span_id" not in _call(run, cid)[1] for cid in ("call_pair1", "call_pair2"))
+    # the same call in another step ties on its own (test above), so a repeat across steps is not ambiguous
+    assert run.spans[_e(2, 2)]["address"]["call"] == "call_tie2" and run.spans[_e(1, 2)]["address"]["call"] == "call_tie"
+
+
+def test_tool_span_without_a_matching_call_stays_untied():
+    run = _runs()[G4]
+    # same parent as the call but another argument value, another tool name, or the same keyword argument plus a positional one
+    for sid in (_e(5, 2), _e(5, 3), _e(5, 4)):
+        assert run.spans[sid]["address"] is None and "paired_by" not in run.spans[sid]
+        assert run.spans[sid]["parent"] == _e(5, 0)
+    assert "tool_span_id" not in _call(run, "call_diff")[1]
+    # a call whose arguments are not JSON holds the stand-in {}, which does not match a TOOL span called with nothing
+    step, cx = _call(run, "call_raw")
+    assert step["tool_calls"][0]["arguments"] == {} and cx["arguments_state"] == "unparsed" and cx["arguments_raw"] == "not json"
+    assert run.spans[_e(7, 2)]["address"] is None and "tool_span_id" not in cx
+    assert json.loads(run.spans[_e(7, 2)]["attributes"]["input.value"])["kwargs"] == {}
+    # TOOL spans of the CodeAgent in G1 and S1 (final_answer) have no structured call under their parent
+    assert _runs()[G1].spans["a000000000000017"]["address"] is None and _runs()[S1].spans["c000000000000006"]["address"] is None
+    # the untied TOOL spans of the row are these, with the history-call and repeated-id cases of the next test
+    untied = {sid for sid, s in run.spans.items() if s["kind"] == "TOOL" and s["address"] is None}
+    assert untied == {_e(3, 2), _e(3, 3), _e(4, 2), _e(4, 3), _e(5, 2), _e(5, 3), _e(5, 4), _e(7, 2), _e(9, 2), _e(10, 2),
+                      _e(11, 2)}
+
+
+def test_history_calls_and_repeated_span_ids_never_tie():
+    run = _runs()[G4]
+    # a history-message call has the name and arguments of the TOOL span beside it, but it was placed by position
+    step, cx = _call(run, "call_hist")
+    assert cx["call_from"] == "history_message" and cx["paired_by"] == "latest_agent_step" and "tool_span_id" not in cx
+    assert cx["parent"] == _e(9, 0) == run.spans[_e(9, 2)]["parent"]
+    assert step["tool_calls"][0]["function_name"] == "web_search" and step["tool_calls"][0]["arguments"] == {"query": "hist"}
+    assert json.loads(run.spans[_e(9, 2)]["attributes"]["input.value"])["kwargs"] == {"query": "hist"}
+    assert run.spans[_e(9, 2)]["address"] is None
+    # a TOOL span id that occurs twice with different content: the file does not say which form ran
+    assert run.dataset["duplicate_spans"] == {_e(10, 2): {"count": 2, "identical": False}}
+    assert run.spans[_e(10, 2)]["address"] is None and "tool_span_id" not in _call(run, "call_dup")[1]
+
+
+def test_a_tie_adds_its_own_fields_and_changes_nothing_else(monkeypatch):
+    paired = _runs()
+    with monkeypatch.context() as m:
+        m.setattr(_Conversion, "pair_tool_spans", lambda self: None)
+        plain = _runs()
+    ties = 0
+    for run_id, run in paired.items():
+        record = run.to_dict()
+        for entry in (record["extra"]["agentpile"].get("spans") or {}).values():
+            if "paired_by" in entry:
+                del entry["paired_by"]
+                entry["address"] = None
+                ties += 1
+        for step in record["steps"]:
+            for cx in ((step.get("extra") or {}).get("agentpile") or {}).get("calls", {}).values():
+                if cx.get("paired_by") == "unique_tool_span":
+                    del cx["paired_by"], cx["tool_span_id"]
+        assert record == plain[run_id].to_dict()
+    assert ties == 5  # one in G1, four in G4
+    assert not any("paired_by" in s for r in plain.values() for s in r.spans.values())
+
+
+def test_a_tied_tool_span_is_written_once_as_the_span_of_its_call():
+    for run in _runs().values():
+        if not run.spans:  # the unreadable row has no source spans to write
+            continue
+        doc = otlp.to_document(run)
+        spans = [s for rs in doc["resourceSpans"] for ss in rs["scopeSpans"] for s in ss["spans"]]
+        attrs = [otlp.decode_attributes(s.get("attributes") or []) for s in spans]
+        assert len({s["spanId"] for s in spans}) == len(spans)
+        # every source span is written once, whatever step, call or subagent it became
+        assert sorted(a["agentpile.span_key"] for a in attrs if "agentpile.span_key" in a) == sorted(run.spans)
+        # the operations are the source's: the spans agentpile adds are CHAIN spans, never a model, tool or agent call
+        kinds = Counter(a.get("openinference.span.kind") for a in attrs)
+        source = Counter(e["kind"] for e in run.spans.values())
+        assert {k: kinds[k] for k in ("LLM", "TOOL", "AGENT")} == {k: source[k] for k in ("LLM", "TOOL", "AGENT")}
+        assert all(a["openinference.span.kind"] == "CHAIN" for a in attrs if "agentpile.span_key" not in a)
+        # a call has one span: the TOOL span for a tied call, a CHAIN span carrying the call otherwise
+        n_calls = sum(len(s.get("tool_calls") or []) for s in run.steps)
+        assert sum(1 for a in attrs if a.get("agentpile.kind") == "call") == n_calls
+        for sid, entry in run.spans.items():
+            if "paired_by" in entry:
+                (index,) = [i for i, a in enumerate(attrs) if a.get("agentpile.span_key") == sid]
+                assert spans[index]["spanId"] == sid and attrs[index]["agentpile.kind"] == "call"
+                assert attrs[index]["openinference.span.kind"] == "TOOL"
+                assert json.loads(attrs[index]["agentpile.call.tool_call_id"]) == entry["address"]["call"]
+    g4 = _runs()[G4]
+    assert sum(1 for s in g4.spans.values() if "paired_by" in s) == 4
 
 
 def test_helpers_read_times_and_loose_json():
@@ -386,5 +592,29 @@ def test_full_pinned_dataset():
     assert len(from_history) == 564  # CodeAgent calls; the 548 structured calls come from ToolCallingAgent outputs
     flags = [s["extra"]["agentpile"] for s in steps]
     assert not any(f.get("history_only") or f.get("role_state") for f in flags)  # every assistant message found its output
-    addressed = sum(1 for r in runs for s in r.spans.values() if s["address"])
+    addressed = sum(1 for r in runs for s in r.spans.values() if s["address"] and s["kind"] == "LLM")
     assert addressed == 1967  # the LLM spans with an output; the 6 failed ones have none
+    assert sum(1 for r in runs for s in r.spans.values() if s["address"] and s["kind"] not in ("LLM", "TOOL")) == 0
+    tools = [s for r in runs for s in r.spans.values() if s["kind"] == "TOOL"]
+    tied = [s for s in tools if s["address"]]
+    assert len(tools) == 648 and len(tied) == 490  # the other 158 are CodeAgent calls (final_answer 142, other tools 16)
+    assert Counter(s.get("paired_by") for s in tied) == {"unique_tool_span": 490}
+    assert sum("tool_span_id" in cx for s in steps for cx in (s["extra"]["agentpile"].get("calls") or {}).values()) == 490
+    assert all(cx.get("paired_by") != "unique_tool_span" or "call_from" not in cx
+               for s in steps for cx in (s["extra"]["agentpile"].get("calls") or {}).values())
+    # source order: the steps of a run keep their positions in order and every result is read after the step it sits on
+    assert all(s["extra"]["agentpile"]["source_pos"] < t["extra"]["agentpile"]["source_pos"]
+               for r in runs for s, t in zip(r.steps, r.steps[1:]))
+    assert sum(len(s["extra"]["agentpile"].get("result_pos", [])) for s in steps) == len(results) == 1092
+    assert all(p > s["extra"]["agentpile"]["source_pos"] for s in steps for p in s["extra"]["agentpile"].get("result_pos", []))
+    edges = 0
+    for run in runs:
+        by_id = {s["step_id"]: s for s in run.steps}
+        agent_pos = [(s["extra"]["agentpile"]["source_pos"], s["step_id"]) for s in run.steps if s["source"] == "agent"]
+        for dep in ap.derive_deps(run, rules=["tool_call_id_v1"]):
+            src = by_id[dep["src"]["step"]]
+            k = [x["source_call_id"] for x in src["observation"]["results"]].index(dep["src"]["call"])
+            at = src["extra"]["agentpile"]["result_pos"][k]
+            assert dep["dst"]["step"] == next(sid for pos, sid in agent_pos if pos > at)  # the next agent step after the result
+            edges += 1
+    assert edges == 1049  # 67 of them point to a different step than they did when the result was ordered with its call

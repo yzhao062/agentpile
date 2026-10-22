@@ -40,6 +40,7 @@ traj = {
          "observation": {"results": [{"source_call_id": "c3", "content": "error: malformed arguments"}]},
          "extra": {"agentpile": {"actor": "booker", "message_state": "null", "source_ref": 4,
                                  "calls": {"c3": {"tool_id": "t.book", "arguments_raw": "{'offer_id': 7",
+                                                  "arguments_state": "unparsed",
                                                   "error": {"type": "tool_error", "message": "malformed arguments"}}},
                                  "result_refs": [5]}}},
         {"step_id": 5, "source": "agent", "message": "I could not complete the booking.",

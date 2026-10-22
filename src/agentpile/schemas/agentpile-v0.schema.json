@@ -112,11 +112,13 @@
         "parent": {"type": ["string", "null"]},
         "error": {},
         "arguments_raw": {},
-        "arguments_state": {"enum": ["missing"]},
+        "arguments_state": {"enum": ["missing", "unparsed"]},
         "arguments_stand_in": {"type": "string"},
         "id_generated": {"type": "boolean"},
         "source_id": {},
         "function_name_raw": {},
+        "tool_span_id": {"type": "string", "description": "Key in spans of the TOOL span a reader tied to this call although the source gives no call id; paired_by names the rule and the span's address names this call."},
+        "paired_by": {"type": "string", "description": "How a reader tied this call to a place the source does not state: latest_agent_step (a call from a history message, put on the latest agent step) or unique_tool_span (a TOOL span, named in tool_span_id)."},
         "source_ref": {},
         "source_fields": {"type": "object"}
       }
@@ -135,7 +137,8 @@
         "attributes": {"type": "object"},
         "events": {"type": "array"},
         "links": {"type": "array"},
-        "address": {"type": ["object", "null"]}
+        "address": {"type": ["object", "null"]},
+        "paired_by": {"type": "string", "description": "Set with an address that names a call when the source gives no call id and a reader inferred it (unique_tool_span); absent when the address comes from the source."}
       }
     },
     "trajectory_ext": {
@@ -162,6 +165,7 @@
         "message_state": {"enum": ["null", "missing"]},
         "message_raw": {},
         "source_ref": {},
+        "source_pos": {"type": "integer", "description": "Sort position of the step in recorded source order, for a reader whose source_ref is not an integer; only the order of the integers matters."},
         "source_fields": {"type": "object"},
         "empty_source": {"type": "boolean"},
         "inputs": {
@@ -174,6 +178,7 @@
         },
         "calls": {"type": "object", "additionalProperties": {"$ref": "#/$defs/call_ext"}},
         "result_refs": {"type": "array"},
+        "result_pos": {"type": "array", "items": {"type": ["integer", "null"]}, "description": "Sort position of each result in recorded source order, parallel to result_refs."},
         "result_fields": {"type": "array", "items": {"type": ["object", "null"]}},
         "deps": {"type": "array", "items": {"$ref": "#/$defs/dep"}}
       }

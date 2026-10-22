@@ -19,6 +19,7 @@ ENV = "AGENTPILE_CACHE"
 
 
 def cache_root() -> Path:
+    """The cache root: ``$AGENTPILE_CACHE``, else ``$XDG_CACHE_HOME/agentpile``, else ``~/.cache/agentpile``."""
     if os.environ.get(ENV):
         return Path(os.environ[ENV]).expanduser()
     base = os.environ.get("XDG_CACHE_HOME") or str(Path.home() / ".cache")

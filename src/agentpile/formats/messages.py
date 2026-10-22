@@ -12,7 +12,9 @@ into an ATIF v1.7 trajectory:
   by name or position.
 - Where ATIF needs a stand-in, the source value is kept in the extension:
   ``message_state`` for a null or absent content, ``arguments_raw`` for
-  arguments that are not a JSON object (an explicit null included),
+  arguments that are not a JSON object (an explicit null included; any other
+  such value also sets ``arguments_state: "unparsed"``, which says ATIF holds
+  ``{}`` for it),
   ``arguments_state: "missing"`` for a call whose source had no ``arguments``
   member at all (an absent member, a null and an empty object stay three
   different records), ``message_raw`` / ``content_raw`` for content parts ATIF
@@ -310,6 +312,8 @@ def messages_to_trajectory(
                     args, raw = _parse_arguments(raw_args)
                     if raw is not _NO_RAW:
                         cx["arguments_raw"] = raw
+                        if raw is not None:  # {} stands in for a value that is not an object (an explicit null is no failed parse)
+                            cx["arguments_state"] = "unparsed"
                 extra_keys = {k2: v for k2, v in tc.items() if k2 not in ("id", "type", "function", "args", "arguments", "name")}
                 if extra_keys:
                     cx["source_fields"] = extra_keys

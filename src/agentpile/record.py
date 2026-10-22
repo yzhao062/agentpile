@@ -84,6 +84,21 @@ def _is_position(ref: Any) -> bool:
     return isinstance(ref, int) and not isinstance(ref, bool)
 
 
+def _placed(pos: Any, ref: Any) -> Tuple[Optional[int], bool]:
+    """(the integer an event sorts by or None, whether the order can use what the reader stored).
+
+    A stored sort position (``source_pos`` of a step, an item of ``result_pos``) wins over the
+    reference beside it; without one, an integer reference is the position. No reference at all
+    leaves the event beside its step; a reference that is not an integer, with no sort position
+    next to it, is one the order cannot use.
+    """
+    if _is_position(pos):
+        return pos, True
+    if _is_position(ref):
+        return ref, True
+    return None, pos is None and ref is None
+
+
 class Run:
     """Read-only view over one trajectory record or one config record."""
 
@@ -174,11 +189,16 @@ class Run:
         ATIF stores a result on the step that issued its call, which can sit
         before turns the source recorded in between. The events follow the
         source instead: a message, its calls and every later result come out at
-        the source position the reader stored (``source_ref`` of the step,
-        ``result_refs`` of the results, when they are integers). A result keeps
-        its association with its call through ``call_id``, and every event
-        keeps its address, so the order of this view never changes an address.
-        Where a record has no integer positions, or mixes other kinds, the
+        the source position the reader stored. A reader whose references are
+        integers (a message index) needs nothing more: ``source_ref`` of the
+        step and ``result_refs`` of the results are the positions. A reader
+        whose references are not integers (a span address) stores an integer
+        sort position beside each: ``source_pos`` on the step extension and
+        ``result_pos``, parallel to ``result_refs``. A stored sort position wins
+        over the reference. A result keeps its association with its call through
+        ``call_id``, and every event keeps its address, so the order of this view
+        never changes an address. Where a record has no usable positions, or an
+        event has a reference that is not an integer and no sort position, the
         order is the order of the ATIF steps.
 
         Where ATIF forced a stand-in value (a non-null message or result, a
@@ -198,7 +218,8 @@ class Run:
 
         The step marker lets a rule see an agent step that has no message event
         (a step whose source had no message). Ordering is by the integer
-        positions the reader stored; see ``events``.
+        positions the reader stored (``source_pos``, ``result_pos`` or integer
+        references); see ``events``.
         """
         if self.kind == CONFIG:
             return []
@@ -212,9 +233,10 @@ class Run:
             role = step.get("source")
             actor = sx.get("actor")
             ref = sx.get("source_ref")
-            if _is_position(ref):
-                position = ref
-            elif ref is not None:
+            placed, usable = _placed(sx.get("source_pos"), ref)
+            if placed is not None:
+                position = placed
+            if not usable:
                 positional = False
             items.append((position, step, None))
             state = sx.get("message_state")
@@ -242,6 +264,7 @@ class Run:
                     name=call.get("function_name"), call_id=cid, error=cx.get("error"),
                     source_ref=cx.get("source_ref"), extra={"tool_id": cx.get("tool_id")})))
             refs = sx.get("result_refs") or []
+            rposs = sx.get("result_pos") or []
             rfields = sx.get("result_fields") or []
             results = (step.get("observation") or {}).get("results") or []
             for i, res in enumerate(results):
@@ -251,18 +274,49 @@ class Run:
                 state = rf.get("content_state")
                 content = None if state == "null" else MISSING if state == "missing" else rf.get("content_raw", res.get("content"))
                 rref = refs[i] if i < len(refs) else None
-                if _is_position(rref):
-                    rpos = rref
-                else:
-                    rpos = position  # no stored position: beside the step's own events
-                    if rref is not None:
-                        positional = False
+                placed, usable = _placed(rposs[i] if i < len(rposs) else None, rref)
+                rpos = position if placed is None else placed  # no stored position: beside the step's own events
+                if not usable:
+                    positional = False
                 items.append((rpos, step, Event(
                     "result", "tool", actor, content, {"trajectory": tid, "step": sid, "result": i},
                     name=rf.get("name"), call_id=cid, error=cx.get("error", rf.get("error")), source_ref=rref)))
         if positional:
             items = sorted(items, key=lambda item: item[0])  # stable: ties keep the ATIF order
         return [(step, event) for _pos, step, event in items]
+
+    def with_deps(self, rules: Any = ("tool_call_id_v1",)) -> "Run":
+        """A copy of this run whose steps carry the dependencies ``derive_deps(self, rules)`` finds.
+
+        Each entry goes under ``deps`` in the extension of its destination step,
+        where ``to_otlp()`` writes it as a span link. Every entry keeps the rule
+        and version that produced it, so an inferred dependency stays apart from
+        what was loaded. Entries a step already holds are kept, and an equal
+        entry is not added twice. This run is not changed; a config record comes
+        back as an equal copy.
+        """
+        from .deps import derive_deps
+
+        record = self.to_dict()
+        if self.kind == CONFIG:
+            return Run(record, CONFIG)
+        steps: Dict[Tuple[Any, Any], Dict[str, Any]] = {}
+        todo = [record]
+        while todo:
+            traj = todo.pop()
+            tid = traj.get("trajectory_id") or traj.get("session_id")
+            for step in traj.get("steps") or []:
+                steps.setdefault((tid, step.get("step_id")), step)
+            todo.extend(t for t in traj.get("subagent_trajectories") or [] if isinstance(t, dict))
+        for dep in derive_deps(self, rules):
+            dst = dep.get("dst") or {}
+            step = steps.get((dst.get("trajectory"), dst.get("step")))
+            if step is None:
+                raise ValueError(f"dependency {dep!r} names a destination step this run does not have")
+            held = step.setdefault("extra", {}).setdefault(EXT, {}).setdefault("deps", [])
+            if dep not in held:
+                held.append(copy.deepcopy(dep))
+        return Run(record, TRAJECTORY)
 
     # -- output --------------------------------------------------------------
 

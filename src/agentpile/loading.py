@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import difflib
 import os
 from pathlib import Path
 from typing import Any, Iterator, List, Optional
@@ -50,8 +51,12 @@ def load(source: Any, reader: Optional[str] = None, **options: Any) -> Iterator[
     if isinstance(source, (str, os.PathLike)):
         path = Path(source)
         if not path.exists():
+            if not isinstance(source, str) or os.sep in source or "/" in source or path.suffix:
+                raise FileNotFoundError(f"no such file: {str(source)!r}")
             known = ", ".join(datasets.names()) or "none registered"
-            raise FileNotFoundError(f"{str(source)!r} is neither a registered dataset ({known}) nor an existing file")
+            close = difflib.get_close_matches(source, datasets.names(), n=1)
+            hint = f"; did you mean {close[0]!r}?" if close else ""
+            raise FileNotFoundError(f"{source!r} is neither a registered dataset ({known}) nor an existing file{hint}")
         source = path
     if reader is not None:
         return iter(readers.get(reader).read(source, **options))

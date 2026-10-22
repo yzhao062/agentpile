@@ -37,6 +37,29 @@ def test_unknown_name_is_not_guessed():
         ap.load("no_such_dataset")
 
 
+def test_a_misspelled_dataset_name_gets_a_suggestion():
+    with pytest.raises(FileNotFoundError, match="did you mean 'who_and_when'"):
+        ap.load("who_and_whenn")
+
+
+def test_a_missing_path_is_reported_as_a_file(tmp_path):
+    for missing in ("trace.json", str(tmp_path / "trace"), tmp_path / "x"):
+        with pytest.raises(FileNotFoundError, match="no such file"):
+            ap.load(missing)
+
+
+def test_a_dataset_that_cannot_be_fetched_fails_at_call_time(tmp_path, monkeypatch):
+    import agentpile.corpora._base as base
+
+    def no_hub():
+        raise ImportError("loading a Hugging Face dataset needs the hf extra: pip install 'agentpile[hf]'")
+
+    monkeypatch.setenv("AGENTPILE_CACHE", str(tmp_path))
+    monkeypatch.setattr(base, "require_hub", no_hub)
+    with pytest.raises(ImportError, match="hf extra"):
+        ap.load("who_and_when")
+
+
 def test_unrecognized_file():
     with pytest.raises(ap.UnrecognizedSource, match="pass reader="):
         ap.load(FIX / "not_a_trace.json")

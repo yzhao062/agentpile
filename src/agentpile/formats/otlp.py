@@ -22,7 +22,9 @@ groups of attributes:
   ``input.value``, ``llm.*``) and OTel GenAI attributes (``gen_ai.operation.name``,
   ``gen_ai.agent.name``, ``gen_ai.request.model``, ``gen_ai.tool.name``, ``gen_ai.tool.call.id``,
   ``gen_ai.tool.call.arguments``, ``gen_ai.tool.call.result``; tool attributes follow GenAI v1.41.0).
-  The reader never uses the view for spans agentpile wrote.
+  The reader never uses the view for spans agentpile wrote. The view shows a call's arguments as the source
+  gave them: the parsed object on a model span, the source value on a tool span, and the source value on a model
+  span too where ATIF holds a stand-in {} for it (``arguments_state`` "unparsed"); nothing where the source recorded none.
 
 Dependency entries (a step's ``deps``) become span links carrying ``agentpile.dep.rule``,
 ``agentpile.dep.rule_version`` and ``agentpile.dep.resource``. A step without a timestamp gets a
@@ -107,7 +109,9 @@ Tool call arguments. A call with no arguments member stays absent: the ATIF fiel
 extension says arguments_state "missing". One tested dialect has a convention for it: OpenInference (the Agents SDK
 instrumentation, 2.5.3) does not export arguments equal to '{}', so there the reader reconstructs {} and the call
 extension names the rule in arguments_stand_in. Pydantic AI has no such convention (it also leaves arguments out when
-content capture is off), so its absent arguments stay missing. An explicit null stays null (arguments_raw).
+content capture is off), so its absent arguments stay missing. An explicit null stays null (arguments_raw). Arguments that
+are not a JSON object (text that does not parse, a list, a number) stay in arguments_raw, ATIF holds {} for them, and the
+call extension says arguments_state "unparsed".
 """
 
 # -- AnyValue ----------------------------------------------------------------------
@@ -661,13 +665,18 @@ def _call_extension(step_ext: Any, call_id: Any) -> Dict[str, Any]:
 
 
 def _shown_arguments(call: Dict[str, Any], cx: Dict[str, Any], prefer_raw: bool) -> Any:
-    """The arguments a backend is shown: ABSENT when the source recorded none (or the reader rebuilt {} for it)."""
+    """The arguments a backend is shown: ABSENT when the source recorded none (or the reader rebuilt {} for it).
+
+    A tool span (``prefer_raw``) shows the source value whenever the extension kept one. A model span shows the
+    parsed arguments, except for a call whose arguments the reader marked ``arguments_state`` "unparsed": ATIF
+    holds a stand-in {} there, so the span shows the source value like the tool span does.
+    """
     state = cx.get("arguments_state")
     if state == "missing" or "arguments_stand_in" in cx:
         return ABSENT
     if "arguments_raw" in cx and cx["arguments_raw"] is None:  # an explicit null in the source
         return None
-    if prefer_raw and "arguments_raw" in cx:
+    if "arguments_raw" in cx and (prefer_raw or state == "unparsed"):
         return cx["arguments_raw"]
     return call.get("arguments")
 
@@ -1132,8 +1141,8 @@ class _Writer:
             base = "llm.output_messages.0.message.tool_calls.%d.tool_call." % j
             v[base + "id"] = c.get("tool_call_id")
             v[base + "function.name"] = c.get("function_name")
-            if args is not ABSENT:
-                v[base + "function.arguments"] = _j(args)
+            if args is not ABSENT:  # OpenInference holds the arguments as text, so a source string goes in as it is
+                v[base + "function.arguments"] = args if isinstance(args, str) else _j(args)
         return ("chat " + model if isinstance(model, str) and model else "chat"), 3, v
 
     def _step_span(self, step: Dict[str, Any], i: int, sid: str, root_id: str, start: int, end: int, synth: bool,
@@ -2150,6 +2159,8 @@ class _Steps:
                         parsed = val
                     else:
                         cx["arguments_raw"] = args
+                        if args is not None:  # {} stands in for a value that is not an object (an explicit null is no failed parse)
+                            cx["arguments_state"] = "unparsed"
             calls_out.append({"tool_call_id": final, "function_name": fname if isinstance(fname, str) else "", "arguments": parsed})
             if not isinstance(fname, str):
                 cx["function_name_raw"] = fname

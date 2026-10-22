@@ -114,11 +114,19 @@ class Dataset:
 
     def load(self, limit: Optional[int] = None, verify: Optional[bool] = None, root: Optional[str] = None,
              **options: Any) -> Iterator[Run]:
-        """Yield runs. ``root`` reads a local directory laid out like the pinned
+        """Runs, read lazily. ``root`` reads a local directory laid out like the pinned
         files instead of downloading. A complete, unfiltered load of the pinned
         files is checked against the manifest count; ``verify=True`` also checks
-        a ``root`` copy, and ``verify=False`` skips the check."""
+        a ``root`` copy, and ``verify=False`` skips the check.
+
+        The files are fetched here, before the iterator is returned, so a
+        missing ``hf`` extra or a failed download is raised by this call.
+        """
         base = Path(root) if root is not None else self.files()
+        return self._runs(base, limit, verify, root, options)
+
+    def _runs(self, base: Path, limit: Optional[int], verify: Optional[bool], root: Optional[str],
+              options: Dict[str, Any]) -> Iterator[Run]:
         n = 0
         for key, raw, where in self.records(base, **options):
             yield self.convert(key, raw, where)

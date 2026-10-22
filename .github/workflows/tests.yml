@@ -6,12 +6,12 @@ on:
 
 jobs:
   core:
-    # Gate 6: the core installs with no dependencies and runs on the oldest and newest supported Python.
+    # Gate 6: the core installs with no dependencies and runs on every supported Python.
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.9", "3.12"]
+        python: ["3.9", "3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6

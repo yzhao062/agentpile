@@ -5,9 +5,14 @@
     for run in ap.load("who_and_when"):   # a dataset at its pinned revision
         run.labels, run.agents, run.steps
     run = next(ap.load("trace.json"))     # a file; the format is detected, never guessed
+    run.to_json("run.json"); run.to_otlp()
 
 A trajectory record is an ATIF v1.7 trajectory with agentpile fields under
 ``extra["agentpile"]``; a config record is ``agentpile-config/0`` JSON.
+``ap.datasets.names()`` lists the datasets, ``ap.readers.names()`` the file
+formats. Downloads go to ``ap.cache_root()`` (``~/.cache/agentpile`` unless
+``AGENTPILE_CACHE`` is set); ``ap.cache_info()`` and ``ap.clear_cache()``
+list and remove them.
 """
 
 from ._capture import CaptureError, capture, config_from
@@ -19,7 +24,7 @@ from .record import ATIF_VERSION, CONFIG_SCHEMA, EXT, MISSING, Event, Run
 from .registry import datasets, readers, register, writers
 from .validate import validate
 
-__version__ = "0.0.1.dev0"
+__version__ = "0.1.0"
 
 # Built-in plugins go in the same registries as installed ones, as lazy
 # module strings, so importing agentpile imports none of them. They are added
