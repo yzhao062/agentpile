@@ -326,10 +326,12 @@ def attach_config(record: Dict[str, Any], config: Dict[str, Any]) -> None:
         note["config_agents_not_attached"] = not_attached
 
 
-def build_runs(otlp: Dict[str, Any], config: Optional[Dict[str, Any]] = None) -> List[Run]:
+def build_runs(otlp: Dict[str, Any], config: Optional[Dict[str, Any]] = None,
+               allow_untested_version: bool = False) -> List[Run]:
     """Read an OTLP JSON document with the ``otlp-json`` reader, then attach ``config`` to every trajectory.
 
     Raises ``CaptureError`` if the reader is not registered or the document holds no span.
+    ``allow_untested_version`` is passed to the reader.
     """
     if READER not in readers:
         raise CaptureError(
@@ -339,7 +341,7 @@ def build_runs(otlp: Dict[str, Any], config: Optional[Dict[str, Any]] = None) ->
         raise CaptureError(
             "no span was captured: the agent did not run inside the capture, or the framework's tracing is switched "
             "off for that run (for example RunConfig(tracing_disabled=True) in the Agents SDK)")
-    runs = list(load(otlp, reader=READER))
+    runs = list(load(otlp, reader=READER, allow_untested_version=allow_untested_version))
     if config is not None:
         for run in runs:
             if run.kind == TRAJECTORY:
@@ -415,8 +417,9 @@ class Capture:
     the same attributes describe the spans that have finished so far.
     """
 
-    def __init__(self, agents: Sequence[Any]) -> None:
+    def __init__(self, agents: Sequence[Any], allow_untested_version: bool = False) -> None:
         self._agents = list(agents)
+        self._allow_untested = bool(allow_untested_version)
         self._session: Any = None
         self._bindings: List[Any] = []
         self._state = "new"  # new -> open -> closed
@@ -528,7 +531,7 @@ class Capture:
         if self._runs is not None:
             return list(self._runs)
         config = self.config
-        runs = build_runs(self.otlp, config.record if config is not None else None)
+        runs = build_runs(self.otlp, config.record if config is not None else None, self._allow_untested)
         if self._state == "closed":
             self._runs = runs
         return list(runs)
@@ -546,10 +549,13 @@ class Capture:
         return f"<Capture {self._state} agents={len(self._agents)} spans={len(spans)}>"
 
 
-def capture(agent: Union[Any, Sequence[Any]]) -> Capture:
+def capture(agent: Union[Any, Sequence[Any]], *, allow_untested_version: bool = False) -> Capture:
     """Capture the runs in which ``agent`` (one agent, or a list of agents) takes part, from entry to exit of the ``with`` block.
 
     Runs of other agents in the same window are not captured. Use ``async with``
     for an async run. See the module documentation for the lifecycle guarantees.
+    ``allow_untested_version=True`` builds the run records even when the framework's
+    instrumentation version is not one this release was tested with; they are then
+    marked ``source.dialect_tested`` false, as ``ap.load`` marks them.
     """
-    return Capture(_agent_list(agent))
+    return Capture(_agent_list(agent), allow_untested_version)

@@ -549,20 +549,24 @@ def with_scope_version(path, version):
     return docs
 
 
-@pytest.mark.parametrize("path, scope, tested", [(PAI, "pydantic-ai", "2.58.0"),
-                                                 (OAI, "openinference.instrumentation.openai_agents", "2.5.3")],
+@pytest.mark.parametrize("path, scope, tested", [(PAI, "pydantic-ai", ("2.58.0", "2.59.0")),
+                                                 (OAI, "openinference.instrumentation.openai_agents", ("2.5.3",))],
                          ids=["pydantic-ai", "openai-agents"])
 def test_an_untested_version_of_a_known_dialect_is_not_interpreted(path, scope, tested):
     for version in ("9.9.9", None, "2.58.01"):
         docs = with_scope_version(path, version)
         with pytest.raises(ap.UnsupportedVersion) as err:
             list(otlp.read(docs))
-        assert scope in str(err.value) and f"tested: {tested}" in str(err.value) and "allow_untested_version" in str(err.value)
+        message = str(err.value)
+        assert scope in message and f"tested: {', '.join(tested)}" in message and "allow_untested_version" in message
         with pytest.raises(ap.UnsupportedVersion):  # the loader passes the same refusal on
             list(ap.load(docs, reader="otlp-json"))
-    control = list(otlp.read(with_scope_version(path, tested)))  # the tested version reads, and nothing says otherwise
-    assert control and all(r.source["dialect_tested"] is True for r in control)
-    assert not any("not tested" in f for r in control for f in r.source["lost_fields"])
+    first = [r.steps for r in otlp.read(with_scope_version(path, tested[0]))]
+    for version in tested:  # each tested version reads, and nothing says otherwise
+        control = list(otlp.read(with_scope_version(path, version)))
+        assert control and all(r.source["dialect_tested"] is True for r in control)
+        assert not any("not tested" in f for r in control for f in r.source["lost_fields"])
+        assert [r.steps for r in control] == first
 
 
 def test_one_untested_span_among_tested_ones_refuses_the_whole_trace():

@@ -535,3 +535,24 @@ def test_run_is_built_from_the_document_with_the_config_attached():
     assert agent["instructions"] == "Answer weather questions."
     calls = [e for e in run.events() if e.kind == "call"]
     assert [(e.name, e.call_id) for e in calls] == [("get_weather", "call_w1")]
+
+
+def test_an_untested_framework_version_is_built_only_on_request(monkeypatch):
+    if "otlp-json" not in ap.readers:
+        pytest.skip("the otlp-json reader is not registered in this build yet")
+    from agentpile.formats import otlp
+
+    monkeypatch.setitem(otlp._TESTED, "pydantic-ai/genai", ("0.0.0",))  # the installed version is now untested
+    world = World("attribute")
+    with ap.capture(world.agent) as cap:
+        world.run()
+    with pytest.raises(ap.UnsupportedVersion, match="allow_untested_version"):
+        cap.run
+    world = World("attribute")
+    with ap.capture(world.agent, allow_untested_version=True) as cap:
+        world.run()
+    run = cap.run
+    assert run.source["dialect_tested"] is False and any("not tested" in f for f in run.source["lost_fields"])
+    assert [(e.name, e.call_id) for e in run.events() if e.kind == "call"] == [("get_weather", "call_w1")]
+    (agent,) = [a for a in run.agents if a["name"] == "weather_agent"]
+    assert agent["instructions"] == "Answer weather questions."  # the configuration is still attached

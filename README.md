@@ -74,7 +74,7 @@ A configuration with no execution is a config record (`agentpile-config/0`) with
 
 Inference is kept apart from what was loaded. `ap.load()` keeps what the source records, and the few pairings a reader has to infer (a result matched to its call by position, a TRAIL TOOL span tied to its call by a unique match) carry `paired_by` with the name of the rule. Dependencies between steps come from `ap.derive_deps(run, rules=[...])`, and every dependency names the rule and version that produced it. `run.with_deps(rules=[...])` returns a copy whose steps carry those entries, which `to_otlp()` then writes as span links; the run you loaded is not changed.
 
-`run.to_otlp()` writes a run as OTLP JSON spans in the layout of Harbor's ATIF-to-OpenTelemetry converter. A run loaded from a trace writes each of its source spans once, so a telemetry tool counts the same model and tool operations as in the original trace; the spans agentpile adds around them (the trajectory, user and system steps) are CHAIN spans, not model or tool operations. Reading an OTLP trace whose instrumentation version differs from the tested one raises an error unless you pass `allow_untested_version=True`, which marks the record as read from an untested version.
+`run.to_otlp()` writes a run as OTLP JSON spans in the layout of Harbor's ATIF-to-OpenTelemetry converter. A run loaded from a trace writes each of its source spans once, so a telemetry tool counts the same model and tool operations as in the original trace; the spans agentpile adds around them (the trajectory, user and system steps) are CHAIN spans, not model or tool operations. Reading an OTLP trace whose instrumentation version differs from the tested ones raises an error unless you pass `allow_untested_version=True`, which marks the record as read from an untested version.
 
 ## Capturing a Running Agent
 
@@ -91,6 +91,8 @@ cap.run            # the captured run
 cap.otlp           # the same spans as an OTLP JSON document
 ap.config_from(my_agent)   # the configuration alone: instructions, model, tools with their schemas, handoffs
 ```
+
+Capture is tested with Pydantic AI 2.58.0 and 2.59.0 and with the OpenAI Agents SDK 0.24.0 (openinference-instrumentation-openai-agents 2.5.3). With another version `cap.run` raises an error; `ap.capture(my_agent, allow_untested_version=True)` builds the run anyway and marks it `source.dialect_tested` false.
 
 A capture uses its own tracer provider and never sets the global one. Observers the host program already had keep receiving every span, and the agent's original instrumentation setting is restored when the block exits, including on an exception. Everything a capture records happens while the block is open and only for the agents passed to `capture()`; runs of other agents in the same window are not recorded. What counts as a selected agent's run depends on the framework. For the Agents SDK, a trace in which a selected agent takes part (it starts the run, receives a handoff, or is called as a tool) is recorded whole, other participants included; the SDK names agents only by name in its spans, so an unselected agent that shares a selected agent's name is also recorded. For Pydantic AI, each selected agent's own runs are recorded: an agent that a selected agent calls from a tool is recorded only when it is selected too, so pass every agent whose delegated work you want.
 

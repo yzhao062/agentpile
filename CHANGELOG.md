@@ -2,7 +2,7 @@
 
 All notable changes to agentpile are listed here. Versions follow [Semantic Versioning](https://semver.org/); before 1.0, a minor version may change the record format, and the entry says how.
 
-## 0.1.0 (2026-10-20)
+## 0.1.0 (2026-10-21)
 
 The first release.
 
@@ -14,6 +14,6 @@ The first release.
 - `Run.events()`: messages, tool calls and tool results in the order the source recorded them, with each event's address in the record.
 - `ap.derive_deps(run, rules=[...])` with six named, versioned rules (`tool_call_id_v1`, `full_context_v1`, `resource_chain_v1`, `last_writer_v1`, `prior_reads_v1`, `value_flow_v1`), and `Run.with_deps(rules=[...])`, which returns a copy whose steps carry the entries.
 - `run.to_json()` and `run.to_otlp()`; an OTLP export reads back to an equal record, and a run loaded from a trace writes each source span once.
-- `ap.capture(agent=...)` and `ap.config_from(agent)` for Pydantic AI and the OpenAI Agents SDK.
+- `ap.capture(agent=...)` and `ap.config_from(agent)` for Pydantic AI (2.58.0 and 2.59.0) and the OpenAI Agents SDK (0.24.0, through openinference-instrumentation-openai-agents 2.5.3). Another framework version raises `UnsupportedVersion` unless `allow_untested_version=True`, which builds the run and marks it.
 - `ap.validate(record)`, the JSON schema of the extension, and plugin registries for readers, writers and datasets (`ap.register` and the `agentpile.readers`, `agentpile.writers` and `agentpile.datasets` entry-point groups).
 - One download cache, `~/.cache/agentpile/` (`AGENTPILE_CACHE`), with `ap.cache_info()` and `ap.clear_cache()`.

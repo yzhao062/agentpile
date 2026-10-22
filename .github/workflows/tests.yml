@@ -7,7 +7,8 @@ on:
 jobs:
   core:
     # Gate 6: the core installs with no dependencies and runs on every supported Python.
-    runs-on: ubuntu-latest
+    # ubuntu-latest (26.04) has no Python 3.9 build; 24.04 still has one.
+    runs-on: ${{ matrix.python == '3.9' && 'ubuntu-24.04' || 'ubuntu-latest' }}
     strategy:
       fail-fast: false
       matrix:

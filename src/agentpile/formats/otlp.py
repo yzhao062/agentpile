@@ -46,11 +46,11 @@ step a CHAIN span, and a step or call that no source span stands behind a CHAIN 
 agent operations the source had, and the token totals it had.
 
 Reader. Spans written by agentpile rebuild the exact record. Spans of two framework dialects are
-mapped into ATIF steps (``DIALECTS``, ``MAPPING``): Pydantic AI 2.58.0 (OTel GenAI conventions) and the
-OpenAI Agents SDK 0.24.0 through openinference-instrumentation-openai-agents 2.5.3 (OpenInference).
+mapped into ATIF steps (``DIALECTS``, ``MAPPING``): Pydantic AI 2.58.0 and 2.59.0 (OTel GenAI conventions)
+and the OpenAI Agents SDK 0.24.0 through openinference-instrumentation-openai-agents 2.5.3 (OpenInference).
 Calls and results pair by tool call id only and nothing is inferred. A dialect is interpreted only for
-the instrumentation scope version it was tested with: any other version raises ``UnsupportedVersion``
-naming the tested one, and ``allow_untested_version=True`` reads it anyway and marks the run
+the instrumentation scope versions it was tested with: any other version raises ``UnsupportedVersion``
+naming the tested ones, and ``allow_untested_version=True`` reads it anyway and marks the run
 (``source.dialect_tested`` false, a ``lost_fields`` note). Spans of any other dialect are read
 generically: the run holds one empty placeholder step, and ``source.lost_fields`` says what was not
 mapped. In every case each span is kept in the extension's ``spans`` field, with the address of the step
@@ -76,12 +76,13 @@ from ..record import ATIF_VERSION, EXT, EXT_VERSION, TRAJECTORY, Run
 name = "otlp-json"
 READER_VERSION = "1"
 
-# Supported dialects: instrumentation scope name -> (dialect name, tested scope version).
+# Supported dialects: instrumentation scope name -> (dialect name, tested scope versions). Pydantic AI 2.59.0
+# builds the same records as 2.58.0 from the fixture scripts; its spans add one key to model_request_parameters.
 DIALECTS = {
-    "pydantic-ai": ("pydantic-ai/genai", "2.58.0"),
-    "openinference.instrumentation.openai_agents": ("openinference/openai-agents", "2.5.3"),
+    "pydantic-ai": ("pydantic-ai/genai", ("2.58.0", "2.59.0")),
+    "openinference.instrumentation.openai_agents": ("openinference/openai-agents", ("2.5.3",)),
 }
-_TESTED = {dialect: version for dialect, version in DIALECTS.values()}
+_TESTED = {dialect: versions for dialect, versions in DIALECTS.values()}
 _SCOPE_OF = {dialect: scope for scope, (dialect, _) in DIALECTS.items()}
 
 OPTIONS = ("allow_untested_version",)
@@ -1532,13 +1533,18 @@ def _scope_versions(spans: List[_Span], dialect: str) -> List[str]:
     return sorted({s.scope_version for s in spans if s.scope_name == scope})
 
 
+def _is_tested(found: List[str], dialect: str) -> bool:
+    """True when the spans declare one scope version and it is one this release was tested with."""
+    return len(found) == 1 and found[0] in _TESTED[dialect]
+
+
 def _check_tested(spans: List[_Span], dialect: str, allow_untested: bool) -> None:
     """Refuse to interpret a dialect at a scope version it was not tested with, unless the caller opted in."""
     found = _scope_versions(spans, dialect)
-    tested = _TESTED[dialect]
-    if found == [tested] or allow_untested:
+    if _is_tested(found, dialect) or allow_untested:
         return
     shown = ", ".join(repr(v) if v else "none declared" for v in found)
+    tested = ", ".join(_TESTED[dialect])
     raise UnsupportedVersion(
         f"{_SCOPE_OF[dialect]} version {shown} is not a tested version of the {dialect} dialect (tested: {tested}); "
         f"its spans are not interpreted into steps because the layout may differ. Pass allow_untested_version=True "
@@ -1661,10 +1667,10 @@ class _Builder:
 
     def run(self) -> Run:
         found = _scope_versions(self.spans, self.dialect)
-        if found != [_TESTED[self.dialect]]:  # only reached when the caller opted in
+        if not _is_tested(found, self.dialect):  # only reached when the caller opted in
             self.note("dialect: instrumentation scope version %s was not tested (tested: %s); the spans were interpreted "
                       "with the tested layout because allow_untested_version=True"
-                      % (", ".join(repr(v) if v else "none declared" for v in found), _TESTED[self.dialect]))
+                      % (", ".join(repr(v) if v else "none declared" for v in found), ", ".join(_TESTED[self.dialect])))
         agents = [s for s in self.spans if self.is_agent(s)]
         self.delegated = {a.key for a in agents if any(self.is_tool(x) for x in self.ancestors(a))}
         units: Dict[Optional[str], Dict[str, List[_Span]]] = {None: {"llm": [], "tool": [], "agent": []}}
@@ -1737,7 +1743,7 @@ class _Builder:
         source: Dict[str, Any] = {"format": name, "record_key": self.trace_id, "reader": name, "reader_version": READER_VERSION,
                                   "lost_fields": [], "dialect": self.dialect}
         source.update(self.info)
-        source["dialect_tested"] = {s.scope_version for s in self.spans if self.in_scope(s)} == {_TESTED[self.dialect]}
+        source["dialect_tested"] = _is_tested(_scope_versions(self.spans, self.dialect), self.dialect)
         traj["extra"] = {EXT: {"version": EXT_VERSION, "source": source, "task": {"id": None, "text": None},
                                "outcome": {"success": None, "score": None, "raw": None}, "labels": [],
                                "agents": roster, "tools": tools}}
