@@ -569,15 +569,19 @@ def test_an_untested_version_of_a_known_dialect_is_not_interpreted(path, scope, 
         assert [r.steps for r in control] == first
 
 
-def test_one_untested_span_among_tested_ones_refuses_the_whole_trace():
+@pytest.mark.parametrize("other", ["3.0.0", "2.59.0"], ids=["untested", "two-tested"])
+def test_a_trace_that_mixes_scope_versions_is_refused_whole(other):
     doc = json.loads(PAI.read_text(encoding="utf-8"))
     extra = copy.deepcopy(doc["resourceSpans"][0]["scopeSpans"][0])
-    extra["scope"]["version"] = "3.0.0"
+    extra["scope"]["version"] = other  # beside 2.58.0: a mixture is untested even when each version is tested
     for sp in extra["spans"]:
         sp["spanId"] = sp["spanId"][::-1]
     doc["resourceSpans"][0]["scopeSpans"].append(extra)
-    with pytest.raises(ap.UnsupportedVersion, match="3.0.0"):
+    with pytest.raises(ap.UnsupportedVersion, match=other):
         list(otlp.read(doc))
+    runs = list(otlp.read(doc, allow_untested_version=True))
+    assert runs and all(r.source["dialect_tested"] is False for r in runs)
+    assert all(any("not tested" in f for f in r.source["lost_fields"]) for r in runs)
 
 
 def test_an_untested_version_is_read_only_on_request_and_the_run_says_so():
