@@ -4,7 +4,7 @@
   "github": "yzhao062/catchbench",
   "revision": "30a516c77cda902de2f8e56fb27be09ea3034591",
   "checked_at": "2026-10-20",
-  "license_on_card": "MIT; rows name their upstream licence",
+  "license_on_card": "MIT; rows name their upstream license",
   "gated": false,
   "allow_patterns": null,
   "configs_splits": [
