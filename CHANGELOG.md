@@ -2,6 +2,22 @@
 
 All notable changes to agentpile are listed here. Versions follow [Semantic Versioning](https://semver.org/); before 1.0, a minor version may change the record format, and the entry says how.
 
+## 0.1.1 (2026-10-22)
+
+Fixes found by running 0.1.0 on Google Colab, where the preinstalled google-adk caps OpenTelemetry at 1.42.1.
+
+### Changed
+
+- The `otel` extra installs only `opentelemetry-proto`, which `ap.send_otlp` uses for a receiver that takes only protobuf. The OpenTelemetry SDK comes with the `pydantic-ai` and `openai-agents` extras, since capture is the only code that uses it.
+- The OpenTelemetry lower bound of the `otel`, `pydantic-ai` and `openai-agents` extras is 1.42.1, down from 1.45.1, so installing them on Colab no longer upgrades OpenTelemetry past what google-adk accepts. The tests pass on both versions.
+
+### Fixed
+
+- Loading a gated dataset (TRAIL) without access raises `ap.GatedDataset`, which names the page where you accept the terms and the ways to give huggingface_hub a token (`hf auth login`, `HF_TOKEN`, Colab Secrets). The hub's own error is kept as the cause.
+- `ap.show(run, file=...)` writes to `file` inside a Jupyter notebook too. Before, rich drew the view as cell output and the file stayed empty. Without `file`, a notebook still shows the rich view as cell output.
+- The capture error for a missing OpenTelemetry SDK names the extra of the framework being captured instead of `otel`.
+- The README's compare-failures example says that TRAIL is gated.
+
 ## 0.1.0 (2026-10-22)
 
 The first release.

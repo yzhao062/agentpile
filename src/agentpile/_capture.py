@@ -442,8 +442,9 @@ class Capture:
         try:
             from .integrations import _otel
         except ImportError as exc:
+            extras = " or ".join(f"'agentpile[{integrations.FRAMEWORKS[name][1]}]'" for name in self._frameworks)
             raise CaptureError(
-                f"capture needs the OpenTelemetry SDK ({exc}); install it with: pip install 'agentpile[otel]'") from exc
+                f"capture needs the OpenTelemetry SDK ({exc}); install it with: pip install {extras}") from exc
         self._session = _otel.Session()
         try:
             for name, members in self._frameworks.items():

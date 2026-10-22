@@ -15,3 +15,7 @@ class AmbiguousSource(AgentpileError, ValueError):
 
 class UnrecognizedSource(AgentpileError, ValueError):
     """No reader recognizes the input."""
+
+
+class GatedDataset(AgentpileError, PermissionError):
+    """A Hugging Face dataset is gated, and the token in use (if any) has not been granted access."""

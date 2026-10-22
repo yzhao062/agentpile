@@ -231,6 +231,42 @@ def test_a_failed_download_surfaces_when_the_reader_reaches_the_file(cache, monk
     assert not (_local(cache, ds) / MARKER).exists()
 
 
+def _refusal():
+    from huggingface_hub.utils import GatedRepoError
+
+    exc = GatedRepoError.__new__(GatedRepoError)  # the hub builds it from an HTTP response; none is needed here
+    Exception.__init__(exc, "Access to dataset is restricted. You must have access to it and be authenticated.")
+    return exc
+
+
+@pytest.mark.parametrize("call, limit", [("HfApi", 1), ("hf_hub_download", 1), ("snapshot_download", None)])
+def test_a_gated_dataset_says_how_to_get_access(call, limit, cache, monkeypatch):
+    ds = ap.datasets.get("who_and_when")
+    _hub(monkeypatch, FIXTURES / "who_and_when", ds.revision)
+    import huggingface_hub
+
+    def refuse(*args, **kwargs):
+        raise _refusal()
+
+    def refuse_while_listing(*args, **kwargs):  # the hub's listing is lazy: its request runs during iteration
+        yield SimpleNamespace(path="README.md", size=7)
+        raise _refusal()
+
+    if call == "HfApi":  # the listing, which a limited and a full load both start with
+        monkeypatch.setattr(huggingface_hub, "HfApi", lambda: SimpleNamespace(list_repo_tree=refuse_while_listing))
+    else:
+        monkeypatch.setattr(huggingface_hub, call, refuse)
+    options = {} if limit is None else {"limit": limit}
+    with pytest.raises(ap.GatedDataset) as info:
+        list(ap.load("who_and_when", verify=False, **options))
+    message = str(info.value)
+    assert "https://huggingface.co/datasets/Kevin355/Who_and_When" in message and "HF_TOKEN" in message
+    assert "restart the session" in message  # the hub reads a Colab secret once per session
+    assert isinstance(info.value, PermissionError)
+    assert type(info.value.__cause__).__name__ == "GatedRepoError"
+    assert not (_local(cache, ds) / MARKER).exists()
+
+
 # -- the generic mechanism, on a tree that is not one of the datasets --------------------------------------------
 
 class Tree(Dataset):

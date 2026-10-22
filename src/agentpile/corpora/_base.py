@@ -6,13 +6,14 @@ import copy
 import fnmatch
 import json
 import re
+from contextlib import contextmanager
 from functools import lru_cache
 from importlib import resources
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple
 
 from ..cache import dataset_dir
-from ..errors import AgentpileError
+from ..errors import AgentpileError, GatedDataset
 from ..record import Run
 
 
@@ -36,6 +37,21 @@ def require_hub():
     except ImportError as exc:
         raise ImportError("loading a Hugging Face dataset needs the hf extra: pip install 'agentpile[hf]'") from exc
     return huggingface_hub
+
+
+@contextmanager
+def gated(name: str, repo_id: str) -> Iterator[None]:
+    """Report the hub's refusal of a gated dataset with the steps that grant access; the hub's error is the cause."""
+    from huggingface_hub.utils import GatedRepoError
+
+    try:
+        yield
+    except GatedRepoError as exc:
+        raise GatedDataset(
+            f"{name}: the Hugging Face dataset {repo_id} is gated. Accept its terms at "
+            f"https://huggingface.co/datasets/{repo_id} while signed in, then give huggingface_hub a token of that "
+            f"account: run `hf auth login`, or set HF_TOKEN (in Google Colab, add HF_TOKEN under Secrets, enable its "
+            f"notebook access and restart the session, since the hub reads Colab secrets once)") from exc
 
 
 def finished(name: str, repo_id: str, revision: str, allow_patterns: Optional[List[str]] = None) -> Optional[Path]:
@@ -70,8 +86,9 @@ def fetch(name: str, repo_id: str, revision: str, allow_patterns: Optional[List[
     want = {"repo_id": repo_id, "revision": revision, "allow_patterns": allow_patterns}
     hub = require_hub()
     pinned = Partial(name, repo_id, revision, allow_patterns).listing
-    hub.snapshot_download(repo_id=repo_id, repo_type="dataset", revision=revision,
-                          allow_patterns=allow_patterns, local_dir=str(local), max_workers=max_workers)
+    with gated(name, repo_id):
+        hub.snapshot_download(repo_id=repo_id, repo_type="dataset", revision=revision,
+                              allow_patterns=allow_patterns, local_dir=str(local), max_workers=max_workers)
     missing = [path for path in pinned if not (local / path).is_file()]
     if missing:
         raise FileNotFoundError(f"{repo_id}@{revision[:12]}: {len(missing)} pinned file(s) still missing after the "
@@ -95,10 +112,11 @@ class Partial:
         self.hub = require_hub()
         from huggingface_hub.utils import filter_repo_objects
 
-        self.repo_id, self.revision = repo_id, revision
+        self.name, self.repo_id, self.revision = name, repo_id, revision
         self.local = dataset_dir(name, revision)
-        entries = self.hub.HfApi().list_repo_tree(repo_id, recursive=True, revision=revision, repo_type="dataset")
-        names = [e.path for e in entries if getattr(e, "size", None) is not None]  # files only; folders carry no size
+        with gated(name, repo_id):
+            entries = self.hub.HfApi().list_repo_tree(repo_id, recursive=True, revision=revision, repo_type="dataset")
+            names = [e.path for e in entries if getattr(e, "size", None) is not None]  # files only; folders: no size
         self.listing = sorted(filter_repo_objects(names, allow_patterns=allow_patterns))
         self._names = set(self.listing)
 
@@ -120,8 +138,9 @@ class Partial:
             name = path.relative_to(self.local).as_posix()
             if name not in self._names:
                 raise FileNotFoundError(f"{name} is not among the pinned files of {self.repo_id}@{self.revision[:12]}")
-            self.hub.hf_hub_download(repo_id=self.repo_id, filename=name, repo_type="dataset",
-                                     revision=self.revision, local_dir=str(self.local))
+            with gated(self.name, self.repo_id):
+                self.hub.hf_hub_download(repo_id=self.repo_id, filename=name, repo_type="dataset",
+                                         revision=self.revision, local_dir=str(self.local))
             if not path.is_file():
                 raise FileNotFoundError(f"the download of {name} did not produce {path}")
         return path

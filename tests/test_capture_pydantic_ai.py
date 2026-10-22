@@ -375,7 +375,7 @@ def test_a_missing_opentelemetry_sdk_is_reported_with_the_extra_and_touches_noth
     monkeypatch.setitem(sys.modules, "opentelemetry.sdk.resources", None)  # makes `import opentelemetry.sdk.resources` fail
     world = World("attribute")
     original = world.setting()
-    with pytest.raises(CaptureError, match=r"pip install 'agentpile\[otel\]'"):
+    with pytest.raises(CaptureError, match=r"pip install 'agentpile\[pydantic-ai\]'$"):  # the SDK comes with it
         with ap.capture(world.agent):
             raise AssertionError("must not enter")
     assert world.setting() is original

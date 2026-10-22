@@ -146,3 +146,13 @@ def test_a_config_record_has_no_spans_to_send(receiver_factory):
     with pytest.raises(ValueError):
         ap.send_otlp(config, rx.endpoint)
     assert rx.requests == []
+
+
+def test_the_otel_extra_is_protobuf_alone_and_no_extra_outgrows_colab():
+    # Google Colab's google-adk caps OpenTelemetry at 1.42.1, so no extra may ask for more than that.
+    import re
+
+    pyproject = (Path(__file__).parent.parent / "pyproject.toml").read_text(encoding="utf-8")
+    assert re.search(r"""^otel = \["opentelemetry-proto>=1\.42\.1; python_version >= '3\.10'"\]$""", pyproject, re.M)
+    floors = re.findall(r'"opentelemetry-[a-z-]+>=([0-9.]+)', pyproject)
+    assert floors and set(floors) == {"1.42.1"}

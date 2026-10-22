@@ -22,13 +22,13 @@ from ._show import show
 from ._tables import table, to_pandas
 from .cache import cache_info, cache_root, clear_cache
 from .deps import derive_deps
-from .errors import AgentpileError, AmbiguousSource, UnrecognizedSource, UnsupportedVersion
+from .errors import AgentpileError, AmbiguousSource, GatedDataset, UnrecognizedSource, UnsupportedVersion
 from .loading import load
 from .record import ATIF_VERSION, CONFIG_SCHEMA, EXT, MISSING, Event, Run
 from .registry import datasets, readers, register, writers
 from .validate import validate
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 # Built-in plugins go in the same registries as installed ones, as lazy
 # module strings, so importing agentpile imports none of them. They are added
@@ -64,6 +64,7 @@ __all__ = [
     "CONFIG_SCHEMA",
     "EXT",
     "Event",
+    "GatedDataset",
     "MISSING",
     "Run",
     "UnrecognizedSource",

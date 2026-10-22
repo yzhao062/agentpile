@@ -529,3 +529,12 @@ def test_plain_true_ignores_an_installed_rich():
     buf = io.StringIO()
     ap.show(run, file=buf, width=100, plain=True)
     assert "╭" not in buf.getvalue() and buf.getvalue().isascii()
+
+
+def test_inside_a_notebook_a_text_stream_still_gets_the_view(monkeypatch):
+    console_module = pytest.importorskip("rich.console")
+    monkeypatch.setattr(console_module, "_is_jupyter", lambda: True)  # what rich detects in a Jupyter kernel
+    assert console_module.Console().is_jupyter  # so a Console left to decide sends its output to the cell
+    buf = io.StringIO()
+    ap.show(corpus("who_and_when")[0], file=buf, width=100)
+    assert "mistake_step = true (who_and_when)" in buf.getvalue()

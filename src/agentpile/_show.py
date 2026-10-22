@@ -669,7 +669,8 @@ def show(run: Run, *, deps: Union[None, bool, str, Iterable[Any]] = None, width:
     each text (content, arguments, label value) and says how much was left out; ``None`` keeps all of it.
     ``file`` is a text stream (default ``sys.stdout``) or a rich ``Console``. The view uses ``rich`` when it
     is installed (``pip install 'agentpile[view]'``); ``plain=True`` prints deterministic, ASCII-only layout
-    text instead (the source text itself stays as it is). ``plain=False`` requires rich.
+    text instead (the source text itself stays as it is). ``plain=False`` requires rich. In a Jupyter
+    notebook the rich view is drawn as cell output, except when ``file`` names a stream, which gets the text.
     """
     if not isinstance(run, Run):
         raise TypeError("show() takes a Run, got %s" % type(run).__name__)
@@ -685,7 +686,9 @@ def show(run: Run, *, deps: Union[None, bool, str, Iterable[Any]] = None, width:
             if plain is False:
                 raise ImportError("a rich view needs the view extra: pip install 'agentpile[view]'") from exc
         else:
-            console = file if isinstance(file, Console) else Console(file=file, width=width, highlight=False)
+            # A notebook would otherwise take the output from rich and leave an explicit stream empty.
+            console = file if isinstance(file, Console) else Console(
+                file=file, width=width, highlight=False, force_jupyter=False if file is not None else None)
     view = _build(run, deps, max_chars)
     if console is not None:
         _render_rich(view, console)

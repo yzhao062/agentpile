@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentpile"
-version = "0.1.0"
+version = "0.1.1"
 description = "Load public agent-trajectory datasets and agent traces into one run record based on ATIF v1.7."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -33,15 +33,17 @@ hf = ["huggingface_hub>=0.23", "pyarrow>=14"]
 view = ["rich>=13"]
 pandas = ["pandas>=1.5"]
 graph = ["networkx>=3.0"]
-# Lower bounds are the versions the capture tests ran against (2026-10-20); nothing older is tested.
+# Lower bounds are versions the tests ran against: the frameworks as of 2026-10-20, and OpenTelemetry 1.42.1
+# (Google Colab's version in 2026-10, where google-adk caps it) as well as 1.45.1. Nothing older is tested.
 # pydantic-ai-slim needs Python 3.11, openai-agents and the OpenInference instrumentor need 3.10.
-# opentelemetry-proto lets ap.send_otlp reach a receiver that takes only protobuf (Arize Phoenix).
-otel = ["opentelemetry-sdk>=1.45.1; python_version >= '3.10'", "opentelemetry-proto>=1.45.1; python_version >= '3.10'"]
-pydantic-ai = ["pydantic-ai-slim>=2.58.0; python_version >= '3.11'", "opentelemetry-sdk>=1.45.1; python_version >= '3.10'"]
+# otel is opentelemetry-proto alone, which lets ap.send_otlp reach a receiver that takes only protobuf
+# (Arize Phoenix); the OpenTelemetry SDK comes with the capture extras, the only code that uses it.
+otel = ["opentelemetry-proto>=1.42.1; python_version >= '3.10'"]
+pydantic-ai = ["pydantic-ai-slim>=2.58.0; python_version >= '3.11'", "opentelemetry-sdk>=1.42.1; python_version >= '3.10'"]
 openai-agents = [
   "openai-agents>=0.24.0; python_version >= '3.10'",
   "openinference-instrumentation-openai-agents>=2.5.3; python_version >= '3.10'",
-  "opentelemetry-sdk>=1.45.1; python_version >= '3.10'",
+  "opentelemetry-sdk>=1.42.1; python_version >= '3.10'",
 ]
 dev = ["pytest>=7.0"]
 

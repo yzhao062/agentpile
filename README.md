@@ -50,6 +50,7 @@ A run whose source has no timestamps gets synthetic ones that only order its spa
 Who&When blames a step, TRAIL marks error spans, and MAST flags 14 failure modes per run. One table holds all three ([script](https://github.com/yzhao062/agentpile/blob/main/examples/compare_failures.py)).
 
 ```python
+# TRAIL is gated: accept its terms on Hugging Face and log in first (section 3)
 runs = [run for name in ("who_and_when", "trail", "mast") for run in ap.load(name)]
 labels = ap.to_pandas(runs, "labels")   # run_id, name, value, target_kind, step, span, ...
 ```
