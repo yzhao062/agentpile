@@ -2,8 +2,8 @@ name: recipes
 
 # Each recipe in examples/integrations/ runs in its own environment at the versions its requirements.txt pins, with
 # the network blocked while it runs (examples/integrations/_offline). It runs weekly, by hand, whenever a recipe or the
-# code it uses changes, and for a v* tag before a release. Results on main go to the recipe-status branch, whose badges
-# the README's Works With table shows. A failed check marks its row stale until the same check passes again; a passing
+# code it uses changes, and for a v* tag before a release. Results on main, and on a v* tag at main's current head, go
+# to the recipe-status branch, whose badges the README's Works With table shows. A failed check marks its row stale until the same check passes again; a passing
 # row turns stale when the code it covers changes on main and its check has not passed since (every fold judges every
 # row by the current main, so a run that finishes late cannot bring back an old result); a failed scheduled run opens
 # or updates an issue. The OTLP ingestion check starts Phoenix, Jaeger and MLflow, sends the fixture
@@ -118,7 +118,7 @@ jobs:
 
   status:
     needs: [recipe, ingest]
-    if: always() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: always() && github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -133,7 +133,20 @@ jobs:
           pattern: status-*
           merge-multiple: true
           path: results
+      # A release tag checks the commit that the release bumped, which is main's head; its results then count as a
+      # main run's. A tag anywhere else (a patch release on another branch) runs other code, and publishes nothing.
+      - name: Publish only from main, or from a v* tag at main's current head
+        id: gate
+        run: |
+          git fetch --depth 1 origin +refs/heads/main:refs/remotes/origin/main
+          if [ "$GITHUB_REF" = refs/heads/main ] || [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::$GITHUB_REF is not at the head of main, so its results are not published"
+          fi
       - name: Fold the results into the recipe-status branch
+        if: steps.gate.outputs.publish == 'true'
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -151,7 +164,7 @@ jobs:
           git -C status-branch add status
           git -C status-branch commit -q -m "Recipe status for ${GITHUB_SHA::7} (run ${GITHUB_RUN_ID})" || echo "no change"
       - name: Open or update an issue for each failed scheduled check
-        if: github.event_name == 'schedule'
+        if: github.event_name == 'schedule' && steps.gate.outputs.publish == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -169,6 +182,7 @@ jobs:
             fi
           done < failed.txt
       - name: Push, rebuilding on the new head if another run pushed first
+        if: steps.gate.outputs.publish == 'true'
         run: |
           for attempt in 1 2 3 4 5; do
             if git -C status-branch push origin recipe-status; then exit 0; fi

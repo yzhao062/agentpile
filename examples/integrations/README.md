@@ -26,7 +26,7 @@ A recipe reads the small dataset fixtures in `tests/corpora/fixtures`, so its de
 
 ## How They Are Checked
 
-`.github/workflows/recipes.yml` runs every recipe at its pins, offline, weekly, on demand, for a release tag, and whenever a recipe or the code it uses changes. The OTLP ingestion check against Phoenix, Jaeger and MLflow runs weekly, for a release tag and on demand. Results on `main` go to the `recipe-status` branch. A failed check marks its row stale until the same check passes again, a passing row turns stale when the code it covers changes and its check has not run since, and a failed weekly run opens or updates an issue labeled `recipe-check`. A version of a tool that no check has run gets no row.
+`.github/workflows/recipes.yml` runs every recipe at its pins, offline, weekly, on demand, for a release tag, and whenever a recipe or the code it uses changes. The OTLP ingestion check against Phoenix, Jaeger and MLflow runs weekly, for a release tag and on demand. Results on `main`, and on a release tag at the head of `main`, go to the `recipe-status` branch. A failed check marks its row stale until the same check passes again, a passing row turns stale when the code it covers changes and its check has not run since, and a failed weekly run opens or updates an issue labeled `recipe-check`. A version of a tool that no check has run gets no row.
 
 ## Adding a Recipe
 
