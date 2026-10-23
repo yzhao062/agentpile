@@ -1,43 +1,43 @@
 {
   "row": "ingest-phoenix",
-  "status": "stale",
-  "reason": "the code it covers changed after its last check",
+  "status": "passing",
+  "reason": null,
   "last_run": {
     "row": "ingest-phoenix",
     "outcome": "success",
-    "revision": "ed068a2b445d0fefaa35dd0ea95df18af98dfc99",
+    "revision": "c9dfabf1fac0f02991594305b2ff4ae0b4beb715",
     "date": "2026-10-23",
-    "run": "https://github.com/yzhao062/agentpile/actions/runs/40009840379",
-    "run_id": 40009840379,
+    "run": "https://github.com/yzhao062/agentpile/actions/runs/40038354346",
+    "run_id": 40038354346,
     "run_attempt": 1,
     "event": "workflow_dispatch",
     "versions": {
       "arize-phoenix": "20.24.0",
-      "agentpile": "0.2.0.dev0"
+      "agentpile": "0.2.0"
     },
     "covers": [
       "examples/integrations/view-otlp",
       "src/agentpile"
     ],
-    "fingerprint": "c3cab84b069398b10aadb241034536ba1ea578db26f36c78bdf4b769b552c0ca"
+    "fingerprint": "1a67239caaeccac13391a3086c637acc4ad141d006937f974446b0cc12d4b997"
   },
   "last_passing_run": {
     "row": "ingest-phoenix",
     "outcome": "success",
-    "revision": "ed068a2b445d0fefaa35dd0ea95df18af98dfc99",
+    "revision": "c9dfabf1fac0f02991594305b2ff4ae0b4beb715",
     "date": "2026-10-23",
-    "run": "https://github.com/yzhao062/agentpile/actions/runs/40009840379",
-    "run_id": 40009840379,
+    "run": "https://github.com/yzhao062/agentpile/actions/runs/40038354346",
+    "run_id": 40038354346,
     "run_attempt": 1,
     "event": "workflow_dispatch",
     "versions": {
       "arize-phoenix": "20.24.0",
-      "agentpile": "0.2.0.dev0"
+      "agentpile": "0.2.0"
     },
     "covers": [
       "examples/integrations/view-otlp",
       "src/agentpile"
     ],
-    "fingerprint": "c3cab84b069398b10aadb241034536ba1ea578db26f36c78bdf4b769b552c0ca"
+    "fingerprint": "1a67239caaeccac13391a3086c637acc4ad141d006937f974446b0cc12d4b997"
   }
 }
