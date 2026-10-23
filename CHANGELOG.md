@@ -2,7 +2,9 @@
 
 All notable changes to agentpile are listed here. Versions follow [Semantic Versioning](https://semver.org/); before 1.0, a minor version may change the record format, and the entry says how.
 
-## Unreleased
+## 0.2.0 (2026-10-23)
+
+Chat rows for training and evaluation, OTLP output that follows the OpenInference and OTel GenAI conventions, a labels table that saves to Parquet, and recipes for downstream tools. The labels table's `value` column changes type, which can silently empty an existing filter (see Changed).
 
 ### Added
 
