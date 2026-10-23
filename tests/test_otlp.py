@@ -264,7 +264,7 @@ def test_nothing_is_truncated():
     run.record["steps"][4]["observation"]["results"][1]["content"] = big
     doc = otlp.to_document(run)
     call = by_name(doc, "execute_tool f")[0]
-    assert attrs_of(call)["gen_ai.tool.call.result"] == big
+    assert attrs_of(call)["output.value"] == big
     system = by_name(doc, "system_message")[0]
     assert attrs_of(system)["input.value"] == big
     assert write_read(run) == run
@@ -291,7 +291,11 @@ def test_span_structure_follows_the_harbor_converter():
     assert ra["openinference.span.kind"] == "AGENT" and ra["gen_ai.operation.name"] == "invoke_agent"
     assert ra["gen_ai.agent.name"] == "synthetic-travel" and ra["gen_ai.request.model"] == "fake-model"
     assert ra["input.value"].startswith("Book me a flight")
-    assert all(s["parentSpanId"] == root[0]["spanId"] for s in spans if s is not root[0])
+    steps = {s["spanId"]: s for s in spans if attrs_of(s).get("agentpile.kind") == "step"}
+    assert len(steps) == 5 and all(s["parentSpanId"] == root[0]["spanId"] for s in steps.values())
+    # a call's span sits under the span of the step that issued it, as a tool run sits under the model turn
+    for call in (s for s in spans if attrs_of(s).get("agentpile.kind") == "call"):
+        assert attrs_of(steps[call["parentSpanId"]])["agentpile.index"] == attrs_of(call)["agentpile.step_index"]
     kinds = [attrs_of(s).get("openinference.span.kind") for s in spans]
     assert kinds.count("TOOL") == 3 and kinds.count("LLM") == 3 and kinds.count("CHAIN") == 2
     user, system = by_name(doc, "user_message")[0], by_name(doc, "system_message")[0]
@@ -300,7 +304,7 @@ def test_span_structure_follows_the_harbor_converter():
     assert attrs_of(user)["input.value"].startswith("Book me")
 
 
-def test_tool_span_attributes_follow_genai_v1_41_0():
+def test_tool_span_attributes_follow_the_pinned_conventions():
     run = next(ap.load(FIX / "atif_multiagent.json"))
     doc = otlp.to_document(run)
     search = by_name(doc, "execute_tool search_flights")[0]
@@ -308,10 +312,14 @@ def test_tool_span_attributes_follow_genai_v1_41_0():
     assert a["gen_ai.operation.name"] == "execute_tool" and a["gen_ai.tool.name"] == "search_flights"
     assert a["gen_ai.tool.call.id"] == "c1"
     assert json.loads(a["gen_ai.tool.call.arguments"]) == {"origin": "LAX", "dest": "SFO"}
-    assert a["gen_ai.tool.call.result"] == '[{"offer_id": 7, "depart": "09:00"}]'
+    assert json.loads(a["input.value"]) == {"origin": "LAX", "dest": "SFO"} and a["input.mime_type"] == "application/json"
+    # the result is a JSON list, which the GenAI result attribute does not take: it shows only as the output text
+    assert a["output.value"] == '[{"offer_id": 7, "depart": "09:00"}]' and "gen_ai.tool.call.result" not in a
     assert a["tool.name"] == "search_flights" and a["openinference.span.kind"] == "TOOL"
+    assert json.loads(a["tool.parameters"]) == run.record["agent"]["tool_definitions"][0]["function"]["parameters"]
     book = attrs_of(by_name(doc, "execute_tool book_flight")[0])
-    assert book["gen_ai.tool.call.arguments"] == "{'offer_id': 7"  # the raw text the source gave
+    assert book["input.value"] == "{'offer_id': 7" and book["input.mime_type"] == "text/plain"  # the raw text the source gave
+    assert "gen_ai.tool.call.arguments" not in book and json.loads(book["tool.parameters"])["required"] == ["offer_id"]
     assert by_name(doc, "execute_tool book_flight")[0]["status"]["code"] == 2
     assert book["error.type"] == "tool_error"
     step = attrs_of([s for s in spans_of(doc) if s["name"] == "chat fake-model"][0])  # the actor's model
@@ -1001,7 +1009,13 @@ def test_subagent_trajectories_nest_under_the_call_that_references_them():
     kinds = {s["name"]: attrs_of(s)["openinference.span.kind"] for s in spans.values()}
     assert kinds["invoke_agent child"] == "AGENT" and kinds["execute_tool ask"] == "TOOL"
     child_step = [s for s in spans.values() if s.get("parentSpanId") == subs[0]["spanId"]][0]
-    assert int(child_step["startTimeUnixNano"]) == otlp.parse_iso_ns("2026-02-02T02:02:02Z")
+    # the child's step has a source time, its parent none: the span is drawn inside the call that started the child,
+    # marked as a synthetic time, and the record keeps the source time
+    call = spans[subs[0]["parentSpanId"]]
+    assert int(call["startTimeUnixNano"]) <= int(child_step["startTimeUnixNano"]) < int(child_step["endTimeUnixNano"]) \
+        <= int(call["endTimeUnixNano"])
+    assert attrs_of(child_step)["agentpile.time_synthetic"] is True
+    assert json.loads(attrs_of(child_step)["agentpile.step.timestamp"]) == "2026-02-02T02:02:02Z"
     assert write_read(run) == run
 
 
@@ -1410,9 +1424,9 @@ def test_the_view_shows_no_arguments_the_source_never_recorded():
     doc = otlp.to_document(run)
     first, second = (attrs_of(by_name(doc, f"execute_tool {n}")[0]) for n in ("search_flights", "read_calendar"))
     assert "gen_ai.tool.call.arguments" not in first and "input.value" not in first  # absent in the source: absent in the view
-    assert second["gen_ai.tool.call.arguments"] == "null"
+    assert second["input.value"] == "null" and "gen_ai.tool.call.arguments" not in second  # null is no JSON object
     other = attrs_of(by_name(doc, "execute_tool book_flight")[0])
-    assert other["gen_ai.tool.call.arguments"] == "{'offer_id': 7"  # recorded arguments still show
+    assert other["input.value"] == "{'offer_id': 7"  # recorded arguments still show
     chat = attrs_of([s for s in spans_of(doc) if s["name"].startswith("chat") and attrs_of(s)["agentpile.index"] == 2][0])
     parts = json.loads(chat["gen_ai.output.messages"])[0]["parts"]
     assert "arguments" not in parts[1] and parts[2]["arguments"] is None
@@ -1488,7 +1502,8 @@ def arguments_run(cases=ARGUMENT_CASES):
 
 
 def argument_views(run, cases=ARGUMENT_CASES):
-    """call id -> (model span in gen_ai.output.messages, model span in llm.output_messages, tool span); MISSING when absent."""
+    """call id -> (model span in gen_ai.output.messages, model span in llm.output_messages, tool span input.value,
+    tool span gen_ai.tool.call.arguments); MISSING when absent."""
     doc = otlp.to_document(run)
     chat = attrs_of([s for s in spans_of(doc) if attrs_of(s).get("agentpile.kind") == "step" and attrs_of(s)["agentpile.index"] == 2][0])
     parts = {p["id"]: p for p in json.loads(chat["gen_ai.output.messages"])[0]["parts"] if p["type"] == "tool_call"}
@@ -1496,7 +1511,8 @@ def argument_views(run, cases=ARGUMENT_CASES):
     for j, (cid, _, _) in enumerate(cases):
         tool = attrs_of(by_name(doc, "execute_tool f_" + cid)[0])
         key = "llm.output_messages.0.message.tool_calls.%d.tool_call.function.arguments" % j
-        out[cid] = (parts[cid].get("arguments", MISSING), chat.get(key, MISSING), tool.get("gen_ai.tool.call.arguments", MISSING))
+        out[cid] = (parts[cid].get("arguments", MISSING), chat.get(key, MISSING), tool.get("input.value", MISSING),
+                    tool.get("gen_ai.tool.call.arguments", MISSING))
     return out
 
 
@@ -1504,17 +1520,20 @@ def test_a_model_span_shows_the_source_arguments_exactly_when_atif_holds_a_stand
     run = arguments_run()
     assert ap.validate(run) == []
     views = argument_views(run)
-    # an object the source recorded: the model span shows it, the tool span shows its text
-    assert views["parsed"][0] == {"k": 1} and json.loads(views["parsed"][1]) == {"k": 1} and json.loads(views["parsed"][2]) == {"k": 1}
-    assert views["empty"] == ({}, "{}", "{}")  # a genuine empty object stays an empty object
-    # a stand-in {}: both spans show the source value, and the llm.* text is the source text itself, not a quoted copy
-    assert views["text"] == ("{bad", "{bad", "{bad")
-    assert views["list"][0] == ["x", 1] and json.loads(views["list"][1]) == ["x", 1] and json.loads(views["list"][2]) == ["x", 1]
-    # raw kept beside a faithful parse (AgentRewardBench): the model span keeps the parsed object, only the tool span shows the raw text
-    assert views["browser"][0] == {"arg0": "7"} and json.loads(views["browser"][1]) == {"arg0": "7"} and views["browser"][2] == "fill('7')"
-    assert views["null"] == (None, "null", "null")
-    assert views["absent"] == (MISSING, MISSING, MISSING)
-    assert views["legacy"] == ({}, "{}", "{bad")  # a record written before the mark exports as it did
+    # an object the source recorded: the model span shows it, the tool span shows its text, and it is the GenAI arguments
+    assert views["parsed"][0] == {"k": 1} and all(json.loads(v) == {"k": 1} for v in views["parsed"][1:])
+    assert views["empty"] == ({}, "{}", "{}", "{}")  # a genuine empty object stays an empty object
+    # a stand-in {}: both spans show the source value, and the llm.* text is the source text itself, not a quoted copy;
+    # the GenAI arguments take JSON objects only, so a value that is no object leaves them out
+    assert views["text"] == ("{bad", "{bad", "{bad", MISSING)
+    assert views["list"][0] == ["x", 1] and all(json.loads(v) == ["x", 1] for v in views["list"][1:3]) and views["list"][3] is MISSING
+    # raw kept beside a faithful parse (AgentRewardBench): the model span keeps the parsed object, only the tool span's
+    # input.value shows the raw text, and the GenAI arguments are the parsed object
+    assert views["browser"][0] == {"arg0": "7"} and json.loads(views["browser"][1]) == {"arg0": "7"}
+    assert views["browser"][2] == "fill('7')" and json.loads(views["browser"][3]) == {"arg0": "7"}
+    assert views["null"] == (None, "null", "null", MISSING)
+    assert views["absent"] == (MISSING, MISSING, MISSING, MISSING)
+    assert views["legacy"] == ({}, "{}", "{bad", "{}")  # a record written before the mark shows its text, and ATIF's object
     assert write_read(run) == run and keep(write_read(run)) == keep(run)
     harbor_valid(run.record)  # last: it skips when Harbor is not installed
 
@@ -1526,7 +1545,8 @@ def test_the_fixture_call_with_malformed_arguments_shows_its_text_on_both_spans(
     (part,) = [p for p in json.loads(chat["gen_ai.output.messages"])[0]["parts"] if p["type"] == "tool_call"]
     assert part["arguments"] == "{'offer_id': 7"
     assert chat["llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments"] == "{'offer_id': 7"
-    assert attrs_of(by_name(doc, "execute_tool book_flight")[0])["gen_ai.tool.call.arguments"] == "{'offer_id': 7"
+    book = attrs_of(by_name(doc, "execute_tool book_flight")[0])
+    assert book["input.value"] == "{'offer_id': 7" and "gen_ai.tool.call.arguments" not in book  # the text is no JSON object
     assert [c["arguments"] for c in run.steps[3]["tool_calls"]] == [{}]  # the record still holds the stand-in
     legacy = copy.deepcopy(run.record)
     del legacy["steps"][3]["extra"]["agentpile"]["calls"]["c3"]["arguments_state"]

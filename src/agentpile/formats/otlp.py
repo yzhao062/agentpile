@@ -7,29 +7,42 @@ format). Ids are hex (base64 is accepted too), enums are integers or names, int6
 values are strings or numbers, ``AnyValue`` is decoded in all its forms, and the
 snake-case and legacy (``instrumentationLibrarySpans``) spellings are accepted.
 
-Writer. A trajectory becomes the span structure of Harbor's ATIF-to-OTel converter: one
-AGENT root span (``invoke_agent``), one span per step, one TOOL span per tool call
-(a child of the trajectory span, like the step spans), and a nested AGENT span per
-entry of ``subagent_trajectories``. An agent step is an LLM span; a user or system step is a
-CHAIN span named ``user_message`` or ``system_message``, never an LLM call. Each span carries two
-groups of attributes:
+Writer. A trajectory becomes the span structure of Harbor's ATIF-to-OTel converter, one level
+deeper: one AGENT root span (``invoke_agent``), one span per step under it, one TOOL span per tool
+call under the span of the step that issued it, and a nested AGENT span per entry of
+``subagent_trajectories``. An agent step is an LLM span; a user or system step is a CHAIN span named
+``user_message`` or ``system_message``, never an LLM call. The resource's ``service.name`` is the
+agent's name, else the run's dataset as ``ap.load`` names it, else ``agentpile``;
+``openinference.project.name`` is that dataset (``to_document``). Each span carries two groups of attributes:
 
 - The record. ``agentpile.*`` attributes hold every ATIF field and every agentpile extension
   field as JSON text, one attribute per key (``agentpile.step.message``, ``agentpile.ext.actor``).
   An absent attribute is a missing value, ``null`` is null, ``""`` is an empty string. Nothing is
   truncated or normalized, and the reader rebuilds the record from these attributes alone.
-- A view for observability backends: OpenInference attributes (``openinference.span.kind``,
-  ``input.value``, ``llm.*``) and OTel GenAI attributes (``gen_ai.operation.name``,
-  ``gen_ai.agent.name``, ``gen_ai.request.model``, ``gen_ai.tool.name``, ``gen_ai.tool.call.id``,
-  ``gen_ai.tool.call.arguments``, ``gen_ai.tool.call.result``; tool attributes follow GenAI v1.41.0).
-  The reader never uses the view for spans agentpile wrote. The view shows a call's arguments as the source
-  gave them: the parsed object on a model span, the source value on a tool span, and the source value on a model
-  span too where ATIF holds a stand-in {} for it (``arguments_state`` "unparsed"); nothing where the source recorded none.
+- A view for observability backends, with the attribute names of OpenInference 0.1.41
+  (``openinference.span.kind``, ``input.value``, ``llm.*``, ``tool.*``) and the OTel GenAI names and
+  value schemas at revision ``9ffc7e00c639be7712e544e3e54331e885dccf84`` (``gen_ai.operation.name``,
+  ``gen_ai.agent.name``, ``gen_ai.request.model``, ``gen_ai.output.messages``, ``gen_ai.tool.*``). The
+  view is a partial projection. An attribute whose value the record lacks (a provider, a finish reason,
+  the prompt a model was given) stays absent even where GenAI requires it, and every GenAI attribute
+  written fits its pinned value schema. On a model span, ``input.value`` is what came in since the
+  previous model call, marked ``agentpile.input_reconstructed``, and the call parts give the parsed
+  arguments, or the source value where ATIF holds a stand-in {} for it (``arguments_state``
+  "unparsed"), and nothing where the source recorded none. Tool spans show a call's arguments and result
+  as the source gave them in ``input.value`` and ``output.value``; ``gen_ai.tool.call.arguments`` and
+  ``gen_ai.tool.call.result`` hold JSON objects only, and ``tool.parameters`` is the tool's parameter
+  schema. The reader never uses the view for spans agentpile wrote.
 
 Dependency entries (a step's ``deps``) become span links carrying ``agentpile.dep.rule``,
 ``agentpile.dep.rule_version`` and ``agentpile.dep.resource``. A step without a timestamp gets a
-synthetic, increasing time marked ``agentpile.time_synthetic``; the reader restores the original
-timestamp and never reports a synthetic time as a source time.
+synthetic time marked ``agentpile.time_synthetic``; steps share an instant only when the interval they
+must fit in is too narrow to give each its own. The reader restores the original timestamp and never
+reports a synthetic time as a source time. Spans agentpile adds fit inside their parent's interval and
+take time when that interval does. Source spans keep their recorded times, so what agentpile adds under
+a source span that takes no time takes none either. A time a source span lacks is filled in without
+passing the one it has, and a span without an end takes no time. A step's span may move off its recorded
+timestamp to fit its parent; it is then marked ``agentpile.time_synthetic``, while the record keeps the
+timestamp.
 
 A run that carries source spans (the extension's ``spans`` field: a trace read from OTLP, TRAIL) is
 written without repeating the source's operations. A kept span that a step, a call or a subagent
@@ -45,7 +58,8 @@ step a CHAIN span, and a step or call that no source span stands behind a CHAIN 
 ``tool_call``) without model, token or tool attributes. So the written trace has the chat, tool and
 agent operations the source had, and the token totals it had.
 
-Reader. Spans written by agentpile rebuild the exact record. Spans of two framework dialects are
+Reader. Spans written by agentpile rebuild the exact record; a step or call belongs to the first
+trajectory span above it, or to the one an ``agentpile.owner`` on the way names. Spans of two framework dialects are
 mapped into ATIF steps (``DIALECTS``, ``MAPPING``): Pydantic AI 2.58.0 to 2.60.0 (OTel GenAI conventions)
 and the OpenAI Agents SDK 0.24.0 through openinference-instrumentation-openai-agents 2.5.3 (OpenInference).
 Calls and results pair by tool call id only and nothing is inferred. A dialect is interpreted only for
@@ -619,30 +633,107 @@ def _is_num(v: Any) -> bool:
     return isinstance(v, (int, float)) and not isinstance(v, bool)
 
 
-def _step_times(steps: List[Dict[str, Any]]) -> List[Tuple[int, bool]]:
-    """(start ns, synthetic) per step: the source timestamp where it parses, an increasing stand-in elsewhere."""
+def _step_times(steps: List[Dict[str, Any]], frame: Optional[Tuple[int, int]] = None) -> List[Tuple[int, bool]]:
+    """(start ns, synthetic) per step: the source timestamp where it parses, a stand-in elsewhere.
+
+    Stand-ins sit one tick apart: after the previous source timestamp, else before the next one, else from the start
+    of ``frame`` or, for a top-level trajectory, the epoch of synthetic times. ``frame`` is the interval of the span
+    the steps are written under when that interval is fixed. Within it, a run of stand-ins that would not fit between
+    its neighbours (the source timestamps around it, cut to the frame) is spread evenly between them, or placed on the
+    one instant they leave; the writer then moves any step still outside the frame into it."""
     parsed = [parse_iso_ns(s.get("timestamp")) for s in steps]
-    real = [p for p in parsed if p is not None]
-    lead = 0
-    for p in parsed:
-        if p is not None:
-            break
-        lead += 1
-    base = (real[0] - lead * _TICK) if real else SYNTHETIC_EPOCH_NS
     out: List[Tuple[int, bool]] = []
-    prev: Optional[int] = None
-    for p in parsed:
-        if p is not None:
-            out.append((p, False))
-            prev = p
+    i = 0
+    while i < len(parsed):
+        if parsed[i] is not None:
+            out.append((parsed[i], False))
+            i += 1
+            continue
+        j = i
+        while j < len(parsed) and parsed[j] is None:
+            j += 1
+        m = j - i
+        before = parsed[i - 1] if i > 0 else None
+        after = parsed[j] if j < len(parsed) else None
+        if before is not None:
+            starts = [before + (k + 1) * _TICK for k in range(m)]
+        elif after is not None:
+            starts = [after - (m - k) * _TICK for k in range(m)]
         else:
-            prev = base if prev is None else prev + _TICK
-            out.append((prev, True))
+            starts = [(frame[0] if frame else SYNTHETIC_EPOCH_NS) + k * _TICK for k in range(m)]
+        if frame is not None:
+            lo = frame[0] if before is None else max(before, frame[0])
+            hi = frame[1] if after is None else min(after, frame[1])
+            if hi <= lo:
+                starts = [lo] * m
+            elif starts[0] < lo or starts[-1] + _TICK > hi:
+                lead = 1 if before is not None and before >= frame[0] else 0  # a source step already starts at lo
+                starts = [lo + (k + lead) * (hi - lo) // (m + 1) for k in range(m)]
+        out.extend((s, True) for s in starts)
+        i = j
     return out
 
 
+def _parameter_schema(defn: Any) -> Optional[Dict[str, Any]]:
+    """The parameter schema of a tool definition: OpenAI (nested, flat or legacy), MCP or Anthropic shape, else None."""
+    if not isinstance(defn, dict):
+        return None
+    inner = defn["function"] if isinstance(defn.get("function"), dict) else defn
+    for key in ("parameters", "inputSchema", "input_schema"):
+        if isinstance(inner.get(key), dict):
+            return inner[key]
+    return None
+
+
+def _definition_name(defn: Any) -> Optional[str]:
+    inner = defn.get("function") if isinstance(defn, dict) and isinstance(defn.get("function"), dict) else defn
+    return inner.get("name") if isinstance(inner, dict) and isinstance(inner.get("name"), str) else None
+
+
+def _tool_schemas(tools: Any, defs: Any) -> Tuple[Dict[str, Dict[str, Any]], Dict[str, Dict[str, Any]], frozenset]:
+    """``(tool id -> parameter schema, tool name -> parameter schema, every tool id)`` from one trajectory's own tools
+    (its extension's ``tools``) and its agent's ``tool_definitions``. A name maps to a schema only when every tool
+    and definition of that name has one and all have the same: a tool of that name whose schema the record lacks could
+    be the one a call used."""
+    by_id: Dict[str, Dict[str, Any]] = {}
+    named: Dict[str, List[Optional[Dict[str, Any]]]] = {}
+    for tid, entry in (tools.items() if isinstance(tools, dict) else []):
+        if not isinstance(entry, dict) or not isinstance(tid, str):
+            continue
+        schema = _parameter_schema(entry.get("definition"))
+        if schema is not None:
+            by_id[tid] = schema
+        name = entry.get("name") if isinstance(entry.get("name"), str) else _definition_name(entry.get("definition"))
+        if name:
+            named.setdefault(name, []).append(schema)
+    for defn in (defs if isinstance(defs, list) else []):
+        name = _definition_name(defn)
+        if name:
+            named.setdefault(name, []).append(_parameter_schema(defn))
+    by_name = {name: found[0] for name, found in named.items()
+               if found[0] is not None and all(s == found[0] for s in found)}
+    return by_id, by_name, frozenset(t for t in (tools if isinstance(tools, dict) else {}) if isinstance(t, str))
+
+
+def _refuse_constant(name: str) -> Any:
+    raise ValueError(name)
+
+
+def _json_object(value: Any) -> Optional[Dict[str, Any]]:
+    """The value as a JSON object, decoding JSON text; None for anything else (a list, a number, text that is not JSON,
+    an object holding NaN or infinity, which JSON does not have)."""
+    try:
+        if isinstance(value, str):
+            value = json.loads(value, parse_constant=_refuse_constant)
+        if isinstance(value, dict):  # a decoded number can still overflow to infinity (1e400)
+            json.dumps(value, allow_nan=False, default=str)
+    except ValueError:
+        return None
+    return value if isinstance(value, dict) else None
+
+
 def _genai_tool_definition(defn: Any) -> Optional[Dict[str, Any]]:
-    """An OpenAI function schema as a GenAI v1.41.0 function tool definition, or None for any other shape."""
+    """An OpenAI function schema as a GenAI function tool definition, or None for any other shape."""
     if isinstance(defn, dict) and isinstance(defn.get("function"), dict) and isinstance(defn["function"].get("name"), str):
         fn = defn["function"]
         out: Dict[str, Any] = {"type": "function", "name": fn["name"]}
@@ -652,6 +743,43 @@ def _genai_tool_definition(defn: Any) -> Optional[Dict[str, Any]]:
             out["parameters"] = fn["parameters"]
         return out
     return None
+
+
+def _is_model_call(step: Dict[str, Any], sourced: bool) -> bool:
+    """Whether a step no source span stands behind is written as a model call (``chat``): an agent step of a record
+    without source spans, unless its ``llm_call_count`` is 0, which marks a step such as a scripted greeting."""
+    return step.get("source") == "agent" and not sourced and step.get("llm_call_count") != 0
+
+
+def _model_inputs(steps: List[Dict[str, Any]], sourced: bool) -> List[List[Dict[str, Any]]]:
+    """Per step, what came in since the previous model call, in record order: system and user steps, the text of an
+    agent step that was no model call (a scripted greeting), and tool results with their call ids. A step that is no
+    model call gets an empty list.
+
+    ATIF records each step's output and lacks the prompt a model was given, so this is a reconstruction of the recorded
+    segment between model calls. Each message and result appears in one segment at most, which keeps an export
+    linear in the number of steps."""
+    out: List[List[Dict[str, Any]]] = []
+    pending: List[Dict[str, Any]] = []
+    for step in steps:
+        if _is_model_call(step, sourced):
+            out.append(pending)
+            pending = []
+        else:
+            out.append([])
+            text = _text_of(step.get("message"))
+            if step.get("source") != "agent":
+                pending.append({"role": "system" if step.get("source") == "system" else "user", "content": text})
+            elif text:
+                pending.append({"role": "assistant", "content": text})
+        obs = step.get("observation")
+        for res in (obs.get("results") if isinstance(obs, dict) and isinstance(obs.get("results"), list) else []):
+            if isinstance(res, dict):
+                msg = {"role": "tool", "content": _text_of(res.get("content"))}
+                if isinstance(res.get("source_call_id"), str):
+                    msg["tool_call_id"] = res["source_call_id"]
+                pending.append(msg)
+    return out
 
 
 def _subs_of(traj: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -731,6 +859,14 @@ class _Writer:
             return tid.lower()
         seed = tid if isinstance(tid, str) else json.dumps(record, sort_keys=True, ensure_ascii=True, default=str)
         return hashlib.sha256(("agentpile:" + seed).encode("utf-8")).digest()[:16].hex()
+
+    def _interval_of(self, span_id: str) -> Optional[Tuple[int, int]]:
+        """(start, end) of a written span, or None while its times are not set (a trajectory span gets them last)."""
+        for sp in reversed(self.spans):
+            if sp.get("spanId") == span_id:
+                start, end = str(sp.get("startTimeUnixNano", "")), str(sp.get("endTimeUnixNano", ""))
+                return (int(start), int(end)) if start.isdigit() and end.isdigit() else None
+        return None
 
     def _sid(self, path: str) -> str:
         n = 0
@@ -859,11 +995,14 @@ class _Writer:
     # -- a span that is a kept source span --------------------------------------------------------------------
 
     def _adopt(self, claim: _Claim, fallback_parent: Optional[str], fallback_start: int) -> Tuple[Dict[str, Any], bool]:
-        """The span of a kept entry without its attributes, and whether its times had to be made up."""
+        """The span of a kept entry without its attributes, and whether its times had to be made up. A time the entry
+        lacks is filled in without passing the one it has: a missing start is ``fallback_start`` or the recorded end,
+        whichever comes first, and a missing end is the start, so such a span takes no time."""
         entry = claim.entry
         start, end = entry.get("start_time_unix_nano"), entry.get("end_time_unix_nano")
         synthetic = not _is_int(start) or not _is_int(end)
-        start = start if _is_int(start) else fallback_start
+        if not _is_int(start):
+            start = min(fallback_start, end) if _is_int(end) else fallback_start
         end = end if _is_int(end) else start
         parent = entry.get("parent")
         ids = self.span_ids[claim.owner]
@@ -917,7 +1056,9 @@ class _Writer:
     # -- one trajectory ------------------------------------------------------------------
 
     def _emit_traj(self, traj: Dict[str, Any], tpath: str, kind: str, index: int, parent_id: Optional[str],
-                   owner_id: Optional[str]) -> str:
+                   owner_id: Optional[str], frame: Optional[Tuple[int, int]] = None) -> str:
+        """Write one trajectory's spans. ``frame`` is the fixed interval of the span it is written under, which every
+        generated span keeps inside; a top-level trajectory has none, as its span is sized to what it holds."""
         steps_raw = traj.get("steps")
         steps = []
         for s in steps_raw if isinstance(steps_raw, list) else []:
@@ -952,10 +1093,18 @@ class _Writer:
         kept = self.kept.get(tpath)
         _put_ext(attrs, ext, ("spans",) if kept else ())
 
-        times = _step_times(steps)
+        if frame is not None and frame[1] < frame[0]:  # a source span recorded as ending before it starts
+            frame = (frame[0], frame[0])
+        origin = frame[0] if frame else SYNTHETIC_EPOCH_NS
+        times = _step_times(steps, frame)
         root_synthetic = False
         if root_claim is not None:  # the source span of this subagent is its span
-            root, root_synthetic = self._adopt(root_claim, parent_id, times[0][0] if times else SYNTHETIC_EPOCH_NS)
+            root, root_synthetic = self._adopt(root_claim, parent_id, times[0][0] if times else origin)
+            # it keeps its times, filled in where the source lacks one, so what is written under it fits them
+            start, end = int(root["startTimeUnixNano"]), int(root["endTimeUnixNano"])
+            frame = (start, max(start, end))
+            origin = frame[0]
+            times = _step_times(steps, frame)
         else:
             label = str(agent.get("name", ""))
             root = {"traceId": self.trace, "spanId": root_id,
@@ -970,7 +1119,10 @@ class _Writer:
             claim = self.claim_step.get((tpath, i))
             step_ids.append(claim.sid if claim is not None else self._sid(f"{tpath}/step/{i}"))
         call_ids: Dict[Tuple[int, Any], str] = {}
-        end_max = times[0][0] if times else SYNTHETIC_EPOCH_NS
+        any_synthetic = any(s for _, s in times)
+        catalog = ext.get("tools") if isinstance(ext, dict) and isinstance(ext.get("tools"), dict) else {}
+        schemas = _tool_schemas(catalog, agent.get("tool_definitions"))  # this trajectory's own tools, as validate checks
+        inputs = _model_inputs(steps, self.sourced)
         for i, step in enumerate(steps):
             self.step_span.setdefault((tid, step.get("step_id")), step_ids[i])
             obs = step.get("observation")
@@ -980,41 +1132,74 @@ class _Writer:
             step_claim = self.claim_step.get((tpath, i))
             if step_claim is not None and _is_int(step_claim.entry.get("start_time_unix_nano")):
                 start = step_claim.entry["start_time_unix_nano"]  # the source span's own time
-            end = max(start, times[i + 1][0] if i + 1 < len(times) else start)
             calls = step.get("tool_calls")
             calls = calls if isinstance(calls, list) and calls and all(isinstance(c, dict) for c in calls) else []
+            # A step lasts until the next one starts, and at least long enough to give each of its calls a width. Within
+            # a frame, a step no source span stands behind is moved inside it, even off its own source timestamp, which
+            # the record keeps (agentpile.step.timestamp); a zero-width frame holds it at that instant.
+            width = max((times[i + 1][0] if i + 1 < len(times) else start) - start, 2 * max(len(calls), 1) * _CALL_TICK)
+            end = start + width
+            if frame is not None and step_claim is None:
+                lower, upper = frame
+                if upper > lower:
+                    bounded = min(max(start, lower), upper - 1)
+                    synth = synth or bounded != start
+                    start, end = bounded, min(upper, max(bounded + 1, end))
+                else:
+                    synth = synth or start != lower
+                    start = end = lower
+                any_synthetic = any_synthetic or synth
+            self.spans.append(self._step_span(step, i, step_ids[i], root_id, start, end, synth, tid, roster, models, agent,
+                                              step_claim, inputs[i]))
+            lo, hi = self._interval_of(step_ids[i]) or (start, end)
+            hi = max(lo, hi)  # a source span recorded as ending before it starts holds its calls at its start
             sx = _split_extra(step)[1]
             cxs = sx.get("calls") if isinstance(sx, dict) and isinstance(sx.get("calls"), dict) else {}
+            half = (hi - lo) // 2
             for j, call in enumerate(calls):
                 call_claim = self.claim_call.get((tpath, i, j))
                 csid = call_claim.sid if call_claim is not None else self._sid(f"{tpath}/step/{i}/call/{j}")
                 cid = call.get("tool_call_id")
                 call_ids[(i, cid)] = csid
                 self.call_span.setdefault((tid, step.get("step_id"), cid), csid)
-                t = start + (j + 1) * _CALL_TICK
-                end = max(end, t)
-                self.spans.append(self._call_span(call, j, i, csid, root_id, t, cxs, results, call_claim))
-            end_max = max(end_max, end)
-            self.spans.append(self._step_span(step, i, step_ids[i], root_id, start, end, synth, tid, roster, models, agent,
-                                              step_claim))
+                # the calls share the second half of the step's span, the source's own where it has one
+                span_start = lo + half + j * (hi - lo - half) // len(calls)
+                span_end = lo + half + (j + 1) * (hi - lo - half) // len(calls)
+                if hi > lo:  # fewer nanoseconds than calls: neighbouring calls overlap rather than take no time
+                    span_start = min(span_start, hi - 1)
+                    span_end = min(hi, max(span_start + 1, span_end))
+                self.spans.append(self._call_span(call, j, i, csid, step_ids[i], root_id, span_start, span_end, cxs, results,
+                                                  call_claim, schemas))
         for k, sub in enumerate(subs):  # under the call that references the subagent, else its step, else the root
-            self._emit_traj(sub, f"{tpath}/sub{k}", "subagent", k, self._subagent_parent(sub, steps, step_ids, call_ids, root_id),
-                            root_id)
+            parent = self._subagent_parent(sub, steps, step_ids, call_ids, root_id)
+            self._emit_traj(sub, f"{tpath}/sub{k}", "subagent", k, parent, root_id, self._interval_of(parent) or frame)
         if kept:
-            self._emit_kept(tpath, root_id, times[0][0] if times else SYNTHETIC_EPOCH_NS)
-        if any(s for _, s in times):
-            attrs["agentpile.time_synthetic"] = True
+            self._emit_kept(tpath, root_id, times[0][0] if times else origin)
         if root_claim is not None:
+            if any_synthetic:
+                attrs["agentpile.time_synthetic"] = True
             root["attributes"] = encode_attributes(self._adopted_attrs(root_claim, attrs, root_synthetic, None))
             return root_id
-        starts, ends = [times[0][0] if times else SYNTHETIC_EPOCH_NS], [end_max]
-        if self.sourced:  # the source spans are not on the step clock, and the trajectory span covers all of them
-            for sp in self.spans[first_span + 1:]:
-                for field, bucket in (("startTimeUnixNano", starts), ("endTimeUnixNano", ends)):
-                    if isinstance(sp.get(field), str) and sp[field].isdigit():
-                        bucket.append(int(sp[field]))
-        root["startTimeUnixNano"] = str(min(starts))
-        root["endTimeUnixNano"] = str(max(ends))
+        # The trajectory span covers every span written under it: source spans, which are not on the step clock, and
+        # subagent trajectories, which can run past the step that started them. Inside a frame it stays within the
+        # frame, which source spans it holds may still cross.
+        starts, ends = [], []
+        for sp in self.spans[first_span + 1:]:
+            for field, bucket in (("startTimeUnixNano", starts), ("endTimeUnixNano", ends)):
+                if isinstance(sp.get(field), str) and sp[field].isdigit():
+                    bucket.append(int(sp[field]))
+        start = min(starts) if starts else origin
+        end = max(max(ends) if ends else start, start + _CALL_TICK)
+        if frame is not None:
+            lower, upper = frame
+            new_start = min(max(start, lower), max(lower, upper - 1))
+            new_end = min(upper, max(end, new_start + (1 if upper > lower else 0)))
+            any_synthetic = any_synthetic or (new_start, new_end) != (start, end)
+            start, end = new_start, new_end
+        if any_synthetic:
+            attrs["agentpile.time_synthetic"] = True
+        root["startTimeUnixNano"] = str(start)
+        root["endTimeUnixNano"] = str(end)
         root["attributes"] = encode_attributes(attrs)
         return root_id
 
@@ -1086,7 +1271,8 @@ class _Writer:
         return v
 
     def _step_view(self, step: Dict[str, Any], sx_d: Dict[str, Any], roster: Dict[str, str], models: Dict[str, str],
-                   agent: Dict[str, Any], text: str, model_call: bool) -> Tuple[str, int, Dict[str, Any]]:
+                   agent: Dict[str, Any], text: str, model_call: bool,
+                   heard: List[Dict[str, Any]]) -> Tuple[str, int, Dict[str, Any]]:
         """(span name, span kind, view attributes) of a step no source span stands behind.
 
         An agent step is a model call (``chat``) only in a record without source spans: where the source's own spans
@@ -1096,7 +1282,11 @@ class _Writer:
         The model of a model call is the step's ``model_name``, else the roster ``model`` of the step's actor, else the
         trajectory's ``agent.model_name`` (ATIF's default for its steps). A scripted step, text the harness fixed rather
         than a model wrote, gets none. The fallback lives in these view attributes only; the record keeps the step as
-        the source gave it."""
+        the source gave it.
+
+        A model call's ``input.value`` is ``heard``, the recorded segment since the previous model call (``_model_inputs``),
+        as JSON and marked ``agentpile.input_reconstructed``. The standard input-message attributes stay out, since
+        the record does not hold the full prompt."""
         source = step.get("source")
         v: Dict[str, Any] = {}
         if source != "agent":
@@ -1133,6 +1323,10 @@ class _Writer:
             v["llm.token_count.total"] = m["prompt_tokens"] + m["completion_tokens"]
         if _is_num(m.get("cost_usd")):
             v["llm.cost.total"] = m["cost_usd"]
+        if heard:
+            v["input.value"] = _j(heard)
+            v["input.mime_type"] = "application/json"
+            v["agentpile.input_reconstructed"] = True
         v["output.value"] = text
         v["output.mime_type"] = "text/plain"
         parts: List[Dict[str, Any]] = [{"type": "text", "content": text}] if text else []
@@ -1143,7 +1337,7 @@ class _Writer:
             if args is not ABSENT:
                 part["arguments"] = args
             parts.append(part)
-        # GenAI requires finish_reason on an output message and ATIF has no such field, so it is omitted (Pydantic AI does the same).
+        # ATIF has no finish reason, and the pinned GenAI revision makes it optional, so it is left out.
         v["gen_ai.output.messages"] = _j([{"role": "assistant", "parts": parts}])
         v["llm.output_messages.0.message.role"] = "assistant"
         if text:
@@ -1158,14 +1352,13 @@ class _Writer:
 
     def _step_span(self, step: Dict[str, Any], i: int, sid: str, root_id: str, start: int, end: int, synth: bool,
                    tid: Any, roster: Dict[str, str], models: Dict[str, str], agent: Dict[str, Any],
-                   claim: Optional[_Claim]) -> Dict[str, Any]:
+                   claim: Optional[_Claim], heard: List[Dict[str, Any]]) -> Dict[str, Any]:
         extra_attr, sx = _split_extra(step)
         sx_d = sx if isinstance(sx, dict) else {}
         attrs: Dict[str, Any] = {"agentpile.version": EXT_VERSION, "agentpile.kind": "step", "agentpile.index": i}
         if claim is None:
-            model_call = step.get("source") == "agent" and not self.sourced and step.get("llm_call_count") != 0
             span_name, span_kind, view = self._step_view(step, sx_d, roster, models, agent, _text_of(step.get("message")),
-                                                         model_call)
+                                                         _is_model_call(step, self.sourced), heard)
             attrs.update(view)
             if synth:
                 attrs["agentpile.time_synthetic"] = True
@@ -1208,8 +1401,16 @@ class _Writer:
             self.todo_links.append((span, tid, deps_list, sid, root_id))
         return span
 
-    def _call_span(self, call: Dict[str, Any], j: int, i: int, csid: str, root_id: str, t: int,
-                   cxs: Dict[str, Any], results: List[Any], claim: Optional[_Claim]) -> Dict[str, Any]:
+    def _call_span(self, call: Dict[str, Any], j: int, i: int, csid: str, parent_id: str, root_id: str, t: int, t_end: int,
+                   cxs: Dict[str, Any], results: List[Any], claim: Optional[_Claim],
+                   schemas: Tuple[Dict[str, Dict[str, Any]], Dict[str, Dict[str, Any]], Any]) -> Dict[str, Any]:
+        """The span of a call: the kept source span it came from, or a span under the step that issued it.
+
+        A generated tool span shows the source's arguments and result in ``input.value`` and ``output.value``. The
+        GenAI ``gen_ai.tool.call.arguments`` and ``gen_ai.tool.call.result`` hold JSON objects only, as the pinned
+        schemas require: the parsed arguments, and a result that is a JSON object; other values stay in the generic
+        attributes. ``tool.parameters`` is the parameter schema of the call's tool, by its ``tool_id`` or else by a
+        name all of whose definitions agree."""
         cid = call.get("tool_call_id")
         fname = call.get("function_name")
         cx = cxs.get(cid) if isinstance(cid, str) else None
@@ -1240,21 +1441,32 @@ class _Writer:
                 attrs["gen_ai.tool.call.id"] = cid
             shown = _shown_arguments(call, cx_d, True)
             if shown is not ABSENT:
-                arg_text = shown if isinstance(shown, str) else _j(shown)
-                attrs["gen_ai.tool.call.arguments"] = arg_text
-                attrs["input.value"] = arg_text
+                attrs["input.value"] = shown if isinstance(shown, str) else _j(shown)
                 attrs["input.mime_type"] = "text/plain" if isinstance(shown, str) else "application/json"
+            args = _json_object(_shown_arguments(call, cx_d, False))
+            if args is not None:
+                attrs["gen_ai.tool.call.arguments"] = _j(args)
+            by_id, by_name, known = schemas
+            tool_id = cx_d.get("tool_id")
+            if isinstance(tool_id, str) and tool_id in known:  # the call's own tool decides, schema or none
+                schema = by_id.get(tool_id)
+            else:
+                schema = by_name.get(fname) if isinstance(fname, str) else None
+            if schema is not None:
+                attrs["tool.parameters"] = _j(schema)
             for res in results:
                 if isinstance(res, dict) and isinstance(cid, str) and res.get("source_call_id") == cid:
-                    attrs["gen_ai.tool.call.result"] = _text_of(res.get("content"))
-                    attrs["output.value"] = attrs["gen_ai.tool.call.result"]
+                    content = res.get("content")
+                    attrs["output.value"] = _text_of(content)
+                    if _json_object(content) is not None:
+                        attrs["gen_ai.tool.call.result"] = content if isinstance(content, str) else _j(content)
                     break
         else:
             attrs["openinference.span.kind"] = "CHAIN"
         attrs.update(record)
-        span: Dict[str, Any] = {"traceId": self.trace, "spanId": csid, "parentSpanId": root_id,
+        span: Dict[str, Any] = {"traceId": self.trace, "spanId": csid, "parentSpanId": parent_id,
                                 "name": ("execute_tool " if operation else "tool_call ") + (fname if isinstance(fname, str) else ""),
-                                "kind": 1, "startTimeUnixNano": str(t), "endTimeUnixNano": str(t)}
+                                "kind": 1, "startTimeUnixNano": str(t), "endTimeUnixNano": str(t_end)}
         err = cx_d.get("error")
         if err and operation:
             if isinstance(err, dict) and isinstance(err.get("type"), str):
@@ -1316,15 +1528,27 @@ class _Writer:
 
 
 def to_document(run: Run, trace_id: Optional[str] = None) -> Dict[str, Any]:
-    """The run as an OTLP/JSON ``ExportTraceServiceRequest`` (a dict)."""
+    """The run as an OTLP/JSON ``ExportTraceServiceRequest`` (a dict).
+
+    ``service.name`` is the agent's name, else the run's dataset (when the name is missing or ``unknown``), else
+    ``agentpile``; ``openinference.project.name`` is the run's dataset, which Phoenix uses as the project. The dataset
+    is the name ``ap.load`` takes (``tau_bench``) when the record's reader is a registered dataset, else the source's
+    own id (``run.source["dataset"]``, such as a hub repository)."""
     if run.kind != TRAJECTORY:
         raise ValueError("the otlp-json writer takes trajectory records; a config record has no steps to write as spans")
     from .. import __version__
+    from ..registry import datasets
     spans = _Writer(run.record, trace_id).build()
     agent = run.record.get("agent") if isinstance(run.record.get("agent"), dict) else {}
-    service = agent.get("name") if isinstance(agent.get("name"), str) and agent.get("name") else "agentpile"
-    resource = {"service.name": service, "telemetry.sdk.language": "python", "telemetry.sdk.name": "agentpile",
-                "telemetry.sdk.version": __version__}
+    name = agent.get("name") if isinstance(agent.get("name"), str) and agent.get("name") not in ("", "unknown") else None
+    source = run.source
+    dataset = source.get("dataset") if isinstance(source.get("dataset"), str) and source["dataset"] else None
+    if dataset and isinstance(source.get("reader"), str) and source["reader"] in datasets:
+        dataset = source["reader"]
+    resource = {"service.name": name or dataset or "agentpile", "telemetry.sdk.language": "python",
+                "telemetry.sdk.name": "agentpile", "telemetry.sdk.version": __version__}
+    if dataset:
+        resource["openinference.project.name"] = dataset
     return {"resourceSpans": [{"resource": {"attributes": encode_attributes(resource)},
                                "scopeSpans": [{"scope": {"name": "agentpile", "version": __version__}, "spans": spans}]}]}
 
@@ -1426,10 +1650,15 @@ def _read_agentpile(spans: List[_Span]) -> Iterator[Run]:
         return s.attrs.get("agentpile.kind") if isinstance(s.attrs.get("agentpile.version"), str) else None
 
     def nearest_root(s: Optional[_Span]) -> Optional[_Span]:
+        """The trajectory span above ``s``. A span on the way that names its trajectory (``agentpile.owner``: a step
+        or call written as a source span, whose own parent chain need not lead there) decides it."""
         guard = 0
         while s is not None and guard < 100000:
             if kind_of(s) in ("trajectory", "subagent"):
                 return s
+            owner = named_root(s, "agentpile.owner")
+            if owner is not None:
+                return owner
             s = by_id.get(s.parent) if s.parent else None
             guard += 1
         return None

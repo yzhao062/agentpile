@@ -189,13 +189,15 @@ def test_odd_actions_keep_everything():
 
 
 def _exported_arguments(run, call_id):
-    """(what the OTLP model span shows, what the tool span shows) as the arguments of one call."""
+    """(what the OTLP model span shows, what the tool span shows, the tool span's GenAI arguments) for one call; the
+    GenAI arguments are a JSON object or None."""
     spans = [otlp.decode_attributes(s["attributes"]) for rs in otlp.to_document(run)["resourceSpans"]
              for ss in rs["scopeSpans"] for s in ss["spans"]]
     (model,) = [p.get("arguments") for a in spans if "gen_ai.output.messages" in a
                 for p in json.loads(a["gen_ai.output.messages"])[0]["parts"] if p["type"] == "tool_call" and p["id"] == call_id]
-    (tool,) = [a["gen_ai.tool.call.arguments"] for a in spans if a.get("gen_ai.tool.call.id") == call_id]
-    return model, tool
+    (tool,) = [a for a in spans if a.get("gen_ai.tool.call.id") == call_id]
+    genai = tool.get("gen_ai.tool.call.arguments")
+    return model, tool["input.value"], None if genai is None else json.loads(genai)
 
 
 def test_a_model_span_shows_the_action_string_only_for_a_call_that_did_not_parse():
@@ -209,10 +211,13 @@ def test_a_model_span_shows_the_action_string_only_for_a_call_that_did_not_parse
     parsed = _exported_arguments(run, "ap-4-0")
     assert parsed[0] == {"arg0": "3"}  # the model span keeps the parsed object, with the trailing HTML comment left out
     assert parsed[1] == "click('3')  <!-- the model added a comment -->"  # the tool span shows the action string
+    assert parsed[2] == {"arg0": "3"}  # and gives the parsed object as its GenAI arguments
     empty = _exported_arguments(run, "ap-10-0")
     assert empty[0] == {} and empty[1] == calls["ap-10-0"]["arguments_raw"]  # a call with no arguments is an empty object, not a failure
+    assert empty[2] == {}
     for cid in ("ap-6-0", "ap-12-0", "ap-14-0"):  # {} in ATIF stands in for an action that did not parse: both spans show the string
-        assert _exported_arguments(run, cid) == (calls[cid]["arguments_raw"], calls[cid]["arguments_raw"])
+        raw = calls[cid]["arguments_raw"]
+        assert _exported_arguments(run, cid) == (raw, raw, None)  # and the tool span has no object to give as GenAI arguments
     assert _exported_arguments(run, "ap-6-0")[0] == "fill('4', some_variable)"
     assert ap.validate(run) == []
     assert next(otlp.read(otlp.to_document(run))) == run

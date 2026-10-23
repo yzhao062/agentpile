@@ -23,13 +23,15 @@ def _ext(step):
 
 
 def _exported_arguments(run, call_id):
-    """(what the OTLP model span shows, what the tool span shows) as the arguments of one call."""
+    """(what the OTLP model span shows, what the tool span shows, the tool span's GenAI arguments) for one call; the
+    GenAI arguments are a JSON object or None."""
     spans = [otlp.decode_attributes(s["attributes"]) for rs in otlp.to_document(run)["resourceSpans"]
              for ss in rs["scopeSpans"] for s in ss["spans"]]
     (model,) = [p.get("arguments") for a in spans if "gen_ai.output.messages" in a
                 for p in json.loads(a["gen_ai.output.messages"])[0]["parts"] if p["type"] == "tool_call" and p["id"] == call_id]
-    (tool,) = [a["gen_ai.tool.call.arguments"] for a in spans if a.get("gen_ai.tool.call.id") == call_id]
-    return model, tool
+    (tool,) = [a for a in spans if a.get("gen_ai.tool.call.id") == call_id]
+    genai = tool.get("gen_ai.tool.call.arguments")
+    return model, tool["input.value"], None if genai is None else json.loads(genai)
 
 
 def test_rows_become_runs_keyed_on_global_row_index():
@@ -125,9 +127,9 @@ def test_tool_use_ids_keep_their_index_and_bad_arguments_stay_raw():
 def test_the_otlp_model_span_shows_the_arguments_text_that_did_not_parse():
     run = _runs()[1]
     cut_off = '{"command":"create","path":"/w/f.py","file'
-    assert _exported_arguments(run, "toolu_01C") == (cut_off, cut_off)  # both spans show the source text, not ATIF's {}
-    model, tool = _exported_arguments(run, "toolu_01A")
-    assert model == {"command": "view", "path": "/w"} and json.loads(tool) == model  # a call that parsed shows its object
+    assert _exported_arguments(run, "toolu_01C") == (cut_off, cut_off, None)  # both spans show the source text, not ATIF's {}
+    model, tool, genai = _exported_arguments(run, "toolu_01A")
+    assert model == {"command": "view", "path": "/w"} and json.loads(tool) == model == genai  # a call that parsed shows its object
 
 
 def test_a_call_to_an_undefined_function_gets_no_tool_id():
