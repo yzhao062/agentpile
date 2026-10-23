@@ -103,6 +103,7 @@ for dep in ap.derive_deps(run, rules=["tool_call_id"]):   # inferred only when y
     print(dep["rule"], "step", dep["src"]["step"], dep["src"]["call"], "-> step", dep["dst"]["step"])
 
 run.to_json("run.json")                   # ATIF v1.7 JSON; run.to_otlp("run.otlp.json") writes OTLP spans
+ap.to_chat(run)                           # chat rows with tools for training and evaluation; here, the same messages
 ```
 
 ```text

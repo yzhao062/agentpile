@@ -6,6 +6,7 @@
         run.labels, run.agents, run.steps
     run = next(ap.load("trace.json"))     # a file; the format is detected, never guessed
     run.to_json("run.json"); run.to_otlp()
+    ap.to_chat(ap.load("tau_bench"), "chat.jsonl")   # OpenAI-style chat rows with tools
 
 A trajectory record is an ATIF v1.7 trajectory with agentpile fields under
 ``extra["agentpile"]``; a config record is ``agentpile-config/0`` JSON.
@@ -16,6 +17,7 @@ list and remove them.
 """
 
 from ._capture import CaptureError, capture, config_from
+from ._chat import to_chat
 from ._graph import to_networkx
 from ._send import send_otlp
 from ._show import show
@@ -42,6 +44,7 @@ readers._builtin("openai-tools", "agentpile.formats.tools:openai")
 readers._builtin("anthropic-tools", "agentpile.formats.tools:anthropic")
 writers._builtin("json", "agentpile.formats.jsonfile")
 writers._builtin("otlp-json", "agentpile.formats.otlp")
+writers._builtin("chat-jsonl", "agentpile.formats.chat")
 datasets._builtin("who_and_when", "agentpile.corpora.who_and_when:dataset")
 datasets._builtin("mast", "agentpile.corpora.mast:dataset")
 datasets._builtin("catchbench_pre", "agentpile.corpora.catchbench_pre:dataset")
@@ -82,6 +85,7 @@ __all__ = [
     "send_otlp",
     "show",
     "table",
+    "to_chat",
     "to_networkx",
     "to_pandas",
     "validate",
