@@ -314,7 +314,7 @@ def test_tool_span_attributes_follow_genai_v1_41_0():
     assert book["gen_ai.tool.call.arguments"] == "{'offer_id': 7"  # the raw text the source gave
     assert by_name(doc, "execute_tool book_flight")[0]["status"]["code"] == 2
     assert book["error.type"] == "tool_error"
-    step = attrs_of([s for s in spans_of(doc) if s["name"] == "chat"][0])
+    step = attrs_of([s for s in spans_of(doc) if s["name"] == "chat fake-model"][0])  # the actor's model
     assert step["gen_ai.operation.name"] == "chat" and step["gen_ai.agent.name"] == "Planner"
     out = json.loads(step["gen_ai.output.messages"])
     assert [p["type"] for p in out[0]["parts"]] == ["text", "tool_call", "tool_call"]
@@ -1413,11 +1413,52 @@ def test_the_view_shows_no_arguments_the_source_never_recorded():
     assert second["gen_ai.tool.call.arguments"] == "null"
     other = attrs_of(by_name(doc, "execute_tool book_flight")[0])
     assert other["gen_ai.tool.call.arguments"] == "{'offer_id': 7"  # recorded arguments still show
-    chat = attrs_of([s for s in spans_of(doc) if s["name"] == "chat" and attrs_of(s)["agentpile.index"] == 2][0])
+    chat = attrs_of([s for s in spans_of(doc) if s["name"].startswith("chat") and attrs_of(s)["agentpile.index"] == 2][0])
     parts = json.loads(chat["gen_ai.output.messages"])[0]["parts"]
     assert "arguments" not in parts[1] and parts[2]["arguments"] is None
     assert not any(k.endswith("tool_calls.0.tool_call.function.arguments") for k in chat)
     assert chat["llm.output_messages.0.message.tool_calls.1.tool_call.function.arguments"] == "null"
+    assert write_read(run) == run
+
+
+def model_spans(run):
+    """(step, attributes) of each model span in the export of a run without source spans."""
+    pairs = [(run.steps[a["agentpile.index"]], a) for a in map(attrs_of, spans_of(otlp.to_document(run)))
+             if a.get("agentpile.kind") == "step" and a.get("gen_ai.operation.name") == "chat"]
+    assert pairs
+    return pairs
+
+
+def test_a_model_span_names_the_model_the_record_gives_its_step():
+    # tau-bench records the model once, on the agent; its steps carry none, and the export still names it on each model span.
+    for run in ap.load("tau_bench", root=str(CORPORA / "tau_bench")):
+        if not any(s.get("source") == "agent" for s in run.steps):
+            continue
+        for step, a in model_spans(run):
+            assert "model_name" not in step
+            assert a["gen_ai.request.model"] == a["llm.model_name"] == run.record["agent"]["model_name"]
+        assert write_read(run) == run  # the record keeps its steps as the source gave them
+    # tau2-bench: the simulator's steps take its roster model, and the scripted greeting no model at all.
+    run = next(r for r in ap.load("tau2_bench", root=str(CORPORA / "tau2_bench")) if r.id == "beta-model/retail/3")
+    roster = {a["id"]: a["model"] for a in run.agents}
+    seen = set()
+    for step, a in model_spans(run):
+        sx = step["extra"]["agentpile"]
+        if sx.get("scripted"):
+            assert "gen_ai.request.model" not in a
+            seen.add("scripted")
+        elif sx.get("actor") == "user":
+            assert a["gen_ai.request.model"] == roster["user"] != roster["assistant"]
+            seen.add("simulator")
+    assert seen == {"scripted", "simulator"}
+    assert write_read(run) == run
+    # An actor's own roster model comes before the trajectory's, which an actor without one takes.
+    record = copy.deepcopy(next(ap.load(FIX / "atif_multiagent.json")).record)
+    for member in record["extra"]["agentpile"]["agents"]:
+        member["model"] = "planner-model" if member["id"] == "planner" else None
+    run = ap.Run(record)
+    by_actor = {step["extra"]["agentpile"]["actor"]: a["gen_ai.request.model"] for step, a in model_spans(run)}
+    assert by_actor == {"planner": "planner-model", "booker": run.record["agent"]["model_name"]}
     assert write_read(run) == run
 
 

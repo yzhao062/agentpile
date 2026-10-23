@@ -52,7 +52,7 @@ Who&When blames a step, TRAIL marks error spans, and MAST flags 14 failure modes
 ```python
 # TRAIL is gated: accept its terms on Hugging Face and log in first (section 3)
 runs = [run for name in ("who_and_when", "trail", "mast") for run in ap.load(name)]
-labels = ap.to_pandas(runs, "labels")   # run_id, name, value, target_kind, step, span, ...
+labels = ap.to_pandas(runs, "labels")   # run_id, name, value, value_type, target_kind, step, span, ...
 ```
 
 <p align="center"><img src="https://raw.githubusercontent.com/yzhao062/agentpile/main/assets/compare_failures.png" alt="Left: cumulative share of labels by the position of their step in the run, for Who&When's decisive step, TRAIL's first error and all TRAIL errors. Right: share of MAST runs flagged with each of 14 failure modes" width="100%"></p>

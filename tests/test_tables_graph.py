@@ -183,11 +183,13 @@ def test_who_and_when_labels_say_where_they_point():
     first = [r for r in rows if r["run_id"] == "Algorithm-Generated/1"]
     by_name = {r["name"]: r for r in first}
     assert by_name["mistake_step"]["target_kind"] == "step" and by_name["mistake_step"]["step"] == 5
-    assert by_name["mistake_step"]["value"] is True and by_name["mistake_step"]["label_source"] == "who_and_when"
+    assert (by_name["mistake_step"]["value"], by_name["mistake_step"]["value_type"]) == ("true", "bool")
+    assert by_name["mistake_step"]["label_source"] == "who_and_when"
     assert by_name["mistake_agent"]["target_kind"] == "agent" and by_name["mistake_agent"]["agent"] == "Math_Expert"
     assert by_name["mistake_agent"]["step"] is None
     hand = {r["name"]: r for r in rows if r["run_id"] == "Hand-Crafted/1"}
     assert hand["mistake_type"]["target_kind"] == "run" and hand["mistake_type"]["value"] == "Tool failure"
+    assert hand["mistake_type"]["value_type"] == "str"
     assert hand["mistake_type"]["step"] is None and hand["mistake_type"]["agent"] is None
     assert list(rows[0]) == ap._tables.LABEL_COLUMNS
 
@@ -203,9 +205,11 @@ def test_catchbench_pre_is_config_rows_with_tool_labels_and_no_events():
     labels = ap.table(runs, "labels")
     assert len(labels) == sum(len(r.labels) for r in runs)
     tool_labels = [r for r in labels if r["target_kind"] == "tool"]
-    assert tool_labels and all(r["tool"] and r["name"] == "excess_capability" and r["value"] is True for r in tool_labels)
+    assert tool_labels and all(r["tool"] and r["name"] == "excess_capability" and (r["value"], r["value_type"]) == ("true", "bool")
+                               for r in tool_labels)
     minimal = next(r for r in labels if r["run_id"] == "crewai-x1" and r["name"] == "minimal_reference")
-    assert minimal["value"] == '["WebSearch"]' and minimal["target_kind"] == "run" and minimal["label_source"] == "catchbench"
+    assert (minimal["value"], minimal["value_type"]) == ('["WebSearch"]', "json")
+    assert minimal["target_kind"] == "run" and minimal["label_source"] == "catchbench"
 
 
 def test_config_file_has_a_run_row_and_no_events():
@@ -216,7 +220,7 @@ def test_config_file_has_a_run_row_and_no_events():
     assert row["n_steps"] == 0 and row["n_agents"] == 1 and row["n_tools"] == len(run.tools) == 2
     assert not [c for c in row if c.startswith("outcome.")]
     assert ap.table(run, "labels") == [{
-        "run_id": "fx-config-1", "name": "excess_permission", "value": True, "target_kind": "agent",
+        "run_id": "fx-config-1", "name": "excess_permission", "value": "true", "value_type": "bool", "target_kind": "agent",
         "trajectory": "fx-config-1", "step": None, "call": None, "result": None, "span": None, "agent": "assistant",
         "tool": None, "label_source": "fixture"}]
 
@@ -294,9 +298,10 @@ def test_trail_span_labels_and_inferred_pairings():
     spans = [r for r in labels if r["target_kind"] == "span"]
     assert spans and all(r["span"] and r["step"] is None for r in spans)
     errors = [r for r in labels if r["name"] == "error"]
-    assert errors and all(json.loads(r["value"])["category"] for r in errors)  # a dict value is JSON text
+    assert errors and all(r["value_type"] == "json" and json.loads(r["value"])["category"] for r in errors)
     scores = [r for r in labels if r["name"] == "reliability_score"]
-    assert scores and all(isinstance(r["value"], int) and r["target_kind"] == "run" for r in scores)
+    assert scores and all(r["value_type"] == "int" and isinstance(json.loads(r["value"]), int) and r["target_kind"] == "run"
+                          for r in scores)
     assert len(labels) == sum(len(r.labels) for r in runs)
 
 
@@ -398,6 +403,34 @@ def test_to_pandas_with_no_rows_keeps_the_columns():
     assert len(labels) == 0 and list(labels.columns) == ap._tables.LABEL_COLUMNS
     runs = ap.to_pandas(config, "runs")
     assert len(runs) == 1 and runs.loc[0, "kind"] == "config" and runs.loc[0, "n_tools"] == 2
+
+
+def test_every_level_of_every_dataset_reaches_arrow_and_parquet(tmp_path):
+    # Datasets label with booleans, numbers, strings and objects alike; one mixed column used to break Arrow here.
+    pa = pytest.importorskip("pyarrow")
+    pq = pytest.importorskip("pyarrow.parquet")
+    pytest.importorskip("pandas")
+    by_dataset = {d.name: corpus(d.name) for d in sorted(CORPORA.iterdir()) if d.is_dir()}
+    assert len(by_dataset) == 13
+    everything = [run for runs in by_dataset.values() for run in runs]
+    for name, runs in [*by_dataset.items(), ("all", everything)]:
+        for level in ap._tables.LEVELS:
+            rows = ap.table(runs, level)
+            pa.Table.from_pylist(rows)
+            pq.write_table(pa.Table.from_pandas(ap.to_pandas(runs, level)), tmp_path / "t.parquet")
+            assert pq.read_table(tmp_path / "t.parquet").num_rows == len(rows), (name, level)
+    rows = ap.table(everything, "labels")
+    values = [label.get("value") for run in everything for label in run.labels]
+    assert len(rows) == len(values) and {r["value_type"] for r in rows} == {"bool", "int", "float", "str", "json", None}
+    tags = {type(None): None, bool: "bool", int: "int", float: "float", str: "str"}
+    frame = ap.to_pandas(everything, "labels")
+    cells = list(zip(frame["value"], frame["value_type"]))
+    assert len(cells) == len(rows)
+    for row, cell, value in zip(rows, cells, values):  # the value comes back with its own type: True, not 1
+        assert row["value_type"] == tags.get(type(value), "json"), row
+        for text, kind in ((row["value"], row["value_type"]), cell):  # the same rule reads a table row and a DataFrame cell
+            back = text if kind in ("str", None) else json.loads(text)
+            assert type(back) is type(value) and back == value, row
 
 
 def test_to_pandas_rejects_an_unknown_level():

@@ -2,6 +2,16 @@
 
 All notable changes to agentpile are listed here. Versions follow [Semantic Versioning](https://semver.org/); before 1.0, a minor version may change the record format, and the entry says how.
 
+## Unreleased
+
+### Changed
+
+- The labels table of `ap.table(runs, "labels")` and `ap.to_pandas(runs, "labels")` stores each `value` as text, or `None` for a null value. A new `value_type` column records `bool`, `int`, `float`, `str`, `json` or `None`. Keep `value` as it is when `value_type` is `str` or `None`, and use `json.loads(value)` otherwise; in `to_pandas` these two columns keep `None` rather than NaN, so the same rule works on a DataFrame. A value JSON cannot hold (a date, a tuple) comes back in its JSON form, and `run.labels` keeps the original typed values. Datasets label with booleans, numbers and strings alike, so the old column mixed types, and saving the labels table to Parquet (or any other Arrow conversion) failed for 7 of the 13 dataset fixtures and for all 13 together. A filter written for the old types needs the new form: `df[df.value == True]` now matches nothing, and `df[(df.value_type == "bool") & (df.value == "true")]` replaces it. `df.value.astype(float)` still works on numeric labels.
+
+### Fixed
+
+- A model span in an OTLP export names a model when its step records none: the model the record's roster gives the step's agent, else the trajectory's model. tau-bench records its model only once per run, so its model spans named none before. A step the harness scripted, such as tau2-bench's fixed greeting, still names none, and the record itself is unchanged. The span is then named `chat <model>`.
+
 ## 0.1.1 (2026-10-22)
 
 Fixes found by running 0.1.0 on Google Colab, where the preinstalled google-adk caps OpenTelemetry at 1.42.1.

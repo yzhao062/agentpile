@@ -929,9 +929,10 @@ class _Writer:
         root_claim = self.claim_traj.get(tpath)
         extra_attr, ext = _split_extra(traj)
         agent = traj.get("agent") if isinstance(traj.get("agent"), dict) else {}
-        roster = {a["id"]: (a.get("name") if isinstance(a.get("name"), str) else a["id"])
-                  for a in (ext.get("agents") if isinstance(ext, dict) and isinstance(ext.get("agents"), list) else [])
-                  if isinstance(a, dict) and isinstance(a.get("id"), str)}
+        members = [a for a in (ext.get("agents") if isinstance(ext, dict) and isinstance(ext.get("agents"), list) else [])
+                   if isinstance(a, dict) and isinstance(a.get("id"), str)]
+        roster = {a["id"]: (a.get("name") if isinstance(a.get("name"), str) else a["id"]) for a in members}
+        models = {a["id"]: a["model"] for a in members if isinstance(a.get("model"), str) and a["model"]}
 
         attrs: Dict[str, Any] = {"agentpile.version": EXT_VERSION, "agentpile.kind": kind, "agentpile.index": index}
         if owner_id is not None and self.sourced:  # a source span's own parent chain need not lead to the embedding trajectory
@@ -993,7 +994,8 @@ class _Writer:
                 end = max(end, t)
                 self.spans.append(self._call_span(call, j, i, csid, root_id, t, cxs, results, call_claim))
             end_max = max(end_max, end)
-            self.spans.append(self._step_span(step, i, step_ids[i], root_id, start, end, synth, tid, roster, agent, step_claim))
+            self.spans.append(self._step_span(step, i, step_ids[i], root_id, start, end, synth, tid, roster, models, agent,
+                                              step_claim))
         for k, sub in enumerate(subs):  # under the call that references the subagent, else its step, else the root
             self._emit_traj(sub, f"{tpath}/sub{k}", "subagent", k, self._subagent_parent(sub, steps, step_ids, call_ids, root_id),
                             root_id)
@@ -1082,13 +1084,18 @@ class _Writer:
             v["output.value"] = _text_of(last_agent.get("message"))
         return v
 
-    def _step_view(self, step: Dict[str, Any], sx_d: Dict[str, Any], roster: Dict[str, str], agent: Dict[str, Any],
-                   text: str, model_call: bool) -> Tuple[str, int, Dict[str, Any]]:
+    def _step_view(self, step: Dict[str, Any], sx_d: Dict[str, Any], roster: Dict[str, str], models: Dict[str, str],
+                   agent: Dict[str, Any], text: str, model_call: bool) -> Tuple[str, int, Dict[str, Any]]:
         """(span name, span kind, view attributes) of a step no source span stands behind.
 
         An agent step is a model call (``chat``) only in a record without source spans: where the source's own spans
         are written, a step without one is not a model call (an earlier call's output re-sent as history), so it is an
-        ``agent_step`` span that carries the record and no model, token or message attributes."""
+        ``agent_step`` span that carries the record and no model, token or message attributes.
+
+        The model of a model call is the step's ``model_name``, else the roster ``model`` of the step's actor, else the
+        trajectory's ``agent.model_name`` (ATIF's default for its steps). A scripted step, text the harness fixed rather
+        than a model wrote, gets none. The fallback lives in these view attributes only; the record keeps the step as
+        the source gave it."""
         source = step.get("source")
         v: Dict[str, Any] = {}
         if source != "agent":
@@ -1096,11 +1103,13 @@ class _Writer:
             v["input.value"] = text
             v["input.mime_type"] = "text/plain"
             return {"user": "user_message", "system": "system_message"}.get(source, "step"), 1, v
+        actor = sx_d.get("actor")
         model = step.get("model_name")
+        if not (isinstance(model, str) and model) and not sx_d.get("scripted"):
+            model = (models.get(actor) if isinstance(actor, str) else None) or agent.get("model_name")
         v["openinference.span.kind"] = "LLM" if model_call else "CHAIN"
         if model_call:
             v["gen_ai.operation.name"] = "chat"
-        actor = sx_d.get("actor")
         who = roster.get(actor) if isinstance(actor, str) else None
         who = who or (agent.get("name") if isinstance(agent.get("name"), str) else None)
         if who:
@@ -1147,13 +1156,15 @@ class _Writer:
         return ("chat " + model if isinstance(model, str) and model else "chat"), 3, v
 
     def _step_span(self, step: Dict[str, Any], i: int, sid: str, root_id: str, start: int, end: int, synth: bool,
-                   tid: Any, roster: Dict[str, str], agent: Dict[str, Any], claim: Optional[_Claim]) -> Dict[str, Any]:
+                   tid: Any, roster: Dict[str, str], models: Dict[str, str], agent: Dict[str, Any],
+                   claim: Optional[_Claim]) -> Dict[str, Any]:
         extra_attr, sx = _split_extra(step)
         sx_d = sx if isinstance(sx, dict) else {}
         attrs: Dict[str, Any] = {"agentpile.version": EXT_VERSION, "agentpile.kind": "step", "agentpile.index": i}
         if claim is None:
             model_call = step.get("source") == "agent" and not self.sourced and step.get("llm_call_count") != 0
-            span_name, span_kind, view = self._step_view(step, sx_d, roster, agent, _text_of(step.get("message")), model_call)
+            span_name, span_kind, view = self._step_view(step, sx_d, roster, models, agent, _text_of(step.get("message")),
+                                                         model_call)
             attrs.update(view)
             if synth:
                 attrs["agentpile.time_synthetic"] = True

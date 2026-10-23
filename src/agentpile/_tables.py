@@ -5,6 +5,10 @@ labels). Every value is a scalar (``None``, bool, int, float or str), and a valu
 that is not one (a dict, a list) is JSON text, so the rows go straight into
 ``pandas.DataFrame``, ``csv.DictWriter`` or a database. Every row of a level has
 the same keys. ``to_pandas`` builds the DataFrame.
+
+A label's value is text in a table, because datasets label with booleans, numbers
+and strings alike and one column of mixed types breaks Arrow and Parquet. The
+``value_type`` column says how to read it back.
 """
 
 from __future__ import annotations
@@ -21,8 +25,8 @@ RUN_COLUMNS = ["run_id", "kind", "dataset", "config", "revision", "file", "forma
                "n_messages", "n_calls", "n_results", "n_agents", "n_tools", "n_labels"]
 EVENT_COLUMNS = ["run_id", "index", "kind", "role", "actor", "step", "call", "result", "source_call_id", "name",
                  "content", "error", "content_state", "id_generated", "name_stand_in", "paired_by"]
-LABEL_COLUMNS = ["run_id", "name", "value", "target_kind", "trajectory", "step", "call", "result", "span", "agent",
-                 "tool", "label_source"]
+LABEL_COLUMNS = ["run_id", "name", "value", "value_type", "target_kind", "trajectory", "step", "call", "result",
+                 "span", "agent", "tool", "label_source"]
 
 COLUMNS = {"runs": RUN_COLUMNS, "events": EVENT_COLUMNS, "labels": LABEL_COLUMNS}
 INT_COLUMNS = {
@@ -39,6 +43,21 @@ def _cell(value: Any) -> Any:
     if value is None or isinstance(value, (bool, int, float, str)):
         return value
     return json.dumps(value, ensure_ascii=False, default=str)
+
+
+def _typed_text(value: Any) -> Tuple[Optional[str], Optional[str]]:
+    """A label value as ``(text, value_type)``: a string as it is, anything else as JSON text, ``(None, None)`` for null.
+
+    ``value_type`` is ``"bool"``, ``"int"``, ``"float"``, ``"str"`` or ``"json"``. Keep ``text`` as it is for ``"str"``
+    and ``None``, and use ``json.loads(text)`` for the others; a value JSON cannot hold (a date, a tuple) comes back in
+    its JSON form, and ``MISSING`` becomes ``None``. ``bool`` is tested before ``int``, of which it is a subclass.
+    """
+    if value is None or value is MISSING:
+        return None, None
+    if isinstance(value, str):
+        return value, "str"
+    kind = next((name for name, cls in (("bool", bool), ("int", int), ("float", float)) if isinstance(value, cls)), "json")
+    return json.dumps(value, ensure_ascii=False, default=str), kind
 
 
 def _text_cell(value: Any) -> Optional[str]:
@@ -136,8 +155,9 @@ def _label_rows(run: Run) -> List[Dict[str, Any]]:
     for label in run.labels:
         target = label.get("target") or {}
         address = target.get("address") or {}
+        value, value_type = _typed_text(label.get("value"))
         rows.append({  # run_id is the record holding the label; trajectory is the one it targets (a subagent's, say)
-            "run_id": run.id, "name": label.get("name"), "value": _cell(label.get("value")),
+            "run_id": run.id, "name": label.get("name"), "value": value, "value_type": value_type,
             "target_kind": target.get("kind"), "trajectory": address.get("trajectory") or run.id,
             "step": address.get("step"), "call": address.get("call"),
             "result": address.get("result"), "span": address.get("span"), "agent": address.get("agent"),
@@ -172,8 +192,11 @@ def table(runs: Union[Run, Iterable[Run]], level: str = "events") -> List[Dict[s
       ``content_state`` (``null``, ``missing``, ``unparsed``, ``rebuilt`` or ``raw``, as the record states
       them), ``id_generated`` and ``name_stand_in`` (flags of a call), and ``paired_by`` (the rule by which
       a reader tied a result, or a call, to a place the source does not state).
-    - ``"labels"``: one row per label with its value (JSON text if not a scalar), ``target_kind``, the
-      target address fields and ``label_source``.
+    - ``"labels"``: one row per label with its value as text (``None`` for a null value) and ``value_type``
+      (``bool``, ``int``, ``float``, ``str`` or ``json``; ``None`` for a null value), ``target_kind``, the target
+      address fields and ``label_source``. Keep ``value`` as it is when ``value_type`` is ``str`` or ``None``, and use
+      ``json.loads(value)`` otherwise; a value JSON cannot hold comes back in its JSON form, and ``run.labels`` keeps
+      the original typed value.
 
     A config record has a row at the ``runs`` and ``labels`` levels and no events.
     """
@@ -194,6 +217,9 @@ def to_pandas(runs: Union[Run, Iterable[Run]], level: str = "events"):
         raise ImportError("to_pandas needs the pandas extra: pip install 'agentpile[pandas]'") from exc
     rows = table(runs, level)
     frame = pd.DataFrame(rows, columns=list(rows[0]) if rows else COLUMNS[level])
+    if level == "labels":  # keep None for a null value, as the read-back rule expects; pandas 3 would make it NaN
+        for column in ("value", "value_type"):
+            frame[column] = pd.Series([row[column] for row in rows], index=frame.index, dtype=object)
     for column in INT_COLUMNS[level]:
         frame[column] = pd.to_numeric(frame[column]).astype("Int64")
     return frame
