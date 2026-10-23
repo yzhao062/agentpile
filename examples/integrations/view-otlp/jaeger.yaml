@@ -1,0 +1,26 @@
+service:
+  extensions: [jaeger_storage, jaeger_query]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [jaeger_storage_exporter]
+
+extensions:
+  jaeger_storage:
+    backends:
+      memstore:
+        memory:
+          max_traces: 100000
+  jaeger_query:
+    storage:
+      traces: memstore
+
+exporters:
+  jaeger_storage_exporter:
+    trace_storage: memstore
+
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 127.0.0.1:4318

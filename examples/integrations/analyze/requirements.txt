@@ -1,0 +1,4 @@
+# Python 3.12; checked 2026-10-23 on macOS arm64
+duckdb==2.0.0
+polars==2.0.0
+pyarrow==26.0.0

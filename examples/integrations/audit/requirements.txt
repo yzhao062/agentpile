@@ -1,0 +1,8 @@
+# Python 3.12; checked 2026-10-23 on macOS arm64
+invariant-ai==0.3.5
+# invariant-ai caps invariant-sdk, openai, Pillow and nltk itself; lark and pydantic float above its lower bounds
+invariant-sdk==0.0.11
+lark==1.3.1
+pydantic==2.14.1
+# reads the Parquet fixtures (the hf extra of agentpile installs it)
+pyarrow==26.0.0

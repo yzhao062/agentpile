@@ -1,0 +1,5 @@
+# Python 3.12; checked 2026-10-23 on macOS arm64
+deepeval==4.3.1
+ragas==0.4.3
+# ragas 0.4.3 imports langchain_community.chat_models.vertexai, which langchain-community 0.4 removed
+langchain-community==0.3.31

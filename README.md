@@ -68,6 +68,54 @@ graph = ap.to_networkx(run, rules=["value_flow"])       # events as nodes, depen
 
 <p align="center"><img src="https://raw.githubusercontent.com/yzhao062/agentpile/main/assets/value_flow.png" alt="Left: one tau-bench run drawn as a graph, with arcs from the calls whose results supplied reservation ids to the later calls that reused them. Right: how many steps back each dependency reaches in tau-bench and tau2-bench" width="100%"></p>
 
+### 1.4 Works With
+
+The same record feeds tools for evaluation, training, auditing, analysis and viewing. `ap.to_chat` turns runs into OpenAI-style chat rows with their tools, `ap.table` into flat tables, and `run.to_otlp` and `run.to_json` into traces and ATIF files. Each row below is a [recipe](https://github.com/yzhao062/agentpile/tree/main/examples/integrations) that CI runs every week at the version shown, offline on the bundled fixtures. A row turns stale when its check fails and stays stale until the same check passes again. A newer version of a tool counts only once its own check has passed.
+
+| Use | Tool | Check | Tested version | Status | Last passing check | Recipe |
+|---|---|---|---|---|---|---|
+| Evaluate | Ragas | tool-call F1 and accuracy, no model | 0.4.3 | ![check][s-evaluate] | ![last pass][l-evaluate] | [evaluate][r-evaluate] |
+| Evaluate | DeepEval | tool correctness, judge never called | 4.3.1 | ![check][s-evaluate] | ![last pass][l-evaluate] | [evaluate][r-evaluate] |
+| Train | Hugging Face datasets, TRL | round trips, assistant-only labels | 5.1.0, 1.16.0 | ![check][s-train] | ![last pass][l-train] | [train][r-train] |
+| Audit | Invariant Guardrails | data-flow and ordering rules | 0.3.5 | ![check][s-audit] | ![last pass][l-audit] | [audit][r-audit] |
+| Analyze | DuckDB, Polars | same answers, Parquet round trip | 2.0.0, 2.0.0 | ![check][s-analyze] | ![last pass][l-analyze] | [analyze][r-analyze] |
+| View | Harbor (`harbor view`) | ATIF loads and is served | 0.24.0 | ![check][s-view-harbor] | ![last pass][l-view-harbor] | [view-harbor][r-view-harbor] |
+| View | Inspect AI (`inspect view`) | eval log reads back and is served | 0.3.283 | ![check][s-view-inspect] | ![last pass][l-view-inspect] | [view-inspect][r-view-inspect] |
+| View | OTLP receivers | exports parse as OTLP and read back | proto 1.45.1 | ![check][s-view-otlp] | ![last pass][l-view-otlp] | [view-otlp][r-view-otlp] |
+| View | Arize Phoenix | every trace sent is found | 20.24.0 | ![check][s-ingest-phoenix] | ![last pass][l-ingest-phoenix] | [view-otlp][r-view-otlp] |
+| View | Jaeger | every trace sent is found | 2.22.0 | ![check][s-ingest-jaeger] | ![last pass][l-ingest-jaeger] | [view-otlp][r-view-otlp] |
+| View | MLflow | every trace sent is found | 3.17.2 | ![check][s-ingest-mlflow] | ![last pass][l-ingest-mlflow] | [view-otlp][r-view-otlp] |
+
+The last three rows start the platform, send the fixture runs to it and query them back. They run weekly, for a release tag and on demand, and after a change to the code they cover they show stale until they run again. Langfuse has a preset in the OTLP recipe and gets a row once its ingestion check passes.
+
+[s-evaluate]: https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyzhao062%2Fagentpile%2Frecipe-status%2Fstatus%2Fevaluate.json
+[l-evaluate]: https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyzhao062%2Fagentpile%2Frecipe-status%2Fstatus%2Fevaluate-last.json
+[s-train]: https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyzhao062%2Fagentpile%2Frecipe-status%2Fstatus%2Ftrain.json
+[l-train]: https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyzhao062%2Fagentpile%2Frecipe-status%2Fstatus%2Ftrain-last.json
+[s-audit]: https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyzhao062%2Fagentpile%2Frecipe-status%2Fstatus%2Faudit.json
+[l-audit]: https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyzhao062%2Fagentpile%2Frecipe-status%2Fstatus%2Faudit-last.json
+[s-analyze]: https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyzhao062%2Fagentpile%2Frecipe-status%2Fstatus%2Fanalyze.json
+[l-analyze]: https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyzhao062%2Fagentpile%2Frecipe-status%2Fstatus%2Fanalyze-last.json
+[s-view-harbor]: https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyzhao062%2Fagentpile%2Frecipe-status%2Fstatus%2Fview-harbor.json
+[l-view-harbor]: https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyzhao062%2Fagentpile%2Frecipe-status%2Fstatus%2Fview-harbor-last.json
+[s-view-inspect]: https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyzhao062%2Fagentpile%2Frecipe-status%2Fstatus%2Fview-inspect.json
+[l-view-inspect]: https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyzhao062%2Fagentpile%2Frecipe-status%2Fstatus%2Fview-inspect-last.json
+[s-view-otlp]: https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyzhao062%2Fagentpile%2Frecipe-status%2Fstatus%2Fview-otlp.json
+[l-view-otlp]: https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyzhao062%2Fagentpile%2Frecipe-status%2Fstatus%2Fview-otlp-last.json
+[s-ingest-phoenix]: https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyzhao062%2Fagentpile%2Frecipe-status%2Fstatus%2Fingest-phoenix.json
+[l-ingest-phoenix]: https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyzhao062%2Fagentpile%2Frecipe-status%2Fstatus%2Fingest-phoenix-last.json
+[s-ingest-jaeger]: https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyzhao062%2Fagentpile%2Frecipe-status%2Fstatus%2Fingest-jaeger.json
+[l-ingest-jaeger]: https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyzhao062%2Fagentpile%2Frecipe-status%2Fstatus%2Fingest-jaeger-last.json
+[s-ingest-mlflow]: https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyzhao062%2Fagentpile%2Frecipe-status%2Fstatus%2Fingest-mlflow.json
+[l-ingest-mlflow]: https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyzhao062%2Fagentpile%2Frecipe-status%2Fstatus%2Fingest-mlflow-last.json
+[r-evaluate]: https://github.com/yzhao062/agentpile/tree/main/examples/integrations/evaluate
+[r-train]: https://github.com/yzhao062/agentpile/tree/main/examples/integrations/train
+[r-audit]: https://github.com/yzhao062/agentpile/tree/main/examples/integrations/audit
+[r-analyze]: https://github.com/yzhao062/agentpile/tree/main/examples/integrations/analyze
+[r-view-harbor]: https://github.com/yzhao062/agentpile/tree/main/examples/integrations/view-harbor
+[r-view-inspect]: https://github.com/yzhao062/agentpile/tree/main/examples/integrations/view-inspect
+[r-view-otlp]: https://github.com/yzhao062/agentpile/tree/main/examples/integrations/view-otlp
+
 ## 2. Quick Start
 
 ```bash

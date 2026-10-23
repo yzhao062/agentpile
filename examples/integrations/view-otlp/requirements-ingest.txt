@@ -1,0 +1,3 @@
+# Python 3.12; checked 2026-10-23 on macOS arm64
+arize-phoenix==20.24.0
+mlflow==3.17.2

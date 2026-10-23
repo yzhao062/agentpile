@@ -1,0 +1,184 @@
+name: recipes
+
+# Each recipe in examples/integrations/ runs in its own environment at the versions its requirements.txt pins, with
+# the network blocked while it runs (examples/integrations/_offline). It runs weekly, by hand, whenever a recipe or the
+# code it uses changes, and for a v* tag before a release. Results on main go to the recipe-status branch, whose badges
+# the README's Works With table shows. A failed check marks its row stale until the same check passes again; a passing
+# row turns stale when the code it covers changes on main and its check has not passed since (every fold judges every
+# row by the current main, so a run that finishes late cannot bring back an old result); a failed scheduled run opens
+# or updates an issue. The OTLP ingestion check starts Phoenix, Jaeger and MLflow, sends the fixture
+# runs and queries them back; it runs weekly, for a v* tag and by hand (workflow_dispatch with ingest), not on every push.
+
+on:
+  schedule:
+    - cron: "23 7 * * 1"
+  workflow_dispatch:
+    inputs:
+      ingest:
+        description: "Also run the OTLP ingestion check against Phoenix, Jaeger and MLflow (it runs weekly anyway)"
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths:
+      - "examples/integrations/**"
+      - "src/agentpile/**"
+      - "tests/corpora/fixtures/**"
+      - "tests/fixtures/otlp/**"
+      - "pyproject.toml"
+      - "tools/recipe_status.py"
+      - ".github/workflows/recipes.yml"
+  pull_request:
+    paths:
+      - "examples/integrations/**"
+      - "src/agentpile/**"
+      - "tests/corpora/fixtures/**"
+      - "tests/fixtures/otlp/**"
+      - "pyproject.toml"
+      - "tools/recipe_status.py"
+      - ".github/workflows/recipes.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  recipe:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        recipe: [evaluate, train, audit, analyze, view-harbor, view-inspect, view-otlp]
+    env:
+      DIR: examples/integrations/${{ matrix.recipe }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install at the recipe's pins
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[hf]" -r "$DIR/requirements.txt"
+          if [ -f "$DIR/setup.sh" ]; then bash "$DIR/setup.sh"; fi
+      - name: Run with the network blocked
+        env:
+          PYTHONPATH: ${{ github.workspace }}/examples/integrations/_offline
+          HF_HUB_OFFLINE: "1"
+          TRANSFORMERS_OFFLINE: "1"
+        run: python "$DIR/$(echo '${{ matrix.recipe }}' | tr - _).py"
+      - name: Record the result
+        if: always()
+        run: |
+          python tools/recipe_status.py record --row "${{ matrix.recipe }}" --outcome "${{ job.status }}" \
+            --requirements "$DIR/requirements.txt" --covers src/agentpile --covers "$DIR" \
+            --out "status-${{ matrix.recipe }}.json"
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: status-${{ matrix.recipe }}
+          path: status-${{ matrix.recipe }}.json
+
+  ingest:
+    if: github.event_name == 'schedule' || startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.ingest)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [phoenix, jaeger, mlflow]
+    env:
+      DIR: examples/integrations/view-otlp
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install the recipe and the platform at their pins
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[hf,otel]" -r "$DIR/requirements.txt" -r "$DIR/requirements-ingest.txt"
+      - name: Start the platform, send the runs, and query them back
+        run: bash "$DIR/ingest.sh" "${{ matrix.platform }}"
+      - name: Record the result with this platform's version
+        if: always()
+        run: |
+          case "${{ matrix.platform }}" in
+            phoenix) version=(--package arize-phoenix) ;;
+            mlflow) version=(--package mlflow) ;;
+            jaeger) version=(--version "jaeger=$(sed -n 's/^JAEGER_VERSION=//p' "$DIR/ingest.sh")") ;;
+          esac
+          python tools/recipe_status.py record --row "ingest-${{ matrix.platform }}" --outcome "${{ job.status }}" \
+            "${version[@]}" --package agentpile --covers src/agentpile --covers "$DIR" \
+            --out "status-ingest-${{ matrix.platform }}.json"
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: status-ingest-${{ matrix.platform }}
+          path: status-ingest-${{ matrix.platform }}.json
+
+  status:
+    needs: [recipe, ingest]
+    if: always() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: status-*
+          merge-multiple: true
+          path: results
+      - name: Fold the results into the recipe-status branch
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git fetch origin recipe-status:refs/remotes/origin/recipe-status; then
+            git worktree add -B recipe-status status-branch origin/recipe-status
+          else
+            git worktree add --detach status-branch
+            git -C status-branch switch --orphan recipe-status
+          fi
+          # Rows are judged by the code on main now, which may be newer than this run's checkout.
+          git fetch --depth 1 origin +refs/heads/main:refs/remotes/origin/main
+          git worktree add --detach main-code origin/main
+          python tools/recipe_status.py update results status-branch/status --root main-code \
+            --expect ingest-phoenix --expect ingest-jaeger --expect ingest-mlflow > failed.txt
+          git -C status-branch add status
+          git -C status-branch commit -q -m "Recipe status for ${GITHUB_SHA::7} (run ${GITHUB_RUN_ID})" || echo "no change"
+      - name: Open or update an issue for each failed scheduled check
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh label create recipe-check --color D93F0B --description "A recipe in examples/integrations failed its check" || true
+          while read -r row; do
+            [ -n "$row" ] || continue
+            title="Recipe check failed: $row"
+            number=$(gh issue list --label recipe-check --state open --search "\"$title\" in:title" --json number --jq '.[0].number')
+            if [ -n "$number" ]; then
+              gh issue comment "$number" --body "Still failing in $RUN"
+            else
+              gh issue create --label recipe-check --title "$title" \
+                --body "The scheduled check of \`$row\` failed in $RUN. Its row in the README's Works With table shows stale until the same check passes."
+            fi
+          done < failed.txt
+      - name: Push, rebuilding on the new head if another run pushed first
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if git -C status-branch push origin recipe-status; then exit 0; fi
+            git -C status-branch fetch origin +refs/heads/recipe-status:refs/remotes/origin/recipe-status
+            git -C status-branch reset -q --hard origin/recipe-status
+            git fetch --depth 1 origin +refs/heads/main:refs/remotes/origin/main
+            git -C main-code checkout -q --detach origin/main
+            python tools/recipe_status.py update results status-branch/status --root main-code \
+              --expect ingest-phoenix --expect ingest-jaeger --expect ingest-mlflow > /dev/null
+            git -C status-branch add status
+            git -C status-branch commit -q -m "Recipe status for ${GITHUB_SHA::7} (run ${GITHUB_RUN_ID})" || exit 0
+          done
+          exit 1

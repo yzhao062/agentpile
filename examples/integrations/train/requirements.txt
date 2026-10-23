@@ -1,0 +1,12 @@
+# Python 3.12; checked 2026-10-23 on macOS arm64
+datasets==5.1.0
+transformers==5.20.2
+trl==1.16.0
+torch==2.14.1
+accelerate==1.15.0
+huggingface_hub==2.3.0
+pyarrow==26.0.0
+pandas==3.1.0
+numpy==2.5.4
+tokenizers==0.23.3
+Jinja2==3.1.6
