@@ -2,6 +2,12 @@
 
 All notable changes to agentpile are listed here. Versions follow [Semantic Versioning](https://semver.org/); before 1.0, a minor version may change the record format, and the entry says how.
 
+## 0.1.2 (2026-10-22)
+
+### Added
+
+- Capture and the OTLP reader accept spans from Pydantic AI 2.60.0, which builds the same records as 2.58.0 and 2.59.0 from the fixture scripts. With 0.1.1, `cap.run` raised `UnsupportedVersion` for it, and 2.60.0 is what `pip install "agentpile[pydantic-ai]"` now installs.
+
 ## 0.1.1 (2026-10-22)
 
 Fixes found by running 0.1.0 on Google Colab, where the preinstalled google-adk caps OpenTelemetry at 1.42.1.

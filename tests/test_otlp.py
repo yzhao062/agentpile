@@ -549,7 +549,7 @@ def with_scope_version(path, version):
     return docs
 
 
-@pytest.mark.parametrize("path, scope, tested", [(PAI, "pydantic-ai", ("2.58.0", "2.59.0")),
+@pytest.mark.parametrize("path, scope, tested", [(PAI, "pydantic-ai", ("2.58.0", "2.59.0", "2.60.0")),
                                                  (OAI, "openinference.instrumentation.openai_agents", ("2.5.3",))],
                          ids=["pydantic-ai", "openai-agents"])
 def test_an_untested_version_of_a_known_dialect_is_not_interpreted(path, scope, tested):
