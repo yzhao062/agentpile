@@ -1,0 +1,61 @@
+{
+  "row": "train",
+  "status": "passing",
+  "reason": null,
+  "last_run": {
+    "row": "train",
+    "outcome": "success",
+    "revision": "ed068a2b445d0fefaa35dd0ea95df18af98dfc99",
+    "date": "2026-10-23",
+    "run": "https://github.com/yzhao062/agentpile/actions/runs/40009541334",
+    "run_id": 40009541334,
+    "run_attempt": 1,
+    "event": "push",
+    "versions": {
+      "datasets": "5.1.0",
+      "transformers": "5.20.2",
+      "trl": "1.16.0",
+      "torch": "2.14.1",
+      "accelerate": "1.15.0",
+      "huggingface_hub": "2.3.0",
+      "pyarrow": "26.0.0",
+      "pandas": "3.1.0",
+      "numpy": "2.5.4",
+      "tokenizers": "0.23.3",
+      "Jinja2": "3.1.6"
+    },
+    "covers": [
+      "examples/integrations/train",
+      "src/agentpile"
+    ],
+    "fingerprint": "3a77c1e9e083f4823276853982d1a4a92d8e8801e26ecaa04fb492252c451e86"
+  },
+  "last_passing_run": {
+    "row": "train",
+    "outcome": "success",
+    "revision": "ed068a2b445d0fefaa35dd0ea95df18af98dfc99",
+    "date": "2026-10-23",
+    "run": "https://github.com/yzhao062/agentpile/actions/runs/40009541334",
+    "run_id": 40009541334,
+    "run_attempt": 1,
+    "event": "push",
+    "versions": {
+      "datasets": "5.1.0",
+      "transformers": "5.20.2",
+      "trl": "1.16.0",
+      "torch": "2.14.1",
+      "accelerate": "1.15.0",
+      "huggingface_hub": "2.3.0",
+      "pyarrow": "26.0.0",
+      "pandas": "3.1.0",
+      "numpy": "2.5.4",
+      "tokenizers": "0.23.3",
+      "Jinja2": "3.1.6"
+    },
+    "covers": [
+      "examples/integrations/train",
+      "src/agentpile"
+    ],
+    "fingerprint": "3a77c1e9e083f4823276853982d1a4a92d8e8801e26ecaa04fb492252c451e86"
+  }
+}

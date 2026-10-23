@@ -1,0 +1,49 @@
+{
+  "row": "audit",
+  "status": "passing",
+  "reason": null,
+  "last_run": {
+    "row": "audit",
+    "outcome": "success",
+    "revision": "ed068a2b445d0fefaa35dd0ea95df18af98dfc99",
+    "date": "2026-10-23",
+    "run": "https://github.com/yzhao062/agentpile/actions/runs/40009541334",
+    "run_id": 40009541334,
+    "run_attempt": 1,
+    "event": "push",
+    "versions": {
+      "invariant-ai": "0.3.5",
+      "invariant-sdk": "0.0.11",
+      "lark": "1.3.1",
+      "pydantic": "2.14.1",
+      "pyarrow": "26.0.0"
+    },
+    "covers": [
+      "examples/integrations/audit",
+      "src/agentpile"
+    ],
+    "fingerprint": "74025392c598020d2a43c19a349f98b294e312ffddc9dc77e20afb38c3812ea6"
+  },
+  "last_passing_run": {
+    "row": "audit",
+    "outcome": "success",
+    "revision": "ed068a2b445d0fefaa35dd0ea95df18af98dfc99",
+    "date": "2026-10-23",
+    "run": "https://github.com/yzhao062/agentpile/actions/runs/40009541334",
+    "run_id": 40009541334,
+    "run_attempt": 1,
+    "event": "push",
+    "versions": {
+      "invariant-ai": "0.3.5",
+      "invariant-sdk": "0.0.11",
+      "lark": "1.3.1",
+      "pydantic": "2.14.1",
+      "pyarrow": "26.0.0"
+    },
+    "covers": [
+      "examples/integrations/audit",
+      "src/agentpile"
+    ],
+    "fingerprint": "74025392c598020d2a43c19a349f98b294e312ffddc9dc77e20afb38c3812ea6"
+  }
+}

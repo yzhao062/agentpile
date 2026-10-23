@@ -1,0 +1,41 @@
+{
+  "row": "view-inspect",
+  "status": "passing",
+  "reason": null,
+  "last_run": {
+    "row": "view-inspect",
+    "outcome": "success",
+    "revision": "ed068a2b445d0fefaa35dd0ea95df18af98dfc99",
+    "date": "2026-10-23",
+    "run": "https://github.com/yzhao062/agentpile/actions/runs/40009541334",
+    "run_id": 40009541334,
+    "run_attempt": 1,
+    "event": "push",
+    "versions": {
+      "inspect-ai": "0.3.283"
+    },
+    "covers": [
+      "examples/integrations/view-inspect",
+      "src/agentpile"
+    ],
+    "fingerprint": "e89efc2e1f9459f69b96ea785d281f50dfb94180d31f09cf772bd29f61490dfd"
+  },
+  "last_passing_run": {
+    "row": "view-inspect",
+    "outcome": "success",
+    "revision": "ed068a2b445d0fefaa35dd0ea95df18af98dfc99",
+    "date": "2026-10-23",
+    "run": "https://github.com/yzhao062/agentpile/actions/runs/40009541334",
+    "run_id": 40009541334,
+    "run_attempt": 1,
+    "event": "push",
+    "versions": {
+      "inspect-ai": "0.3.283"
+    },
+    "covers": [
+      "examples/integrations/view-inspect",
+      "src/agentpile"
+    ],
+    "fingerprint": "e89efc2e1f9459f69b96ea785d281f50dfb94180d31f09cf772bd29f61490dfd"
+  }
+}
