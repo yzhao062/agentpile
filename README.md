@@ -1,6 +1,6 @@
 <div align="center">
 
-# agentpile
+<h1><img src="https://raw.githubusercontent.com/yzhao062/agentpile/main/assets/logo.png" alt="agentpile" width="435"></h1>
 
 **From agent trajectory datasets and traces to the tools you already use.**
 

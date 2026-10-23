@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 136 136" role="img" aria-labelledby="title"><title id="title">agentpile: stacked run records with a connected trajectory</title><g id="record-stack">
+  <rect x="40" y="16" width="80" height="80" rx="18" fill="#BFDFD2"/>
+  <rect x="28" y="28" width="80" height="80" rx="18" fill="#4198AC"/>
+  <rect x="16" y="40" width="80" height="80" rx="18" fill="#183F43"/>
+</g>
+<g id="trajectory" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M36 96 V72 Q36 60 48 60 H64 Q76 60 76 72 V80 Q76 92 64 92 H52"/>
+</g>
+<g id="events"><circle cx="36" cy="98" r="7" fill="#BFDFD2"/><circle cx="76" cy="73" r="7" fill="#ED8D5A"/></g></svg>
