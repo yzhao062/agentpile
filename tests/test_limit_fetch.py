@@ -19,7 +19,7 @@ FIXTURES = Path(__file__).parent / "corpora" / "fixtures"
 MARKER = ".agentpile-complete.json"
 PARQUET = {"swe_agent_nebius", "swe_gym_openhands", "swe_rebench_openhands", "swe_smith", "trail"}
 NAMES = ["adp", "agent_reward_bench", "agentdojo", "mast", "swe_agent_nebius", "swe_gym_openhands",
-         "swe_rebench_openhands", "swe_smith", "tau2_bench", "tau_bench", "trail", "who_and_when"]
+         "swe_rebench_openhands", "swe_smith", "tau2_bench", "tau_bench", "trace_commons", "trail", "who_and_when"]
 REV = "1" * 40
 
 

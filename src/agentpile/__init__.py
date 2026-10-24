@@ -42,6 +42,7 @@ readers._builtin("otlp-json", "agentpile.formats.otlp")
 readers._builtin("mcp-tools-list", "agentpile.formats.tools:mcp")
 readers._builtin("openai-tools", "agentpile.formats.tools:openai")
 readers._builtin("anthropic-tools", "agentpile.formats.tools:anthropic")
+readers._builtin("claude-code-jsonl", "agentpile.formats.claude_code")
 writers._builtin("json", "agentpile.formats.jsonfile")
 writers._builtin("otlp-json", "agentpile.formats.otlp")
 writers._builtin("chat-jsonl", "agentpile.formats.chat")
@@ -58,6 +59,7 @@ datasets._builtin("agent_reward_bench", "agentpile.corpora.agent_reward_bench:da
 datasets._builtin("swe_agent_nebius", "agentpile.corpora.swe_agent_nebius:dataset")
 datasets._builtin("swe_smith", "agentpile.corpora.swe_smith:dataset")
 datasets._builtin("adp", "agentpile.corpora.adp:dataset")
+datasets._builtin("trace_commons", "agentpile.corpora.trace_commons:dataset")
 
 __all__ = [
     "ATIF_VERSION",

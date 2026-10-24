@@ -411,7 +411,7 @@ def test_every_level_of_every_dataset_reaches_arrow_and_parquet(tmp_path):
     pq = pytest.importorskip("pyarrow.parquet")
     pytest.importorskip("pandas")
     by_dataset = {d.name: corpus(d.name) for d in sorted(CORPORA.iterdir()) if d.is_dir()}
-    assert len(by_dataset) == 13
+    assert len(by_dataset) == 14
     everything = [run for runs in by_dataset.values() for run in runs]
     for name, runs in [*by_dataset.items(), ("all", everything)]:
         for level in ap._tables.LEVELS:

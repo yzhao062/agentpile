@@ -9,7 +9,7 @@ from pathlib import Path
 MANIFESTS = Path(__file__).resolve().parents[1] / "src" / "agentpile" / "corpora" / "manifests"
 
 ORDER = ["who_and_when", "mast", "trail", "tau_bench", "tau2_bench", "agent_reward_bench", "agentdojo",
-         "swe_rebench_openhands", "swe_agent_nebius", "swe_gym_openhands", "swe_smith", "adp", "catchbench_pre"]
+         "swe_rebench_openhands", "swe_agent_nebius", "swe_gym_openhands", "swe_smith", "adp", "trace_commons", "catchbench_pre"]
 
 
 def label_summary(m):

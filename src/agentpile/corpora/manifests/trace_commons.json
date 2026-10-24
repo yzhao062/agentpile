@@ -1,0 +1,35 @@
+{
+  "name": "trace_commons",
+  "hf_id": "trace-commons/agent-traces",
+  "revision": "112ebd4d03ce852b00e935d523107c3d0c9a65bf",
+  "checked_at": "2026-10-23",
+  "license_on_card": "cc-by-4.0",
+  "gated": false,
+  "allow_patterns": [
+    "sessions/claude_code/*.jsonl"
+  ],
+  "unsupported": [
+    {
+      "what": "the Cursor (1 file) and opencode (1 file) sessions, which have no agentpile reader"
+    },
+    {
+      "what": "the Parquet table under data/, which the card builds from the raw session files"
+    },
+    {
+      "what": "subagent transcripts: the 9 Agent tool results name an agentId whose file was not donated"
+    },
+    {
+      "what": "labels of any kind"
+    }
+  ],
+  "counts": {
+    "source_rows": {
+      "value": 28
+    },
+    "runs_after_load": {
+      "value": 28
+    }
+  },
+  "count_note": "One run per Claude Code session file. The 28 files hold 17,991 non-empty lines, 4,264 tool calls and 4,262 results; every result pairs with a call, and 2 calls have no result.",
+  "labels": []
+}

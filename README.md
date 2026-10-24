@@ -16,7 +16,7 @@
 ```python
 import agentpile as ap
 
-run = next(ap.load("who_and_when"))   # one of 13 datasets by name, or a trace file by path
+run = next(ap.load("who_and_when"))   # one of 14 datasets by name, or a trace file by path
 ap.show(run)                          # every step, call and result, with the source's labels beside them
 ```
 
@@ -27,7 +27,7 @@ ap.show(run)                          # every step, call and result, with the so
 Public datasets store agent runs in their own schemas (e.g., chat messages in tau-bench, OpenTelemetry spans in TRAIL, raw log text in MAST), and each analysis tool expects its own input. agentpile sits between the two. It reads datasets, trace files and live runs into [ATIF v1.7](https://github.com/harbor-framework/harbor) records that keep what the source recorded. You can then use those records with pandas, networkx or a tracing UI such as Phoenix. It downloads each dataset from its publisher at a pinned revision and redistributes nothing.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/yzhao062/agentpile/main/assets/overview.png" alt="Three kinds of input (13 public datasets, trace and tool files, live agent runs) go into one run record, an ATIF v1.7 trajectory or a config record with no steps. Three kinds of use come out: read a run with ap.show, analyze many runs with pandas tables and networkx graphs, and hand a run on as JSON or as OTLP spans to Phoenix or Jaeger." width="100%">
+  <img src="https://raw.githubusercontent.com/yzhao062/agentpile/main/assets/overview.png" alt="Three kinds of input (14 public datasets, trace and tool files, live agent runs) go into one run record, an ATIF v1.7 trajectory or a config record with no steps. Three kinds of use come out: read a run with ap.show, analyze many runs with pandas tables and networkx graphs, and hand a run on as JSON or as OTLP spans to Phoenix or Jaeger." width="100%">
 </p>
 
 ## 1. What You Can Do
@@ -170,7 +170,7 @@ A dataset loads by name (`ap.datasets.names()` lists them), and a trace file by 
 ```python
 for run in ap.load("who_and_when", limit=5):   # fetches only the files these five runs come from
     print(run.id, run.labels)                  # the labels the reader emits, each with its target
-run = next(ap.load("my_trace.json"))           # ATIF, OpenAI messages, OTLP JSON or a tool list
+run = next(ap.load("my_trace.json"))           # ATIF, OpenAI messages, OTLP JSON, a tool list or a Claude Code session
 ```
 
 ## 3. Datasets
@@ -191,6 +191,7 @@ Each name loads one dataset at the revision shown, and a full load is checked ag
 | `swe_gym_openhands` | [SWE-Gym/OpenHands-Sampled-Trajectories](https://huggingface.co/datasets/SWE-Gym/OpenHands-Sampled-Trajectories) @ `baf3a4e` | 6,055 | run | not declared |
 | `swe_smith` | [SWE-bench/SWE-smith-trajectories](https://huggingface.co/datasets/SWE-bench/SWE-smith-trajectories) @ `08e109b` | 24,100 | run, step | mit |
 | `adp` | [neulab/agent-data-collection](https://huggingface.co/datasets/neulab/agent-data-collection) @ `31a76bf` | 200,914 | run | not declared |
+| `trace_commons` | [trace-commons/agent-traces](https://huggingface.co/datasets/trace-commons/agent-traces) @ `112ebd4` | 28 | none | cc-by-4.0 |
 | `catchbench_pre` | [yzhao062/catchbench](https://github.com/yzhao062/catchbench) @ `30a516c` | 1,187 | run, tool | MIT; rows name their upstream license |
 
 > [!WARNING]
@@ -205,6 +206,7 @@ Each name loads one dataset at the revision shown, and a full load is checked ag
 - **TRAIL** is gated on Hugging Face: accept its terms on the dataset page with the account whose token you use.
 - **AgentRewardBench** run files total about 30 GB, because each step keeps the browser state the agent saw. `limit=` fetches only the run files it reads.
 - **SWE-smith** loads its `tool` split. 14,984 of its 24,100 rows write actions as text and load as plain messages, and `message_format="native"` returns only the 9,116 rows with structured calls.
+- **Trace Commons** loads only its Claude Code sessions, 28 at the pinned revision: enough for tests and examples, too few to draw conclusions from. Its Cursor and opencode files have no reader.
 - **ADP** loads the 14 configurations whose records pass validation and a count check, and the manifest lists the rest. The loader follows ADP's own ADP-to-ATIF converter with two changes, both to keep the source's roles. An environment observation that answers no call becomes a user step whose `role` is `environment`, where ADP's converter makes it an empty agent step. A call's result keeps the observation's own `source`, where ADP's converter relabels `user` as `environment`.
 
 </details>
@@ -260,6 +262,8 @@ Loading never adds what the source did not record: it keeps any dependencies the
 - **Source order:** `run.events()` follows the order the source recorded, which differs from ATIF where ATIF stores a result on the step that issued the call (a delegated agent's steps can come in between). A reader whose references are not integers (e.g., TRAIL's span addresses) stores an integer sort position beside each reference (`source_pos`, `result_pos`), and the reference itself keeps pointing back into the source.
 
 CatchBench PRE rows load as config records, and so do tool definitions: an MCP `tools/list` result, an OpenAI tool list and an Anthropic tool list (readers `mcp-tools-list`, `openai-tools` and `anthropic-tools`), each definition kept verbatim. An MCP tool's permission comes from its annotations when it states them and is `unknown` otherwise.
+
+A Claude Code session file (`~/.claude/projects/<project>/<session>.jsonl`) loads by its path with reader `claude-code-jsonl`, and its subagent files load with it, each under the call that started it. Its format is Claude Code's own and has no public specification. The reader was built on 2.1.x files; it records the versions it saw, and `run.dataset["accounting"]` counts every line it did not map. A session that was edited or rewound keeps every branch, so an export in file order can hold alternatives, which `run.dataset["branches"]` lists. Local sessions can hold secrets, and agentpile writes what it reads.
 
 Inferred pairings include a result matched to its call by position, a TRAIL history call placed on the latest agent step, and a TRAIL TOOL span tied to its call by a unique match. Every dependency from `ap.derive_deps` names the rule and version that produced it, and `run.with_deps(rules=[...])` returns a copy whose steps carry those entries, which `to_otlp()` then writes as span links. The run you loaded is not changed.
 

@@ -2,6 +2,13 @@
 
 All notable changes to agentpile are listed here. Versions follow [Semantic Versioning](https://semver.org/); before 1.0, a minor version may change the record format, and the entry says how.
 
+## Unreleased
+
+### Added
+
+- A reader for the session files Claude Code writes under `~/.claude/projects/<project>/<session>.jsonl`, registered as `claude-code-jsonl`, so `ap.load(path)` reads a local session and every existing output (`run.events()`, tables, `to_chat`, `to_otlp`, `show`) works on it. Claude Code writes one record per content block; the records of one message become one agent step, placed at the message's first line, and each tool result pairs with its call by id even when Claude Code wrote the result before the rest of the message. Subagent files under `<session>/subagents/` load with the session as subagent trajectories, linked to the Agent call that names their id or the Workflow call that names their folder. Attachments are kept verbatim; other bookkeeping records are counted, every line of the file is accounted for in `run.dataset["accounting"]`, and an index of every record's `uuid` and parent keeps the session's tree, including edited or rewound branches, which are labelled and never pruned. The format is Claude Code's own and has no public specification; the reader was built on 2.1.x files.
+- The `trace_commons` dataset: the 28 Claude Code sessions of `trace-commons/agent-traces`, read with the new reader at a pinned revision.
+
 ## 0.2.0 (2026-10-23)
 
 Chat rows for training and evaluation, OTLP output that follows the OpenInference and OTel GenAI conventions, a labels table that saves to Parquet, and recipes for downstream tools. The labels table's `value` column changes type, which can silently empty an existing filter (see Changed).

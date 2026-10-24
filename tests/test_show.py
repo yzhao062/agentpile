@@ -226,7 +226,8 @@ def test_tau2_results_paired_by_position_say_so():
 # -- every reader's output shows without error --------------------------------------------------
 
 NAMES = ["who_and_when", "mast", "trail", "tau_bench", "tau2_bench", "agent_reward_bench", "agentdojo",
-         "swe_rebench_openhands", "swe_agent_nebius", "swe_gym_openhands", "swe_smith", "adp", "catchbench_pre"]
+         "swe_rebench_openhands", "swe_agent_nebius", "swe_gym_openhands", "swe_smith", "adp", "catchbench_pre",
+         "trace_commons"]
 NEEDS_PYARROW = ("trail", "swe_rebench_openhands", "swe_agent_nebius", "swe_gym_openhands", "swe_smith")
 
 

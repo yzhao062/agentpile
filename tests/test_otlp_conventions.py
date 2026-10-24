@@ -28,7 +28,7 @@ SCHEMAS = HERE / "schemas" / "genai"
 SOURCED = ["otlp/pydantic_ai_2.58.0.json", "otlp/pydantic_ai_2.58.0_delegation.json",
            "otlp/openai_agents_0.24.0_oi_2.5.3.jsonl", "otlp/openai_agents_0.24.0_oi_2.5.3_as_tool.json"]
 ARROW = importlib.util.find_spec("pyarrow") is not None
-needs_arrow = pytest.mark.skipif(not ARROW, reason="counts over all 13 datasets; the Parquet ones need pyarrow")
+needs_arrow = pytest.mark.skipif(not ARROW, reason="counts over all 14 datasets; the Parquet ones need pyarrow")
 
 
 @lru_cache(maxsize=None)
@@ -113,7 +113,7 @@ def test_the_resource_names_the_agent_and_the_dataset():
     assert resource()["service.name"] == "agentpile" and "openinference.project.name" not in resource()
     # every dataset fixture becomes a project named as ap.load names it; tau_bench and adp name no agent
     corpora = [(name, res) for name, _, res, _, _ in exports() if (CORPORA / name).is_dir()]
-    assert len({name for name, _ in corpora}) == (12 if ARROW else 7)  # catchbench_pre holds configs only
+    assert len({name for name, _ in corpora}) == (13 if ARROW else 8)  # catchbench_pre holds configs only
     assert all(res["openinference.project.name"] == name for name, res in corpora)
     assert {res["service.name"] for name, res in corpora if name == "tau_bench"} == {"tau_bench"}
 
@@ -340,11 +340,11 @@ def test_no_generated_span_presents_a_reconstruction_as_the_prompt():
 
 @needs_arrow
 def test_tool_spans_leave_out_the_values_the_genai_schemas_do_not_take():
-    # Counts from the plan: 6 of 94 argument values and 72 of 78 results have no GenAI attribute, and the nine
-    # AgentRewardBench calls that parsed give their parsed object.
+    # Counts from the 0.2.0 plan, over the 13 datasets it measured: 6 of 94 argument values and 72 of 78 results
+    # have no GenAI attribute, and the nine AgentRewardBench calls that parsed give their parsed object.
     arguments, results = Counter(), Counter()
     for name, a in generated():
-        if not (CORPORA / name).is_dir() or a.get("gen_ai.operation.name") != "execute_tool":
+        if not (CORPORA / name).is_dir() or name == "trace_commons" or a.get("gen_ai.operation.name") != "execute_tool":
             continue
         if "input.value" in a:
             arguments[(name, "gen_ai.tool.call.arguments" in a)] += 1
