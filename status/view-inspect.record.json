@@ -5,10 +5,10 @@
   "last_run": {
     "row": "view-inspect",
     "outcome": "success",
-    "revision": "db05f58d59410d72fe3815c0878b3e26ec17493a",
+    "revision": "9b9905e3309f9ddf943b0f6b47dec1fd49a72915",
     "date": "2026-10-24",
-    "run": "https://github.com/yzhao062/agentpile/actions/runs/40070531009",
-    "run_id": 40070531009,
+    "run": "https://github.com/yzhao062/agentpile/actions/runs/40079742850",
+    "run_id": 40079742850,
     "run_attempt": 1,
     "event": "push",
     "versions": {
@@ -18,15 +18,15 @@
       "examples/integrations/view-inspect",
       "src/agentpile"
     ],
-    "fingerprint": "4bed089401dabb04f7168923500b1843eb5c4f03803349cc23839c261237f153"
+    "fingerprint": "608385e29d6d29334a970c1bceda506fd8e0937711cfbb097236f5c429e6ec7c"
   },
   "last_passing_run": {
     "row": "view-inspect",
     "outcome": "success",
-    "revision": "db05f58d59410d72fe3815c0878b3e26ec17493a",
+    "revision": "9b9905e3309f9ddf943b0f6b47dec1fd49a72915",
     "date": "2026-10-24",
-    "run": "https://github.com/yzhao062/agentpile/actions/runs/40070531009",
-    "run_id": 40070531009,
+    "run": "https://github.com/yzhao062/agentpile/actions/runs/40079742850",
+    "run_id": 40079742850,
     "run_attempt": 1,
     "event": "push",
     "versions": {
@@ -36,6 +36,6 @@
       "examples/integrations/view-inspect",
       "src/agentpile"
     ],
-    "fingerprint": "4bed089401dabb04f7168923500b1843eb5c4f03803349cc23839c261237f153"
+    "fingerprint": "608385e29d6d29334a970c1bceda506fd8e0937711cfbb097236f5c429e6ec7c"
   }
 }
