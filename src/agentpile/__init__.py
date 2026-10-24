@@ -30,7 +30,7 @@ from .record import ATIF_VERSION, CONFIG_SCHEMA, EXT, MISSING, Event, Run
 from .registry import datasets, readers, register, writers
 from .validate import validate
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 # Built-in plugins go in the same registries as installed ones, as lazy
 # module strings, so importing agentpile imports none of them. They are added
