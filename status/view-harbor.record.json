@@ -7,10 +7,10 @@
     "outcome": "success",
     "revision": "52ca6edf139478e45c4e3c21330ab913a12b0d58",
     "date": "2026-10-25",
-    "run": "https://github.com/yzhao062/agentpile/actions/runs/40170439679",
-    "run_id": 40170439679,
+    "run": "https://github.com/yzhao062/agentpile/actions/runs/40170593862",
+    "run_id": 40170593862,
     "run_attempt": 1,
-    "event": "push",
+    "event": "workflow_dispatch",
     "versions": {
       "harbor": "0.24.0"
     },
@@ -25,10 +25,10 @@
     "outcome": "success",
     "revision": "52ca6edf139478e45c4e3c21330ab913a12b0d58",
     "date": "2026-10-25",
-    "run": "https://github.com/yzhao062/agentpile/actions/runs/40170439679",
-    "run_id": 40170439679,
+    "run": "https://github.com/yzhao062/agentpile/actions/runs/40170593862",
+    "run_id": 40170593862,
     "run_attempt": 1,
-    "event": "push",
+    "event": "workflow_dispatch",
     "versions": {
       "harbor": "0.24.0"
     },
