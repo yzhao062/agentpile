@@ -1,7 +1,7 @@
 {
   "row": "ingest-jaeger",
-  "status": "passing",
-  "reason": null,
+  "status": "stale",
+  "reason": "the code it covers changed after its last check",
   "last_run": {
     "row": "ingest-jaeger",
     "outcome": "success",
