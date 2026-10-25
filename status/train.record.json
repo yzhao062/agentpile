@@ -5,12 +5,12 @@
   "last_run": {
     "row": "train",
     "outcome": "success",
-    "revision": "52ca6edf139478e45c4e3c21330ab913a12b0d58",
+    "revision": "c8095e2d96e83271f9acd7701ad20cbdca6b399f",
     "date": "2026-10-25",
-    "run": "https://github.com/yzhao062/agentpile/actions/runs/40170593862",
-    "run_id": 40170593862,
+    "run": "https://github.com/yzhao062/agentpile/actions/runs/40176661616",
+    "run_id": 40176661616,
     "run_attempt": 1,
-    "event": "workflow_dispatch",
+    "event": "push",
     "versions": {
       "datasets": "5.1.0",
       "transformers": "5.20.2",
@@ -28,17 +28,17 @@
       "examples/integrations/train",
       "src/agentpile"
     ],
-    "fingerprint": "ed8f811e91a70c99ce8251971061a5810ca847e84792441db5211eac9dca341b"
+    "fingerprint": "ebeaddb867e1e1186df349a084c36bdcaefd5f094552ebb976d9cb7bf9b961ab"
   },
   "last_passing_run": {
     "row": "train",
     "outcome": "success",
-    "revision": "52ca6edf139478e45c4e3c21330ab913a12b0d58",
+    "revision": "c8095e2d96e83271f9acd7701ad20cbdca6b399f",
     "date": "2026-10-25",
-    "run": "https://github.com/yzhao062/agentpile/actions/runs/40170593862",
-    "run_id": 40170593862,
+    "run": "https://github.com/yzhao062/agentpile/actions/runs/40176661616",
+    "run_id": 40176661616,
     "run_attempt": 1,
-    "event": "workflow_dispatch",
+    "event": "push",
     "versions": {
       "datasets": "5.1.0",
       "transformers": "5.20.2",
@@ -56,6 +56,6 @@
       "examples/integrations/train",
       "src/agentpile"
     ],
-    "fingerprint": "ed8f811e91a70c99ce8251971061a5810ca847e84792441db5211eac9dca341b"
+    "fingerprint": "ebeaddb867e1e1186df349a084c36bdcaefd5f094552ebb976d9cb7bf9b961ab"
   }
 }
