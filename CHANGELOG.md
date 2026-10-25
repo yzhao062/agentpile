@@ -2,7 +2,7 @@
 
 All notable changes to agentpile are listed here. Versions follow [Semantic Versioning](https://semver.org/); before 1.0, a minor version may change the record format, and the entry says how.
 
-## 0.3.0 (2026-10-23)
+## 0.3.0 (2026-10-24)
 
 A reader for the session files Claude Code writes, with their subagent files, and the `trace_commons` dataset of 28 public sessions read with it. The record format and every existing reader are unchanged.
 
