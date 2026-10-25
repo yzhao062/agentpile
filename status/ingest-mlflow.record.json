@@ -1,43 +1,43 @@
 {
   "row": "ingest-mlflow",
-  "status": "stale",
-  "reason": "the code it covers changed after its last check",
+  "status": "passing",
+  "reason": null,
   "last_run": {
     "row": "ingest-mlflow",
     "outcome": "success",
-    "revision": "52ca6edf139478e45c4e3c21330ab913a12b0d58",
+    "revision": "c8095e2d96e83271f9acd7701ad20cbdca6b399f",
     "date": "2026-10-25",
-    "run": "https://github.com/yzhao062/agentpile/actions/runs/40170593862",
-    "run_id": 40170593862,
+    "run": "https://github.com/yzhao062/agentpile/actions/runs/40176867021",
+    "run_id": 40176867021,
     "run_attempt": 1,
-    "event": "workflow_dispatch",
+    "event": "push",
     "versions": {
       "mlflow": "3.17.2",
-      "agentpile": "0.3.0"
+      "agentpile": "0.3.1"
     },
     "covers": [
       "examples/integrations/view-otlp",
       "src/agentpile"
     ],
-    "fingerprint": "008e3e099e9cdeba6131851c73ffbb22450a11b3c7c9523a6c34600d700bf56b"
+    "fingerprint": "f5835b55104c6715ea48a1967e9427413ad67afecd9aa589a860dcf09eecfbce"
   },
   "last_passing_run": {
     "row": "ingest-mlflow",
     "outcome": "success",
-    "revision": "52ca6edf139478e45c4e3c21330ab913a12b0d58",
+    "revision": "c8095e2d96e83271f9acd7701ad20cbdca6b399f",
     "date": "2026-10-25",
-    "run": "https://github.com/yzhao062/agentpile/actions/runs/40170593862",
-    "run_id": 40170593862,
+    "run": "https://github.com/yzhao062/agentpile/actions/runs/40176867021",
+    "run_id": 40176867021,
     "run_attempt": 1,
-    "event": "workflow_dispatch",
+    "event": "push",
     "versions": {
       "mlflow": "3.17.2",
-      "agentpile": "0.3.0"
+      "agentpile": "0.3.1"
     },
     "covers": [
       "examples/integrations/view-otlp",
       "src/agentpile"
     ],
-    "fingerprint": "008e3e099e9cdeba6131851c73ffbb22450a11b3c7c9523a6c34600d700bf56b"
+    "fingerprint": "f5835b55104c6715ea48a1967e9427413ad67afecd9aa589a860dcf09eecfbce"
   }
 }
