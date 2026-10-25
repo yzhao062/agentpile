@@ -2,6 +2,20 @@
 
 All notable changes to agentpile are listed here. Versions follow [Semantic Versioning](https://semver.org/); before 1.0, a minor version may change the record format, and the entry says how.
 
+## Unreleased
+
+Examples that run as pasted and on your own runs, and capture with the framework versions a fresh install now gets. The record format and the readers are unchanged.
+
+### Added
+
+- Capture and the OTLP reader accept spans from Pydantic AI 2.61.0, which builds the same records as 2.58.0 to 2.60.0 from the fixture scripts. With 0.3.0, `cap.run` raised `UnsupportedVersion` for it, and 2.61.0 is what `pip install "agentpile[pydantic-ai]"` installs.
+- Every recipe in `examples/integrations/` also runs on your own runs: `python <recipe>.py <dataset name or trace file> --limit N` runs the integration on them and prints a short result, and with no source it runs on the bundled fixtures with its checks, as CI does. Each recipe now opens with the code to copy, followed by its checks.
+
+### Changed
+
+- The `openai-agents` extra installs openinference-instrumentation-openai-agents below 2.6. With 0.3.0 it installed 2.6.0, and `cap.run` raised `UnsupportedVersion`. 2.6.0 writes the same spans as 2.5.3 but ignores a trace that began before the capture block opened, which capture records from its first event inside the block with 2.5.3, so it is not added to the tested versions.
+- README snippets each run when pasted alone, with the extras named in their first line; section 5 runs a Pydantic AI agent on its `TestModel`, with no model key. The two showcase scripts write their figure to the current directory unless given a path, and keep only the code the figure needs.
+
 ## 0.3.0 (2026-10-24)
 
 A reader for the session files Claude Code writes, with their subagent files, and the `trace_commons` dataset of 28 public sessions read with it. The record format and every existing reader are unchanged.

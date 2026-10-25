@@ -1,4 +1,4 @@
-# Versions the extras job of tests.yml installs: the ones the tests last passed with (2026-10-23). A new release of a
+# Versions the extras job of tests.yml installs: the ones the tests last passed with (2026-10-24). A new release of a
 # framework reaches the pull-request and push checks only through a deliberate bump here; the weekly extras-newest job
 # installs the newest versions instead, so a release that breaks capture shows there first.
 huggingface_hub==2.3.0
@@ -13,5 +13,5 @@ opentelemetry-sdk==1.45.1
 pandas==3.1.0
 pyarrow==26.0.0
 pydantic==2.14.1
-pydantic-ai-slim==2.60.0
+pydantic-ai-slim==2.61.0
 rich==15.0.0

@@ -14,6 +14,7 @@
 </div>
 
 ```python
+# pip install "agentpile[hf,view]"
 import agentpile as ap
 
 run = next(ap.load("who_and_when"))   # one of 14 datasets by name, or a trace file by path
@@ -32,45 +33,60 @@ Public datasets store agent runs in their own schemas (e.g., chat messages in ta
 
 ## 1. What You Can Do
 
-### 1.1 Open Any Run in a Tracing UI
+### 1.1 Open Any Run in a Viewer
 
-tau-bench stores plain chat logs. `ap.send_otlp` posts a run as OTLP spans to Arize Phoenix, Jaeger, MLflow or any OTLP/HTTP collector.
+tau-bench stores plain chat logs. `ap.send_otlp` posts a run as OTLP spans to Arize Phoenix, Jaeger, MLflow or any OTLP/HTTP collector, and returns the trace ids.
 
 ```python
+# pip install "agentpile[hf,otel]" arize-phoenix
+# phoenix serve    (in a second terminal)
+import agentpile as ap
+
 run = next(ap.load("tau_bench", limit=1))
-ap.send_otlp(run, "http://localhost:6006/v1/traces")   # Phoenix; Jaeger listens on :4318
+ap.send_otlp(run, "http://localhost:6006/v1/traces")   # then open http://localhost:6006
 ```
 
 <p align="center"><img src="https://raw.githubusercontent.com/yzhao062/agentpile/main/assets/phoenix.png" alt="A tau-bench run in Arize Phoenix: system and user messages, chat steps and tool calls in a span tree, with the customer's request and the agent's final answer" width="85%"></p>
 
-A run whose source has no timestamps gets synthetic ones that only order its spans. The durations a tracing UI shows for such a run are therefore not runtime measurements.
+Jaeger takes the same call at `http://localhost:4318/v1/traces` (UI on port 16686), and MLflow at `http://localhost:5000/v1/traces` with `headers={"x-mlflow-experiment-id": "0"}` to pick the experiment. Harbor and Inspect AI read files: the [view-harbor][r-view-harbor] and [view-inspect][r-view-inspect] recipes write any runs as a Harbor job or an Inspect log and print the command that opens it (`python examples/integrations/view-harbor/view_harbor.py tau_bench` prints `open with: harbor view DIR`).
+
+A run whose source has no timestamps gets synthetic ones that only order its spans. The durations a viewer shows for such a run are therefore not runtime measurements.
 
 ### 1.2 Compare Failures Across Datasets
 
-Who&When blames a step, TRAIL marks error spans, and MAST flags 14 failure modes per run. One table holds all three ([script](https://github.com/yzhao062/agentpile/blob/main/examples/compare_failures.py)).
+Who&When blames a step, TRAIL marks error spans, and MAST flags 14 failure modes per run. One table holds all three ([figure script](https://github.com/yzhao062/agentpile/blob/main/examples/compare_failures.py)).
 
 ```python
+# pip install "agentpile[hf,pandas]"   (downloads about 260 MB once)
 # TRAIL is gated: accept its terms on Hugging Face and log in first (section 3)
+import agentpile as ap
+
 runs = [run for name in ("who_and_when", "trail", "mast") for run in ap.load(name)]
-labels = ap.to_pandas(runs, "labels")   # run_id, name, value, value_type, target_kind, step, span, ...
+labels = ap.to_pandas(runs, "labels")   # run_id, name, value, target_kind, label_source, step, span, ...  (step is empty for span labels)
+print(labels.groupby(["label_source", "target_kind"]).size())
 ```
 
 <p align="center"><img src="https://raw.githubusercontent.com/yzhao062/agentpile/main/assets/compare_failures.png" alt="Left: cumulative share of labels by the position of their step in the run, for Who&When's decisive step, TRAIL's first error and all TRAIL errors. Right: share of MAST runs flagged with each of 14 failure modes" width="100%"></p>
 
 ### 1.3 Follow Values Through a Run
 
-Which earlier result does each call reuse? When a call reuses an id-like value from an earlier result, the `value_flow` rule makes it depend on the call that produced that result. Such values include reservation ids, product ids and dates. The links are inferred from the recorded values ([script](https://github.com/yzhao062/agentpile/blob/main/examples/value_flow.py)).
+Which earlier result does each call reuse? When a call reuses an id-like value from an earlier result, the `value_flow` rule makes it depend on the call that produced that result. Such values include reservation ids, product ids and dates. The links are inferred from the recorded values ([figure script](https://github.com/yzhao062/agentpile/blob/main/examples/value_flow.py)).
 
 ```python
+# pip install "agentpile[hf,graph]"
+import agentpile as ap
+
+run = next(ap.load("tau_bench", limit=1))
 deps = ap.derive_deps(run, rules=["value_flow"])        # each entry names its rule and version
 graph = ap.to_networkx(run, rules=["value_flow"])       # events as nodes, dependencies as edges
+print(len(deps), deps[0]["resource"])
 ```
 
 <p align="center"><img src="https://raw.githubusercontent.com/yzhao062/agentpile/main/assets/value_flow.png" alt="Left: one tau-bench run drawn as a graph, with arcs from the calls whose results supplied reservation ids to the later calls that reused them. Right: how many steps back each dependency reaches in tau-bench and tau2-bench" width="100%"></p>
 
 ### 1.4 Works With
 
-The same record feeds tools for evaluation, training, auditing, analysis and viewing. `ap.to_chat` turns runs into OpenAI-style chat rows with their tools, `ap.table` into flat tables, and `run.to_otlp` and `run.to_json` into traces and ATIF files. Each row below is a [recipe](https://github.com/yzhao062/agentpile/tree/main/examples/integrations) that CI runs every week at the version shown, offline on the bundled fixtures. A row turns stale when its check fails and stays stale until the same check passes again. A newer version of a tool counts only once its own check has passed.
+The same record feeds tools for evaluation, training, auditing, analysis and viewing. `ap.to_chat` turns runs into OpenAI-style chat rows with their tools, `ap.table` into flat tables, and `run.to_otlp` and `run.to_json` into traces and ATIF files. Each row below is a [recipe](https://github.com/yzhao062/agentpile/tree/main/examples/integrations) that CI runs every week at the version shown, offline on the bundled fixtures ([how the rows are checked](https://github.com/yzhao062/agentpile/blob/main/examples/integrations/README.md#how-they-are-checked)), and each also runs on your own runs (e.g., `python examples/integrations/evaluate/evaluate.py tau_bench --limit 20`).
 
 | Use | Tool | Check | Tested version | Status | Last passing check | Recipe |
 |---|---|---|---|---|---|---|
@@ -86,7 +102,16 @@ The same record feeds tools for evaluation, training, auditing, analysis and vie
 | View | Jaeger | every trace sent is found | 2.22.0 | ![check][s-ingest-jaeger] | ![last pass][l-ingest-jaeger] | [view-otlp][r-view-otlp] |
 | View | MLflow | every trace sent is found | 3.17.2 | ![check][s-ingest-mlflow] | ![last pass][l-ingest-mlflow] | [view-otlp][r-view-otlp] |
 
-The last three rows start the platform, send the fixture runs to it and query them back. They run weekly, for a release tag and on demand, and after a change to the code they cover they show stale until they run again. Langfuse has a preset in the OTLP recipe and gets a row once its ingestion check passes.
+Your own runs reach these tools through two calls:
+
+```python
+# pip install "agentpile[hf]"
+import agentpile as ap
+
+runs = [run for run in ap.load("tau_bench", limit=20) if run.outcome["success"]]
+rows = ap.to_chat(runs)             # Hugging Face datasets, TRL; arguments="dict" for Ragas, DeepEval, Invariant, Inspect AI
+events = ap.table(runs, "events")   # DuckDB and Polars, through Parquet
+```
 
 [s-evaluate]: https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyzhao062%2Fagentpile%2Frecipe-status%2Fstatus%2Fevaluate.json
 [l-evaluate]: https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyzhao062%2Fagentpile%2Frecipe-status%2Fstatus%2Fevaluate-last.json
@@ -151,7 +176,7 @@ for dep in ap.derive_deps(run, rules=["tool_call_id"]):   # inferred only when y
     print(dep["rule"], "step", dep["src"]["step"], dep["src"]["call"], "-> step", dep["dst"]["step"])
 
 run.to_json("run.json")                   # ATIF v1.7 JSON; run.to_otlp("run.otlp.json") writes OTLP spans
-ap.to_chat(run)                           # chat rows with tools for training and evaluation; here, the same messages
+rows = ap.to_chat(run)                    # chat rows with tools for training and evaluation; here, the same messages
 ```
 
 ```text
@@ -163,14 +188,17 @@ message agent Yes, light rain.
 tool_call_id step 2 call_1 -> step 3
 ```
 
-The second line is a stand-in made visible. ATIF does not permit the `null` in the source's first assistant message. agentpile therefore stores an empty string in the record and notes that the source held `null`, and the event reports `None`. Rule `tool_call_id` gives the dependency: it makes the next agent step after a result depend on the call that produced it, here the final answer (step 3) on `call_1` in step 2.
+The `None` in the second line is the `null` of the source's first assistant message: ATIF has no `null` there, so the record holds an empty string and notes what the source had. Rule `tool_call_id` makes the next agent step after a result depend on the call that produced it, here the final answer (step 3) on `call_1` in step 2.
 
-A dataset loads by name (`ap.datasets.names()` lists them), and a trace file by its path (`ap.readers.names()` lists the formats):
+Logs from your own framework load the same way once they are OpenAI-style messages, in memory or in a JSON or JSONL file. A dataset loads by name (`ap.datasets.names()` lists them), and a trace file by its path (`ap.readers.names()` lists the formats):
 
 ```python
+# pip install "agentpile[hf]"
+import agentpile as ap
+
 for run in ap.load("who_and_when", limit=5):   # fetches only the files these five runs come from
-    print(run.id, run.labels)                  # the labels the reader emits, each with its target
-run = next(ap.load("my_trace.json"))           # ATIF, OpenAI messages, OTLP JSON, a tool list or a Claude Code session
+    print(run.id, [(label["name"], label["value"]) for label in run.labels])   # the labels the reader emits
+run = next(ap.load("run.json"))                # the ATIF file written above; also OpenAI messages, OTLP JSON, a tool list or a Claude Code session
 ```
 
 ## 3. Datasets
@@ -217,21 +245,24 @@ Have agent trajectories or a trace format that agentpile does not load yet? [Ope
 
 ## 5. Capturing a Running Agent
 
-`ap.capture` records a run of a Pydantic AI agent or an OpenAI Agents SDK agent into the same record, with the agent's configuration attached:
-
-```bash
-pip install "agentpile[pydantic-ai]"     # or "agentpile[openai-agents]"
-```
+`ap.capture` records a run of a Pydantic AI agent or an OpenAI Agents SDK agent (`pip install "agentpile[openai-agents]"`) into the same record, with the agent's configuration attached.
 
 ```python
-with ap.capture(agent=my_agent) as cap:
+# pip install "agentpile[pydantic-ai]"
+import agentpile as ap
+from pydantic_ai import Agent
+from pydantic_ai.models.test import TestModel
+
+my_agent = Agent(TestModel(), name="my_agent")   # TestModel answers without a model key
+
+with ap.capture(my_agent) as cap:
     my_agent.run_sync("Book a flight from LAX to SFO.")
-cap.run            # the captured run
-cap.otlp           # the same spans as an OTLP JSON document
+ap.show(cap.run)           # the captured run
+cap.otlp                   # the same spans as an OTLP JSON document
 ap.config_from(my_agent)   # the configuration alone: instructions, model, tools with schemas, handoffs
 ```
 
-Capture is tested with Pydantic AI 2.58.0, 2.59.0 and 2.60.0 and with the OpenAI Agents SDK 0.24.0 through openinference-instrumentation-openai-agents 2.5.3. agentpile checks the version of the instrumentation that wrote the spans, which is Pydantic AI itself or, for the Agents SDK, OpenInference. With any other instrumentation version `cap.run` raises an error, and `ap.capture(my_agent, allow_untested_version=True)` builds the run anyway and marks it `source.dialect_tested` false.
+Capture is tested with Pydantic AI 2.58.0, 2.59.0, 2.60.0 and 2.61.0 and with the OpenAI Agents SDK 0.24.0 through openinference-instrumentation-openai-agents 2.5.3. agentpile checks the version of the instrumentation that wrote the spans, which is Pydantic AI itself or, for the Agents SDK, OpenInference. With any other instrumentation version `cap.run` raises an error, and `ap.capture(my_agent, allow_untested_version=True)` builds the run anyway and marks it `source.dialect_tested` false.
 
 <details>
 <summary>Which runs a capture records</summary>
@@ -273,7 +304,7 @@ Inferred pairings include a result matched to its call by position, a TRAIL hist
 
 ### 6.2 Extending
 
-A reader is any object with `sniff(source) -> bool` and `read(source) -> Iterator[Run]`. Register one for a session with `ap.register("my-format", reader)`, or ship it in a package through the entry-point group `agentpile.readers` (datasets and writers have `agentpile.datasets` and `agentpile.writers`). Pass `reader="..."` to `ap.load` to skip detection.
+Logs that are OpenAI-style messages need no reader (see [Quick Start](#2-quick-start)). Otherwise, a reader is any object with `sniff(source) -> bool` and `read(source) -> Iterator[Run]`. Register one for a session with `ap.register("my-format", reader)`, or ship it in a package through the entry-point group `agentpile.readers` (datasets and writers have `agentpile.datasets` and `agentpile.writers`). Pass `reader="..."` to `ap.load` to skip detection.
 
 ### 6.3 Downloads and Cache
 

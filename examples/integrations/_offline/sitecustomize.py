@@ -3,9 +3,14 @@ machine raises.
 
 The recipes CI job runs each recipe this way, so a recipe that reaches for the network fails instead of passing on a
 download. Loopback stays open for a viewer the recipe starts locally. Installation happens before, with the network on.
+DeepEval and Ragas send telemetry unless told not to, so this also opts them out.
 """
 
+import os
 import socket
+
+os.environ.setdefault("DEEPEVAL_TELEMETRY_OPT_OUT", "YES")
+os.environ.setdefault("RAGAS_DO_NOT_TRACK", "true")
 
 LOOPBACK = {"localhost", "127.0.0.1", "::1", "0.0.0.0"}
 _connect, _connect_ex, _getaddrinfo = socket.socket.connect, socket.socket.connect_ex, socket.getaddrinfo

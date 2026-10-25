@@ -1,53 +1,53 @@
-"""Score an agent's tool calls offline with Ragas and DeepEval, on rows from ap.to_chat.
+"""Score tool calls with Ragas and DeepEval.
 
-Ragas (ToolCallF1, ToolCallAccuracy) and DeepEval (ToolCorrectnessMetric) both compare the calls an agent made with a
-list of reference calls. agentpile gives them one input: ap.to_chat(runs, arguments="dict") turns each trajectory into
-OpenAI-style messages whose tool calls carry their arguments as dicts. tau-bench runs hold the task's reference calls
-in the run label gold_actions (name and kwargs). A score below 1 says the agent's calls differ from that list. It does
-not say the run failed, because tau-bench grades the final database state. Ragas matches arguments exactly, and
-DeepEval gives partial credit for the argument keys that match.
+Takes runs and compares the tool calls each agent made with a reference list: tau-bench runs keep it in the run label
+gold_actions (name and kwargs). ap.to_chat(runs, arguments="dict") gives both libraries their input, and each run gets
+three scores from 0 to 1: Ragas ToolCallF1 and strict-order ToolCallAccuracy (arguments must match exactly) and
+DeepEval ToolCorrectnessMetric (partial credit for the argument keys that match). A score below 1 says the agent's
+calls differ from the list; tau-bench grades the final database state, so the run may still have passed. tau2-bench's
+user simulator makes tool calls too, and to_chat writes them as user text, so only the agent's calls are scored.
 
-tau2-bench has a second caller. Its user simulator makes tool calls too, and to_chat writes them as user text
-("[user] tool call check_status {}"), so they never reach either library as agent calls. The script checks this against
-run.events(), which holds every call with the id of the agent that made it.
-
-Checks (the script exits non-zero when one fails):
-  1. The calls handed to Ragas and to DeepEval equal the agent's call events in run.events(), run by run, and every
-     simulator call became user text.
-  2. Self-reference control: a run scored against its own calls gives 1.0 on both Ragas metrics and on DeepEval.
-  3. The stub judge handed to DeepEval, which raises when asked for a completion, was never called. A second metric
-     with available_tools set does ask its judge, which shows that the stub is wired in.
-
-    pip install -e . -r examples/integrations/evaluate/requirements.txt    # from the repository root
-    python examples/integrations/evaluate/evaluate.py
-
-It reads the test fixtures of this checkout, so it needs no network, API key or account and calls no model.
+    pip install -e ".[hf]" -r examples/integrations/evaluate/requirements.txt
+    python examples/integrations/evaluate/evaluate.py                        # the bundled fixtures, with the checks
+    python examples/integrations/evaluate/evaluate.py tau_bench --limit 20   # your runs: tau_bench, which has gold_actions
 """
 
-import os
+import argparse
+import asyncio
+import warnings
+from itertools import islice
+from pathlib import Path
 
-os.environ["DEEPEVAL_TELEMETRY_OPT_OUT"] = "YES"  # set before either library is imported
-os.environ["RAGAS_DO_NOT_TRACK"] = "true"
+from deepeval.metrics import ToolCorrectnessMetric
+from deepeval.models import DeepEvalBaseLLM
+from deepeval.test_case import LLMTestCase, ToolCallParams, ToolCall as DeepEvalCall
+from ragas.dataset_schema import MultiTurnSample
+from ragas.messages import AIMessage, HumanMessage, ToolMessage, ToolCall as RagasCall
+from ragas.metrics.collections import ToolCallAccuracy, ToolCallF1  # ragas.metrics.ToolCallF1 is deprecated
 
-import asyncio  # noqa: E402
-import warnings  # noqa: E402
-from pathlib import Path  # noqa: E402
-
-import agentpile as ap  # noqa: E402
-from deepeval.metrics import ToolCorrectnessMetric  # noqa: E402
-from deepeval.models import DeepEvalBaseLLM  # noqa: E402
-from deepeval.test_case import LLMTestCase, ToolCallParams, ToolCall as DeepEvalCall  # noqa: E402
-from ragas.dataset_schema import MultiTurnSample  # noqa: E402
-from ragas.messages import AIMessage, HumanMessage, ToolMessage, ToolCall as RagasCall  # noqa: E402
-from ragas.metrics.collections import ToolCallAccuracy, ToolCallF1  # noqa: E402  (ragas.metrics.ToolCallF1 is deprecated)
+import agentpile as ap
 
 FIXTURES = Path(__file__).resolve().parents[3] / "tests" / "corpora" / "fixtures"
-SIMULATOR = "user_simulator"  # the roster name of tau2-bench's simulated user
 warnings.filterwarnings("ignore", module="ragas")  # Ragas warns when the two call lists differ in length
 
 
+def evaluate(runs):
+    """(run id, Ragas F1, Ragas strict accuracy, DeepEval tool correctness) of each run that has a gold_actions label."""
+    report = {}
+    rows = ap.to_chat(runs, arguments="dict", report=report)
+    scores = []
+    for entry in report["runs"]:
+        run = runs[entry["input"]]
+        gold = next((lab["value"] for lab in run.labels if lab["name"] == "gold_actions"), None)
+        if entry["row"] is not None and gold:
+            messages, called = convert(rows[entry["row"]])
+            scores.append((run.id, *score(messages, called, [RagasCall(name=g["name"], args=g["kwargs"]) for g in gold],
+                                          [DeepEvalCall(name=g["name"], input_parameters=g["kwargs"]) for g in gold])))
+    return scores
+
+
 class NoJudge(DeepEvalBaseLLM):
-    """A stand-in judge model that raises, and counts, every request for a completion."""
+    """DeepEval wants a model object; this metric never calls it, so this one raises, and counts, any request."""
 
     fired = 0
 
@@ -100,14 +100,15 @@ def score(messages, called, ragas_ref, deepeval_ref):
     return (*ragas, DEEPEVAL.measure(case, _show_indicator=False))
 
 
-def check_dataset(name):
-    runs = list(ap.load(name, root=FIXTURES / name))
+SIMULATOR = "user_simulator"  # the roster name of tau2-bench's simulated user
+
+
+def check_dataset(name, runs):
     report = {}
     rows = ap.to_chat(runs, arguments="dict", report=report)
     kept = [(runs[e["input"]], rows[e["row"]]) for e in report["runs"] if e["row"] is not None]
     skipped = [e["skipped"] for e in report["runs"] if e["row"] is None]
     n_agent = n_sim = n_control = 0
-    table = []
     for run, row in kept:
         messages, called = convert(row)
         sims = {a["id"] for a in run.agents if a.get("name") == SIMULATOR}
@@ -129,27 +130,18 @@ def check_dataset(name):
             result = score(messages, called, [RagasCall(name=c.name, args=c.input_parameters) for c in renamed], renamed)
             assert result == (0.0, 0.0, 0.0), f"{run.id}: a reference of other tool names scored {result}"
             n_control += 1
-        # the reference calls tau-bench keeps in the run label gold_actions
-        gold = next((lab["value"] for lab in run.labels if lab["name"] == "gold_actions"), None)
-        if gold:
-            result = score(messages, called, [RagasCall(name=g["name"], args=g["kwargs"]) for g in gold],
-                           [DeepEvalCall(name=g["name"], input_parameters=g["kwargs"]) for g in gold])
-            assert all(0.0 <= value <= 1.0 for value in result), f"{run.id}: score outside [0, 1]: {result}"
-            table.append((run.id, len(called), len(gold), *result))
     print(f"{name}: {len(runs)} runs, {len(kept)} chat rows (skipped: {', '.join(skipped) or 'none'}); "
           f"{n_agent} agent calls handed to Ragas and DeepEval, {n_sim} simulator calls kept out as user text")
     print(f"  controls on {n_control} runs: own calls as reference score 1.0, renamed tools 0.0 (Ragas F1, Ragas "
           "strict accuracy, DeepEval)")
-    if table:
-        print(f"  against gold_actions ({len(table)} runs):  calls gold  Ragas F1  Ragas acc  DeepEval  run")
-        for run_id, n_calls, n_gold, *values in table:
-            print(f"{n_calls:>34}{n_gold:>5}{values[0]:>10.4f}{values[1]:>11.4f}{values[2]:>10.4f}  {run_id}")
-    return n_sim, len(table)
+    return n_sim
 
 
-if __name__ == "__main__":
-    (_, n_gold), (n_sim, _) = check_dataset("tau_bench"), check_dataset("tau2_bench")
-    assert n_gold > 0 and n_sim > 0, "the fixtures should hold gold_actions (tau_bench) and simulator calls (tau2_bench)"
+def check(tau, tau2, scores):
+    n_sim = check_dataset("tau_bench", tau) + check_dataset("tau2_bench", tau2)
+    for run_id, *values in scores:
+        assert all(0.0 <= value <= 1.0 for value in values), f"{run_id}: score outside [0, 1]: {values}"
+    assert scores and n_sim > 0, "the fixtures should hold gold_actions (tau_bench) and simulator calls (tau2_bench)"
     # 3. the stub judge never fired; the same metric with available_tools does ask its judge
     probe, tool = NoJudge(), DeepEvalCall(name="t", input_parameters={})
     try:
@@ -158,4 +150,34 @@ if __name__ == "__main__":
     except RuntimeError:
         pass
     assert probe.fired > 0 and JUDGE.fired == 0, f"judge calls: {JUDGE.fired}; with available_tools: {probe.fired}"
-    print(f"stub judge model calls: {JUDGE.fired} (with available_tools set: {probe.fired})\nall checks passed")
+    print(f"stub judge model calls: {JUDGE.fired} (with available_tools set: {probe.fired})")
+
+
+def load_runs(sources, limit):
+    """The first `limit` runs of each source; a dataset name takes limit= and downloads only that part, a file path does not."""
+    return [run for source in sources
+            for run in islice(ap.load(source, **({"limit": limit} if source in ap.datasets.names() else {})), limit)]
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    parser.add_argument("source", nargs="*", help="a dataset name or a trace file (default: the bundled fixtures, with the checks)")
+    parser.add_argument("--limit", type=int, default=20, help="runs per source (default: 20)")
+    args = parser.parse_args()
+    if args.source:
+        scores = evaluate(load_runs(args.source, args.limit))
+    else:
+        tau, tau2 = (list(ap.load(name, root=FIXTURES / name)) for name in ("tau_bench", "tau2_bench"))
+        scores = evaluate(tau)
+    if scores:
+        f1, accuracy, deepeval = (sum(s[i] for s in scores) / len(scores) for i in (1, 2, 3))
+        print(f"{len(scores)} runs scored against gold_actions: mean Ragas F1 {f1:.2f}, Ragas accuracy {accuracy:.2f}, DeepEval {deepeval:.2f}")
+    else:
+        print("no run has a gold_actions label to score against")
+    if not args.source:
+        check(tau, tau2, scores)
+        print("all checks passed")
+
+
+if __name__ == "__main__":
+    main()

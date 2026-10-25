@@ -60,7 +60,7 @@ agent operations the source had, and the token totals it had.
 
 Reader. Spans written by agentpile rebuild the exact record; a step or call belongs to the first
 trajectory span above it, or to the one an ``agentpile.owner`` on the way names. Spans of two framework dialects are
-mapped into ATIF steps (``DIALECTS``, ``MAPPING``): Pydantic AI 2.58.0 to 2.60.0 (OTel GenAI conventions)
+mapped into ATIF steps (``DIALECTS``, ``MAPPING``): Pydantic AI 2.58.0 to 2.61.0 (OTel GenAI conventions)
 and the OpenAI Agents SDK 0.24.0 through openinference-instrumentation-openai-agents 2.5.3 (OpenInference).
 Calls and results pair by tool call id only and nothing is inferred. A dialect is interpreted only for
 the instrumentation scope versions it was tested with: any other version raises ``UnsupportedVersion``
@@ -90,11 +90,13 @@ from ..record import ATIF_VERSION, EXT, EXT_VERSION, TRAJECTORY, Run
 name = "otlp-json"
 READER_VERSION = "1"
 
-# Supported dialects: instrumentation scope name -> (dialect name, tested scope versions). Pydantic AI 2.59.0
-# and 2.60.0 build the same records as 2.58.0 from the fixture scripts; each adds one key to the spans'
-# model_request_parameters (2.60.0: introduced_tool_names), which the reader does not use.
+# Supported dialects: instrumentation scope name -> (dialect name, tested scope versions). Pydantic AI 2.59.0,
+# 2.60.0 and 2.61.0 build the same records as 2.58.0 from the fixture scripts; 2.59.0 and 2.60.0 each add one key to
+# the spans' model_request_parameters (2.60.0: introduced_tool_names), which the reader does not use; 2.61.0 adds none.
+# openinference-instrumentation-openai-agents 2.6.0 writes the same spans as 2.5.3 but ignores a trace that began
+# before a capture block opened, which capture takes from its first event inside the block, so 2.6.0 is not listed.
 DIALECTS = {
-    "pydantic-ai": ("pydantic-ai/genai", ("2.58.0", "2.59.0", "2.60.0")),
+    "pydantic-ai": ("pydantic-ai/genai", ("2.58.0", "2.59.0", "2.60.0", "2.61.0")),
     "openinference.instrumentation.openai_agents": ("openinference/openai-agents", ("2.5.3",)),
 }
 _TESTED = {dialect: versions for dialect, versions in DIALECTS.values()}

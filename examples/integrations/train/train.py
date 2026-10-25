@@ -1,29 +1,22 @@
-"""Chat rows into supervised fine-tuning with Hugging Face datasets and TRL, without a training run.
+"""Turn chat rows into supervised fine-tuning input with Hugging Face datasets and TRL.
 
-ap.to_chat gives OpenAI-style rows. This recipe follows them to the point where a trainer would start, and checks
-the places where they usually break. Storage: tool schemas and tool-call arguments differ in shape from row to row,
-and type inference would merge the arguments of different calls into one struct with null keys; both are kept as
-JSON text under explicit datasets.Features instead, and the rows survive JSONL and Parquet exactly. Template: chat
-templates take argument objects, not text, and assistant-only loss needs a template with generation blocks (TRL's
-Qwen2.5 training variant, bundled here). Masks: TRL's SFTTrainer tokenizes the rows and builds the labels, and every
-label is compared with the rendered text. Nothing is trained and no model is called; SFTTrainer wants a model object,
-so a randomly initialised Qwen2 of 2 million parameters, built from a config in this script, stands in and never runs.
-
-The default run reads the fixtures of this checkout and makes no network call. From the repository root:
+Takes runs and gives a datasets.Dataset of ap.to_chat rows that survive JSONL and Parquet, and an SFTTrainer that
+builds assistant-only labels on Qwen2.5's chat template (TRL's training variant, bundled here). Nothing is trained and
+no model is called: SFTTrainer wants a model object, so a randomly initialised Qwen2 of 2 million parameters stands in
+for the one you would train. With your own runs the script writes the dataset to --out and counts the tokens TRL
+trains; the checks compare every label with the rendered text.
 
     pip install -e ".[hf]" -r examples/integrations/train/requirements.txt
-    hf download Qwen/Qwen2.5-0.5B-Instruct config.json tokenizer.json tokenizer_config.json vocab.json merges.txt \\
-        --revision 7ae557604adf67be50417f59c2c2f167def9a775
-    python examples/integrations/train/train.py
-
-The hf line puts the tokenizer files (11 MB, no weights) in the Hugging Face cache; the script loads them offline and
-writes its scratch files to a new temporary directory, whose path it prints.
+    bash examples/integrations/train/setup.sh                            # the Qwen2.5 tokenizer files, 11 MB
+    python examples/integrations/train/train.py                          # the bundled fixtures, with the checks
+    python examples/integrations/train/train.py tau_bench --limit 20     # your runs: a dataset name or a trace file
 """
 
+import argparse
 import json
 import re
-import sys
 import tempfile
+from itertools import islice
 from pathlib import Path
 
 import transformers
@@ -37,30 +30,35 @@ import agentpile as ap
 
 HERE = Path(__file__).resolve().parent
 FIXTURES = HERE.parents[2] / "tests" / "corpora" / "fixtures"
-TRL_TEMPLATES = Path(trl.__file__).parent / "chat_templates"
 MODEL, REVISION = "Qwen/Qwen2.5-0.5B-Instruct", "7ae557604adf67be50417f59c2c2f167def9a775"
-# Four fixtures, plus swe_rebench_openhands (a second tool schema) and swe_agent_nebius (a row with no assistant turn).
-SOURCES = ("tau_bench", "tau2_bench", "swe_gym_openhands", "who_and_when", "swe_rebench_openhands", "swe_agent_nebius")
+TEMPLATE = HERE / "qwen2_5_training.jinja"  # assistant-only loss needs a template with generation blocks
 CALL = {"id": Value("string"), "type": Value("string"), "function": {"name": Value("string"), "arguments": Value("string")}}
 FEATURES = Features({"messages": List({"role": Value("string"), "content": Value("string"), "name": Value("string"),
                                        "tool_call_id": Value("string"), "tool_calls": List(CALL)}),
                      "tools": Value("string")})
-ASSISTANT_TURN = re.compile(r"<\|im_start\|>assistant(.*?<\|im_end\|>\n)", re.S)  # the text that a generation block covers
 
 
-def chat_rows(name):
-    """([(source, row, report entry)], number of runs) for one fixture; who_and_when speaks as the first agent of a run."""
-    runs = list(ap.load(name, root=FIXTURES / name))
-    items = []
-    for group in ([[run] for run in runs] if name == "who_and_when" else [runs]):
-        report = {}
-        speaker = group[0].agents[0]["id"] if name == "who_and_when" else None
-        rows = ap.to_chat(group, perspective=speaker, report=report)  # arguments="json" is the default
-        items += zip([name] * len(rows), rows, [e for e in report["runs"] if e["row"] is not None])
-    return items, len(runs)
+def to_sft(runs):
+    """A Dataset with one chat row per run that has an assistant turn."""
+    rows = [row for row in ap.to_chat(runs) if any(m["role"] == "assistant" for m in row["messages"])]
+    # datasets infers features from the first row and would lose the tools column, so FEATURES declares them
+    return Dataset.from_list([encode(row) for row in rows], features=FEATURES)
+
+
+def make_trainer(model, dataset, tokenizer, output_dir):
+    """An SFTTrainer that trains on the assistant turns of dataset only."""
+    # TRL hands the template the stored messages, whose call arguments are JSON text, and the template needs objects
+    apply_chat_template = tokenizer.apply_chat_template
+    tokenizer.apply_chat_template = lambda messages, *a, **kw: apply_chat_template(messages_of(messages, objects=True), *a, **kw)
+    args = SFTConfig(output_dir=str(output_dir), assistant_only_loss=True, chat_template_path=str(TEMPLATE),
+                     max_length=None,  # no truncation, so every assistant turn is checked
+                     per_device_train_batch_size=4, use_cpu=True, bf16=False, report_to="none",
+                     save_strategy="no", disable_tqdm=True)
+    return SFTTrainer(model=model, args=args, train_dataset=dataset, processing_class=tokenizer)
 
 
 def encode(row):
+    """Tool schemas differ in shape from row to row, so the tool list is stored as JSON text."""
     return {"messages": row["messages"], "tools": json.dumps(row["tools"], ensure_ascii=False) if "tools" in row else None}
 
 
@@ -74,6 +72,18 @@ def messages_of(stored, objects=False):
                                for c in m["tool_calls"]]
         out.append(m)
     return out
+
+
+def tiny_model(tok):
+    """SFTTrainer wants a model object: a random Qwen2 of 2 million parameters, which never runs, stands in for yours."""
+    return Qwen2ForCausalLM(Qwen2Config(vocab_size=len(tok), hidden_size=16, intermediate_size=32, num_hidden_layers=1,
+                                        num_attention_heads=2, num_key_value_heads=1, tie_word_embeddings=True))
+
+
+# Four fixtures, plus swe_rebench_openhands (a second tool schema) and swe_agent_nebius (a row with no assistant turn).
+SOURCES = ("tau_bench", "tau2_bench", "swe_gym_openhands", "who_and_when", "swe_rebench_openhands", "swe_agent_nebius")
+TRL_TEMPLATES = Path(trl.__file__).parent / "chat_templates"
+ASSISTANT_TURN = re.compile(r"<\|im_start\|>assistant(.*?<\|im_end\|>\n)", re.S)  # the text that a generation block covers
 
 
 def decode(stored):
@@ -123,60 +133,44 @@ def check_labels(tok, template, example):
     return len(labels), sum(trained), n_call
 
 
-def main():
-    disable_progress_bars()
-    transformers.logging.set_verbosity_error()
-    work = Path(tempfile.mkdtemp(prefix="agentpile-train-"))  # round-trip files, loader cache, trainer output
-
-    items, n_runs = [], 0
-    for name in SOURCES:
-        got, runs = chat_rows(name)
-        items, n_runs = items + got, n_runs + runs
-    rows = [row for _, row, _ in items]
-    assert all(e["assistant_turns"] == sum(m["role"] == "assistant" for m in r["messages"]) for _, r, e in items)
-    named = ap.to_chat(ap.load("who_and_when", root=FIXTURES / "who_and_when"))  # no perspective: turns carry the agent name
-    print(f"{len(rows)} chat rows from {len(SOURCES)} fixtures ({n_runs - len(rows)} runs without events give no row); "
+def check(fixtures, tok, work):
+    """fixtures: the runs of each fixture dataset, by name."""
+    runs = [run for group in fixtures.values() for run in group]
+    report = {}
+    rows = ap.to_chat(runs, report=report)  # arguments="json" is the default
+    entries = [e for e in report["runs"] if e["row"] is not None]
+    assert all(e["assistant_turns"] == sum(m["role"] == "assistant" for m in r["messages"]) for e, r in zip(entries, rows))
+    named = ap.to_chat(fixtures["who_and_when"])  # no perspective: turns carry the agent name
+    print(f"{len(rows)} chat rows from {len(fixtures)} fixtures ({len(runs) - len(rows)} runs without events give no row); "
           f"{sum('tools' in r for r in rows)} rows record tools")
 
     # (1) storage: explicit features, JSON text for tools and arguments, exact round trips
     varied = [r for r in rows if "tools" in r]
     schemas = {json.dumps(r["tools"], sort_keys=True) for r in varied}
     assert len(schemas) > 1 and all("name" in m for r in named for m in r["messages"] if m["role"] == "assistant")
-    groups = (("no tools", [r for r in rows if "tools" not in r] + named), ("tool schemas", varied), ("all rows", rows + named))
+    groups = (("no tools", [r for r in rows if "tools" not in r]), ("tool schemas", varied), ("all rows", rows))
     print("JSONL and Parquet round trips are exact:", {label: round_trip(group, work, label) for label, group in groups},
           f"(the tool batch holds {len(schemas)} different tool lists)")
 
-    # (2) drop the rows without an assistant turn
-    dropped = [f"{name}:{e['id']}" for name, _, e in items if e["assistant_turns"] == 0]
-    train = Dataset.from_list([encode(r) for _, r, e in items if e["assistant_turns"] > 0], features=FEATURES)
+    # (2) the rows without an assistant turn are dropped
+    train = to_sft(runs)
+    dropped = [e["id"] for e in entries if e["assistant_turns"] == 0]
+    assert len(train) == len(rows) - len(dropped)
     print(f"dropped {len(dropped)} rows without an assistant turn: {dropped}")
 
     # (3) template: TRL's training variant of the tokenizer's own template, bundled and checked against the pinned TRL
-    try:
-        tok = AutoTokenizer.from_pretrained(MODEL, revision=REVISION, local_files_only=True)
-    except OSError:
-        sys.exit("tokenizer files are not in the cache: run the hf download line from the docstring first")
-    template = (HERE / "qwen2_5_training.jinja").read_text()
+    template = TEMPLATE.read_text()
     shipped = (TRL_TEMPLATES / "qwen2_5_training.jinja").read_text()
     assert template.endswith(shipped) and tok.chat_template == (TRL_TEMPLATES / "qwen2_5.jinja").read_text()
     assert get_training_chat_template(tok) == shipped and has_generation_markers(template)
     print(f"trl {trl.__version__} ships {len(list(TRL_TEMPLATES.glob('*_training.jinja')))} training templates; the bundled "
           f"qwen2_5_training.jinja is its copy, a patch of the template that {MODEL} ships")
-    # TRL decodes a tools string itself but hands the template the stored messages, so arguments become objects only here
-    apply_chat_template = tok.apply_chat_template
-    tok.apply_chat_template = lambda messages, *a, **kw: apply_chat_template(messages_of(messages, objects=True), *a, **kw)
     sample = next(r for r in train if r["tools"] and any(m["tool_calls"] for m in r["messages"]))
-    text = apply_chat_template(messages_of(sample["messages"]), tools=json.loads(sample["tools"]), chat_template=template, tokenize=False)
+    text = tok.apply_chat_template(messages_of(sample["messages"]), tools=json.loads(sample["tools"]), chat_template=template, tokenize=False)
     assert '"arguments": "{' in text  # arguments left as JSON text would be encoded a second time by the template
 
     # (4) TRL: its own tokenization, label building and collation, with assistant-only loss
-    config = Qwen2Config(vocab_size=len(tok), hidden_size=16, intermediate_size=32, num_hidden_layers=1,
-                         num_attention_heads=2, num_key_value_heads=1, tie_word_embeddings=True)
-    args = SFTConfig(output_dir=str(work / "out"), assistant_only_loss=True, chat_template_path=str(HERE / "qwen2_5_training.jinja"),
-                     max_length=None,  # no truncation, so every assistant turn is checked
-                     per_device_train_batch_size=4, use_cpu=True, bf16=False, report_to="none",
-                     save_strategy="no", disable_tqdm=True)
-    trainer = SFTTrainer(model=Qwen2ForCausalLM(config), args=args, train_dataset=train, processing_class=tok)
+    trainer = make_trainer(tiny_model(tok), train, tok, work / "out")
     assert tok.chat_template == template
     totals = [check_labels(tok, template, example) for example in trainer.train_dataset]
     n_tokens, n_trained, n_call = map(sum, zip(*totals))
@@ -187,28 +181,41 @@ def main():
     print(f"SFTTrainer prepared {len(totals)} rows ({n_tokens} tokens): {n_trained} trained, {n_call} of them in tool calls, "
           f"{n_tokens - n_trained} masked (-100); the collator gave {len(batches)} padded batches with the same counts")
 
-    # (5) templates that fail on this data, and what the Qwen template does to the rest
-    print("templates that cannot give this data assistant masks (one row with tools):")
-    objects, n_calls = messages_of(sample["messages"], objects=True), sum(len(m["tool_calls"] or []) for m in sample["messages"])
-    for file in ("qwen2_5.jinja", "qwen3.jinja", "qwen3_instruct_2507.jinja", "qwen2_5_vl_training.jinja"):
-        tried = (TRL_TEMPLATES / file).read_text()
-        try:
-            out = apply_chat_template(objects, tools=json.loads(sample["tools"]), chat_template=tried, return_dict=True,
-                                      return_assistant_tokens_mask=True)
-            calls = tok.decode(out["input_ids"]).count('", "arguments": ')
-            why = (f"has a generation block but renders {calls} of {n_calls} tool calls" if has_generation_markers(tried)
-                   else "no generation block") + f"; mask covers {sum(out['assistant_masks'])} of {len(out['input_ids'])} tokens"
-        except Exception as exc:  # a template without tool-call support can fail on a call-only turn
-            why = f"has a generation block but fails on this row: {type(exc).__name__}: {exc}"
-        print(f"  {file}{' (the tokenizer own template)' if file == 'qwen2_5.jinja' else ''}: {why}")
-    plain = apply_chat_template([{"role": "user", "content": "hi"}], chat_template=template, tokenize=False)
-    print("default system prompt of the Qwen2.5 template:", repr(re.match(r"<\|im_start\|>system\n(.*?)<\|im_end\|>", plain).group(1)),
-          f"(inserted in {sum(r['messages'][0]['role'] != 'system' for r in train)} of {len(train)} training rows, which have no system message)")
-    render = lambda r: apply_chat_template(r["messages"], chat_template=template, tokenize=False)
+    # (5) the template drops the name field of a multi-agent row
+    render = lambda r: tok.apply_chat_template(r["messages"], chat_template=template, tokenize=False)
     nameless = [{**r, "messages": [{k: v for k, v in m.items() if k != "name"} for m in r["messages"]]} for r in named]
     assert all(render(a) == render(b) for a, b in zip(named, nameless))
     print(f"names are dropped: {len(named)} multi-agent rows render the same text with and without the name field")
-    print(f"ok (scratch files in {work})")
+
+
+def load_runs(sources, limit):
+    """The first `limit` runs of each source; a dataset name takes limit= and downloads only that part, a file path does not."""
+    return [run for source in sources
+            for run in islice(ap.load(source, **({"limit": limit} if source in ap.datasets.names() else {})), limit)]
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    parser.add_argument("source", nargs="*", help="a dataset name or a trace file (default: the bundled fixtures, with the checks)")
+    parser.add_argument("--limit", type=int, default=20, help="runs per source (default: 20)")
+    parser.add_argument("--out", type=Path, help="directory for the files (default: a new temporary one)")
+    args = parser.parse_args()
+    disable_progress_bars()
+    transformers.logging.set_verbosity_error()
+    out = args.out or Path(tempfile.mkdtemp(prefix="agentpile-train-"))
+    out.mkdir(parents=True, exist_ok=True)
+    tok = AutoTokenizer.from_pretrained(MODEL, revision=REVISION, local_files_only=True)  # setup.sh fetched it
+    if args.source:
+        dataset = to_sft(load_runs(args.source, args.limit))
+        dataset.to_parquet(str(out / "sft.parquet"))
+        trainer = make_trainer(tiny_model(tok), dataset, tok, out / "trainer")
+        labels = [label for example in trainer.train_dataset for label in example["labels"]]
+        print(f"{len(dataset)} rows written to {out / 'sft.parquet'}; SFTTrainer prepared {len(labels)} tokens, "
+              f"{sum(label != -100 for label in labels)} of them in assistant turns")
+    else:
+        print(f"scratch files in {out}")
+        check({name: list(ap.load(name, root=FIXTURES / name)) for name in SOURCES}, tok, out)
+        print("all checks passed")
 
 
 if __name__ == "__main__":

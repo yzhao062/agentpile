@@ -1,17 +1,14 @@
-"""Browse agentpile runs in Harbor's local viewer (`harbor view`), which reads ATIF v1.7 trajectories.
+"""Open runs in Harbor's viewer.
 
-agentpile's run record is an ATIF v1.7 trajectory, so `run.to_json` writes the file Harbor shows as it is. This example
-loads the tau_bench, trail and who_and_when fixtures from the checkout (16 runs; no network, API key or model call),
-writes them as a Harbor job (one trial per run, plus the config.json and result.json files the viewer lists), loads
-every file back with Harbor's own pydantic models, then starts `harbor view` on a free local port, reads its job,
-trial and trajectory endpoints, and stops it. A trial's reward is the run's recorded outcome (1.0 or 0.0; TRAIL
-records none). The viewer does not draw the agentpile labels; they stay in the file under extra["agentpile"].
+`harbor view` reads job folders of ATIF v1.7 trajectories, and an agentpile run is one, so `run.to_json` writes the
+trajectory file as it is. This writes the runs as a Harbor job, one trial per run, with the config.json and result.json
+files the viewer lists. A trial's reward is the run's recorded outcome (1.0 or 0.0; none if the run records none). The
+viewer does not draw the agentpile labels; they stay in the file under extra["agentpile"].
 
     pip install -e ".[hf]" -r examples/integrations/view-harbor/requirements.txt
-    python examples/integrations/view-harbor/view_harbor.py [OUT_DIR] [--no-viewer] [--hub]
-
-OUT_DIR (default: a new temporary directory) keeps the job, so `harbor view OUT_DIR` browses it afterwards.
---no-viewer skips the server check; --hub loads 3 runs per dataset from Hugging Face (TRAIL is gated) instead.
+    python examples/integrations/view-harbor/view_harbor.py                        # the bundled fixtures, with the checks
+    python examples/integrations/view-harbor/view_harbor.py tau_bench --limit 20   # your runs: a dataset name or a trace file
+    harbor view DIR                                                                # DIR is the folder the script prints
 """
 
 import argparse
@@ -25,6 +22,7 @@ import time
 import urllib.request
 import uuid
 from datetime import datetime, timezone
+from itertools import islice
 from pathlib import Path
 
 import agentpile as ap
@@ -40,19 +38,17 @@ DATASETS = ("tau_bench", "trail", "who_and_when")
 JOB = "agentpile-runs"
 
 
-def check(ok, what):
-    if not ok:
-        sys.exit(f"CHECK FAILED: {what}")
+def trial_name(run):
+    return re.sub(r"[^A-Za-z0-9._-]+", "_", run.id)
 
 
 def write_job(runs, jobs_dir):
-    """The agentpile part: each run's own JSON becomes a trial's trajectory; the rest is Harbor bookkeeping."""
+    """The agentpile part: each run's own JSON is a trial's trajectory; the rest is Harbor bookkeeping."""
     job_dir = jobs_dir / JOB
-    check(not job_dir.exists(), f"{job_dir} exists; pass a new OUT_DIR so old and new trials never mix")
     job_dir.mkdir(parents=True)
-    names, results = [], []
+    results = []
     for run in runs:
-        name = re.sub(r"[^A-Za-z0-9._-]+", "_", run.id)
+        name = trial_name(run)
         (job_dir / name / "agent").mkdir(parents=True)
         run.to_json(job_dir / name / "agent" / "trajectory.json")
         agent, success = run.record["agent"], run.outcome.get("success")
@@ -65,35 +61,15 @@ def write_job(runs, jobs_dir):
                                  model_info=ModelInfo(name=agent["model_name"]) if agent.get("model_name") else None),
             verifier_result=None if success is None else VerifierResult(rewards={"success": float(success)}))
         (job_dir / name / "result.json").write_text(result.model_dump_json(indent=2))
-        names.append(name)
         results.append(result)
     now = datetime.now(timezone.utc)
-    (job_dir / "config.json").write_text(JobConfig(job_name=JOB, jobs_dir=jobs_dir).model_dump_json(indent=2))
+    (job_dir / "config.json").write_text(JobConfig(job_name=JOB, jobs_dir=jobs_dir, agents=[]).model_dump_json(indent=2))
     (job_dir / "result.json").write_text(JobResult(
         id=uuid.uuid4(), started_at=now, finished_at=now, n_total_trials=len(runs),
         stats=JobStats.from_trial_results(results, n_total_trials=len(runs))).model_dump_json(indent=2))
-    return job_dir, names
 
 
-def check_files(runs, job_dir, names):
-    """Load every file back with Harbor's own models; each trajectory must also equal the agentpile record."""
-    steps = 0
-    for run, name in zip(runs, names):
-        text = (job_dir / name / "agent" / "trajectory.json").read_text(encoding="utf-8")
-        trajectory = Trajectory.model_validate_json(text)
-        check(trajectory.schema_version == "ATIF-v1.7", f"{run.id}: schema {trajectory.schema_version}")
-        check(json.loads(text) == run.record, f"{run.id}: trajectory.json differs from the agentpile record")
-        steps += len(trajectory.steps)
-        result = TrialResult.model_validate_json((job_dir / name / "result.json").read_text())
-        check(result.trial_name == name and result.task_name == run.id, f"{run.id}: trial result")
-        check((result.verifier_result is None) == (run.outcome.get("success") is None), f"{run.id}: reward")
-    JobConfig.model_validate_json((job_dir / "config.json").read_text())
-    job = JobResult.model_validate_json((job_dir / "result.json").read_text())
-    check(job.n_total_trials == job.stats.n_completed_trials == len(runs), "job result counts")
-    return steps
-
-
-def check_viewer(runs, jobs_dir, names):
+def check_viewer(runs, jobs_dir):
     """Start `harbor view` on a free port, read what the browser reads, and stop it."""
     with socket.socket() as probe:
         probe.bind(("127.0.0.1", 0))
@@ -115,45 +91,68 @@ def check_viewer(runs, jobs_dir, names):
                     break
                 except OSError:
                     log.seek(0)
-                    check(server.poll() is None and time.monotonic() < deadline, f"harbor view did not start:\n{log.read()}")
+                    assert server.poll() is None and time.monotonic() < deadline, f"harbor view did not start:\n{log.read()}"
                     time.sleep(0.5)
             listing = get("/api/jobs")
-            check([(j["name"], j["n_total_trials"], j["n_completed_trials"]) for j in listing["items"]]
-                  == [(JOB, len(runs), len(runs))], f"job listing: {listing}")
+            assert [(j["name"], j["n_total_trials"], j["n_completed_trials"]) for j in listing["items"]] \
+                == [(JOB, len(runs), len(runs))], f"job listing: {listing}"
             trials = get(f"/api/jobs/{JOB}/trials")
-            check(trials["total"] == len(runs) and {t["name"] for t in trials["items"]} == set(names), "trial listing")
-            for run, name in zip(runs, names):
-                check(get(f"/api/jobs/{JOB}/trials/{name}/trajectory") == run.record, f"{run.id}: served trajectory")
+            assert trials["total"] == len(runs) and {t["name"] for t in trials["items"]} == {trial_name(r) for r in runs}, \
+                "trial listing"
+            for run in runs:
+                assert get(f"/api/jobs/{JOB}/trials/{trial_name(run)}/trajectory") == run.record, \
+                    f"{run.id}: served trajectory"
         finally:
             server.terminate()
             try:
                 server.wait(timeout=15)
             except subprocess.TimeoutExpired:
                 server.kill()
-    return port
+
+
+def check(runs, jobs_dir, viewer=True):
+    """Load every file back with Harbor's own models; each trajectory must also equal the agentpile record."""
+    job_dir = jobs_dir / JOB
+    for run in runs:
+        name = trial_name(run)
+        text = (job_dir / name / "agent" / "trajectory.json").read_text(encoding="utf-8")
+        trajectory = Trajectory.model_validate_json(text)
+        assert trajectory.schema_version == "ATIF-v1.7", f"{run.id}: schema {trajectory.schema_version}"
+        assert json.loads(text) == run.record, f"{run.id}: trajectory.json differs from the agentpile record"
+        result = TrialResult.model_validate_json((job_dir / name / "result.json").read_text())
+        assert result.trial_name == name and result.task_name == run.id, f"{run.id}: trial result"
+        assert (result.verifier_result is None) == (run.outcome.get("success") is None), f"{run.id}: reward"
+    JobConfig.model_validate_json((job_dir / "config.json").read_text())
+    job = JobResult.model_validate_json((job_dir / "result.json").read_text())
+    assert job.n_total_trials == job.stats.n_completed_trials == len(runs), "job result counts"
+    if viewer:
+        check_viewer(runs, jobs_dir)
+
+
+def load_runs(sources, limit):
+    """The first `limit` runs of each source; a dataset name takes limit= and downloads only that part, a file path does not."""
+    return [run for source in sources
+            for run in islice(ap.load(source, **({"limit": limit} if source in ap.datasets.names() else {})), limit)]
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    parser.add_argument("out_dir", nargs="?", type=Path, help="jobs directory to write (default: a new temporary one)")
-    parser.add_argument("--no-viewer", action="store_true", help="skip starting `harbor view`")
-    parser.add_argument("--hub", action="store_true", help="load 3 runs per dataset from Hugging Face (network)")
+    parser.add_argument("source", nargs="*", help="a dataset name or a trace file (default: the bundled fixtures, with the checks)")
+    parser.add_argument("--limit", type=int, default=20, help="runs per source (default: 20)")
+    parser.add_argument("--out", type=Path, help="directory for the job (default: a new temporary one)")
+    parser.add_argument("--no-viewer", action="store_true", help="skip starting `harbor view` in the checks")
     args = parser.parse_args()
-    runs = [run for name in DATASETS
-            for run in (ap.load(name, limit=3) if args.hub else ap.load(name, root=FIXTURES / name))]
-    jobs_dir = (args.out_dir or Path(tempfile.mkdtemp(prefix="agentpile-harbor-"))).resolve()
-    job_dir, names = write_job(runs, jobs_dir)
-    steps = check_files(runs, job_dir, names)
-    empty = sum(1 for run in runs if not any(True for _ in run.events()))
-    print(f"wrote {len(runs)} trials ({steps} steps, {empty} runs without events) to {job_dir}")
-    print(f"loaded back with harbor.models: {len(runs)} ATIF-v1.7 trajectories equal to the agentpile records, "
-          f"{len(runs)} trial results, 1 job config, 1 job result")
-    if args.no_viewer:
-        print("skipped `harbor view` (--no-viewer)")
+    if args.source:
+        runs = load_runs(args.source, args.limit)
     else:
-        port = check_viewer(runs, jobs_dir, names)
-        print(f"harbor view on port {port}: 1 job, {len(runs)} trials and {len(runs)} trajectories served; stopped")
-    print(f"browse it: harbor view {jobs_dir}\nOK")
+        runs = [run for name in DATASETS for run in ap.load(name, root=FIXTURES / name)]
+    jobs_dir = (args.out or Path(tempfile.mkdtemp(prefix="agentpile-harbor-"))).resolve()
+    write_job(runs, jobs_dir)
+    print(f"wrote {len(runs)} trials to {jobs_dir}")
+    print(f"open with: harbor view {jobs_dir}")
+    if not args.source:
+        check(runs, jobs_dir, viewer=not args.no_viewer)
+        print("all checks passed")
 
 
 if __name__ == "__main__":

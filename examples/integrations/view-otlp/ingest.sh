@@ -56,7 +56,7 @@ case "$PLATFORM" in
     mlflow server --host 127.0.0.1 --port "$PORT" --backend-store-uri "sqlite:///$WORK/mlflow.db" > "$WORK/mlflow.log" 2>&1 &
     PID=$!
     ready "http://127.0.0.1:$PORT/health"
-    export MLFLOW_ENDPOINT="http://127.0.0.1:$PORT/v1/traces"
+    export MLFLOW_ENDPOINT="http://127.0.0.1:$PORT/v1/traces" MLFLOW_URL="http://127.0.0.1:$PORT"
     ;;
   *)
     echo "usage: ingest.sh phoenix|jaeger|mlflow" >&2

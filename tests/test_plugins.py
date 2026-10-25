@@ -96,9 +96,9 @@ def test_readme_core_example_runs_without_extras(tmp_path, monkeypatch):
 
 @pytest.mark.network
 def test_readme_dataset_example_runs(tmp_path):
-    """The README's dataset example, with its placeholder file pointed at a real trace."""
+    """The README's dataset example, with the file it loads pointed at a real trace."""
     trace = Path(__file__).parent / "fixtures" / "atif_multiagent.json"
-    code = _readme_block('"my_trace.json"').replace('"my_trace.json"', repr(str(trace)))
+    code = _readme_block('ap.load("run.json")').replace('"run.json"', repr(str(trace)))
     data = os.environ.get("AGENTPILE_DATA")
     if data:  # read the pinned copy instead of downloading
         code = code.replace('ap.load("who_and_when", ', f'ap.load("who_and_when", root={str(Path(data) / "who_and_when")!r}, ')
