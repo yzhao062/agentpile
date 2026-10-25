@@ -27,7 +27,7 @@ ap.show(run)                          # every step, call and result, with the so
 Public datasets store agent runs in their own schemas (e.g., chat messages in tau-bench, OpenTelemetry spans in TRAIL, raw log text in MAST), and each analysis tool expects its own input. agentpile sits between the two. It reads datasets, trace files and live runs into [ATIF v1.7](https://github.com/harbor-framework/harbor) records that keep what the source recorded. You can then use those records with pandas, networkx or a tracing UI such as Phoenix. It downloads each dataset from its publisher at a pinned revision and redistributes nothing.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/yzhao062/agentpile/main/assets/overview.png" alt="Three kinds of input (14 public datasets, trace and tool files, live agent runs) go into one run record, an ATIF v1.7 trajectory or a config record with no steps. Three kinds of use come out: read a run with ap.show, analyze many runs with pandas tables and networkx graphs, and hand a run on as JSON or as OTLP spans to Phoenix or Jaeger." width="100%">
+  <img src="https://raw.githubusercontent.com/yzhao062/agentpile/main/assets/overview.png" alt="Data in on the left: 14 public datasets with about 410,000 runs, eight drawn as circles sized by run count and six smaller ones named; trace and tool files (OTLP JSON, OpenAI messages, ATIF, Claude Code sessions, MCP tool lists); and live runs captured from Pydantic AI and the OpenAI Agents SDK. In the centre, agentpile holds each run as one ATIF v1.7 record: messages, tool calls and results in source order, the source's labels beside the steps and calls they target, and dependencies between calls derived on request. Tool lists and CatchBench PRE rows load as config records with tools and permissions but no steps. On the right, run records go to tools you already use: view with Phoenix, Jaeger, MLflow, Harbor or Inspect AI; evaluate with Ragas or DeepEval; train with Hugging Face datasets or TRL; audit with Invariant Guardrails; analyze with pandas, DuckDB, Polars or networkx." width="100%">
 </p>
 
 ## 1. What You Can Do
@@ -285,6 +285,6 @@ Alpha. Version 0.3.0 covers the 14 datasets above, each checked against a manife
 
 ## 8. License
 
-Apache-2.0 for the code. Each dataset keeps its publisher's terms. Several declare no license on their dataset card, and agentpile records what each card says in its manifest. The tests use synthetic fixtures in each dataset's file layout and copy no dataset content. The name follows the habit of calling a mixed collection a pile and has no connection to EleutherAI's The Pile.
+Apache-2.0 for the code. Each dataset keeps its publisher's terms. Several declare no license on their dataset card, and agentpile records what each card says in its manifest. The tests use synthetic fixtures in each dataset's file layout and copy no dataset content. The tool logos in the overview figure belong to their projects and keep their own terms ([sources](https://github.com/yzhao062/agentpile/blob/main/assets/overview/SOURCES.md)). The name follows the habit of calling a mixed collection a pile and has no connection to EleutherAI's The Pile.
 
 <p align="right"><a href="#agentpile">back to top</a></p>

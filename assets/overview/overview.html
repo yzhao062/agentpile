@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>agentpile overview</title>
+<!--
+  Source of assets/overview.png, the README overview figure. render.py renders it with headless Chrome
+  at twice this size. Circle areas are proportional to the run counts in data-runs, which render.py
+  checks against the bundled manifests. SOURCES.md says where pile.png and each logo in logos/ come from.
+-->
+<style>
+  :root {
+    --ink: #1D2A2E; --sub: #5E6B70; --faint: #8A979C;
+    --dark: #183F43; --teal: #287887; --teal2: #4198AC; --mint: #BFDFD2; --mint2: #5FAE8E;
+    --coral: #ED8D5A; --gold: #E3A72F; --line: #B9C7CB; --tileb: #DCE5E8; --soft: #F3F7F8;
+    --sans: "Helvetica Neue", Arial, sans-serif; --mono: "SF Mono", Menlo, Consolas, monospace;
+  }
+  html, body { margin: 0; background: #fff; }
+  #fig { position: relative; width: 1280px; height: 600px; font-family: var(--sans); color: var(--ink); overflow: hidden; background: #fff; }
+  .abs { position: absolute; }
+  #wires { position: absolute; left: 0; top: 0; width: 1280px; height: 600px; overflow: visible; }
+  .side { font-size: 25px; font-weight: 700; letter-spacing: -0.3px; }
+  .gtitle { font-size: 18px; font-weight: 700; }
+  .gsub { font-size: 13.5px; color: var(--sub); }
+  .code { font-family: var(--mono); font-size: 13px; color: #8E3F26; background: var(--soft); border: 1px solid #E4ECEE; border-radius: 6px; padding: 3px 7px; white-space: nowrap; }
+
+  /* datasets */
+  .bub { position: absolute; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-align: center;
+         color: #fff; font-weight: 700; line-height: 1.05; box-shadow: inset -3px -4px 8px rgba(0,0,0,.10), inset 3px 3px 6px rgba(255,255,255,.35); }
+  .blab { position: absolute; font-size: 12.5px; color: var(--ink); white-space: nowrap; background: #fff; padding: 0 3px; border-radius: 3px; }
+
+  /* trace files */
+  .sheet { position: absolute; width: 70px; height: 84px; border-radius: 6px; border: 1.4px solid rgba(0,0,0,.10);
+           box-shadow: 2px 3px 6px rgba(20,50,60,.12); display: flex; flex-direction: column; align-items: center; justify-content: center;
+           font-size: 12.5px; font-weight: 600; text-align: center; line-height: 1.15; color: #23353A; }
+  .sheet::after { content: ""; position: absolute; right: -1px; top: -1px; width: 14px; height: 14px; background: #fff;
+                  clip-path: polygon(0 0, 100% 100%, 100% 0); }
+  .sheet::before { content: ""; position: absolute; right: -1px; top: -1px; width: 14px; height: 14px; background: rgba(0,0,0,.12);
+                   clip-path: polygon(0 0, 0 100%, 100% 100%); border-bottom-left-radius: 2px; }
+  .sheet img { height: 17px; margin-bottom: 5px; }
+
+  /* tags and tiles */
+  .tag { position: absolute; display: flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; padding: 5px 10px;
+         border-radius: 14px; white-space: nowrap; }
+  .tile { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 9px 0 7px; background: #fff; border: 1px solid var(--tileb);
+          border-radius: 7px; font-size: 14px; color: var(--ink); white-space: nowrap; box-shadow: 0 1px 2px rgba(20,50,60,.06); }
+  .tile img { height: 17px; }
+  .tiles { position: absolute; display: flex; flex-wrap: wrap; gap: 6px; width: 228px; }
+
+  /* lanes */
+  .lane { position: absolute; left: 812px; width: 452px; height: 100px; }
+  .lname { position: absolute; left: 0; top: 4px; font-size: 20px; font-weight: 700; }
+  .chips { position: absolute; left: 0; top: 34px; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+  .chip { font-family: var(--mono); font-size: 12.5px; padding: 2px 6px; border-radius: 5px; background: var(--soft); border: 1px solid #E1EAEC; color: #33464B; }
+  .card { position: absolute; left: 330px; top: 4px; width: 122px; height: 88px; border: 1px solid var(--tileb); border-radius: 9px; background: #fff;
+          box-shadow: 0 2px 5px rgba(20,50,60,.07); overflow: hidden; }
+
+  /* record face */
+  #pile { position: absolute; left: 458px; top: 92px; width: 312px; }
+  #face { position: absolute; left: 546px; top: 152px; width: 204px; height: 296px; transform: skewY(-5.6deg); transform-origin: 50% 50%; color: #fff; }
+  .row { position: absolute; left: 20px; display: flex; align-items: center; gap: 9px; font-size: 14.5px; color: #EAF4F2; }
+  .node { width: 11px; height: 11px; border-radius: 50%; border: 2px solid #183F43; }
+</style>
+</head>
+<body>
+<div id="fig">
+  <svg id="wires"></svg>
+
+  <!-- ===================== left: data in ===================== -->
+  <div class="abs side" style="left:18px; top:14px;">Data in</div>
+
+  <div class="abs gtitle" style="left:18px; top:54px;">14 public datasets</div>
+  <div class="abs gsub" style="left:18px; top:76px;">about 410,000 runs; circle area shows the run count</div>
+  <div id="bubbles" class="abs" style="left:18px; top:96px; width:316px; height:170px;">
+    <!-- name, runs, centre x, centre y, colour, label position; the six smallest are named in the line below -->
+    <div class="bub" data-dataset="adp" data-name="ADP" data-runs="200914" data-x="58" data-y="90" data-c="#1F5A63" data-lab="in"></div>
+    <div class="bub" data-dataset="swe_agent_nebius" data-name="SWE-agent" data-runs="80036" data-x="150" data-y="46" data-c="#4198AC" data-lab="in"></div>
+    <div class="bub" data-dataset="swe_rebench_openhands" data-name="SWE-rebench" data-runs="67074" data-x="152" data-y="126" data-c="#7DC4A8" data-lab="in2"></div>
+    <div class="bub" data-dataset="swe_smith" data-name="SWE-smith" data-runs="24100" data-x="222" data-y="22" data-c="#ED8D5A" data-lab="r"></div>
+    <div class="bub" data-dataset="agentdojo" data-name="AgentDojo" data-runs="15095" data-x="222" data-y="64" data-c="#E9B949" data-lab="r"></div>
+    <div class="bub" data-dataset="tau2_bench" data-name="tau2-bench" data-runs="8340" data-x="222" data-y="98" data-c="#7FA6C8" data-lab="r"></div>
+    <div class="bub" data-dataset="swe_gym_openhands" data-name="SWE-Gym" data-runs="6055" data-x="222" data-y="126" data-c="#9DD3BB" data-lab="r"></div>
+    <div class="bub" data-dataset="tau_bench" data-name="tau-bench" data-runs="4950" data-x="222" data-y="152" data-c="#C9B68A" data-lab="r"></div>
+  </div>
+  <div class="abs gsub" style="left:18px; top:268px; width:400px; font-size:12.5px; line-height:1.3;">and six with under 2,000 runs each: MAST, AgentRewardBench,<br>CatchBench, Who&amp;When, TRAIL and Trace Commons</div>
+
+  <!-- hub cylinder: every dataset comes from its publisher at a pinned revision -->
+  <svg id="db" class="abs" style="left:352px; top:140px;" width="56" height="70" viewBox="0 0 56 70">
+    <defs><linearGradient id="dbg" x1="0" x2="1"><stop offset="0" stop-color="#C9D6DA"/><stop offset=".45" stop-color="#F4F8F9"/><stop offset="1" stop-color="#AFC0C5"/></linearGradient></defs>
+    <path d="M4 12 V56 A24 8 0 0 0 52 56 V12" fill="url(#dbg)" stroke="#9FB2B8" stroke-width="1.2"/>
+    <path d="M4 27 A24 8 0 0 0 52 27 M4 42 A24 8 0 0 0 52 42" fill="none" stroke="#9FB2B8" stroke-width="1.2"/>
+    <ellipse cx="28" cy="12" rx="24" ry="8" fill="#E9F0F2" stroke="#9FB2B8" stroke-width="1.2"/>
+  </svg>
+  <img class="abs" src="logos/hf-logo.svg" style="left:366px; top:166px; height:28px;">
+  <div class="abs gsub" style="left:338px; top:212px; font-size:12px; text-align:center; width:84px; line-height:1.15;">pinned<br>revisions</div>
+
+  <div class="abs gtitle" style="left:18px; top:316px;">Trace and tool files</div>
+  <div id="sheets" class="abs" style="left:18px; top:344px; width:400px; height:90px;">
+    <div class="sheet" style="left:0; top:2px; background:#DCEAF7;"><img src="logos/opentelemetry.svg">OTLP<br>JSON</div>
+    <div class="sheet" style="left:76px; top:2px; background:#D8EFE4;">OpenAI<br>messages</div>
+    <div class="sheet" style="left:152px; top:2px; background:#FBEBC6;"><span style="font-size:15px">ATIF</span></div>
+    <div class="sheet" style="left:228px; top:2px; background:#FBE0D3;"><img src="logos/claude.svg">Claude Code<br>sessions</div>
+    <div class="sheet" style="left:304px; top:2px; background:#E6E1F5;"><img src="logos/modelcontextprotocol.svg">MCP<br>tool lists</div>
+  </div>
+
+  <div class="abs gtitle" style="left:18px; top:450px;">Live agent runs</div>
+  <svg id="run" class="abs" style="left:18px; top:478px;" width="210" height="76" viewBox="0 0 210 76">
+    <defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#7C9298"/></marker></defs>
+    <circle cx="18" cy="38" r="16" fill="#5FAE8E"/><path d="M13 29 L26 38 L13 47 z" fill="#fff"/>
+    <g stroke="#7C9298" stroke-width="1.6" fill="none" marker-end="url(#ah)">
+      <path d="M35 38 H52"/><path d="M90 38 H104"/><path d="M142 31 C152 31 152 14 162 14"/><path d="M142 45 C152 45 152 62 162 62"/>
+      <path d="M71 26 C71 6 123 6 123 22"/>
+    </g>
+    <rect x="54" y="27" width="34" height="22" rx="5" fill="#A8CBE6"/>
+    <rect x="106" y="27" width="34" height="22" rx="5" fill="#F2C76B"/>
+    <rect x="164" y="4" width="36" height="20" rx="5" fill="#C7DDF0"/>
+    <rect x="164" y="52" width="36" height="20" rx="5" fill="#C7DDF0"/>
+  </svg>
+  <div class="tag" style="left:240px; top:484px; background:#FCE3EA; color:#9B1C44;"><img src="logos/pydantic.svg" style="height:16px">Pydantic AI</div>
+  <div class="tag" style="left:240px; top:522px; background:#E6EEF0; color:#23353A;">OpenAI Agents SDK</div>
+
+  <div id="c1" class="abs code" style="left:226px; top:52px;">ap.load("trail")</div>
+  <div id="c2" class="abs code" style="left:256px; top:314px;">ap.load("trace.json")</div>
+  <div id="c3" class="abs code" style="left:256px; top:448px;">ap.capture(agent)</div>
+
+  <!-- ===================== centre: the record ===================== -->
+  <img id="pile" src="pile.png">
+  <div id="face">
+    <svg class="abs" style="left:76px; top:4px;" width="52" height="38" viewBox="0 0 52 38">
+      <path d="M8 30 C 16 8, 28 8, 30 20 S 40 30, 44 8" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/>
+      <circle cx="8" cy="30" r="5.5" fill="#BFDFD2"/><circle cx="44" cy="8" r="5.5" fill="#ED8D5A"/>
+    </svg>
+    <div class="abs" style="left:0; top:44px; width:204px; text-align:center; font-size:34px; font-weight:700; letter-spacing:-1.2px;">agent<span style="color:#9FD6C6">pile</span></div>
+    <div class="abs" style="left:0; top:86px; width:204px; text-align:center; font-size:13.5px; color:#BFD9D3;">one run record, ATIF v1.7</div>
+    <div class="abs" style="left:18px; top:112px; width:168px; height:1px; background:rgba(255,255,255,.22);"></div>
+    <svg class="abs" style="left:0; top:118px;" width="204" height="176" viewBox="0 0 204 176">
+      <path d="M27 17 V131" stroke="rgba(255,255,255,.35)" stroke-width="2"/>
+      <path d="M27 54 C 4 62, 4 123, 27 131" fill="none" stroke="#E3A72F" stroke-width="2" stroke-dasharray="3 3"/>
+      <path d="M22 162 H40" stroke="#E3A72F" stroke-width="2" stroke-dasharray="3 3"/>
+    </svg>
+    <div class="row" style="top:126px;"><span class="node" style="background:#9FD6C6"></span>
+      <svg width="18" height="16" viewBox="0 0 18 16"><path d="M2 2 H16 V11 H8 L4 15 V11 H2 z" fill="none" stroke="#CFE5E0" stroke-width="1.6" stroke-linejoin="round"/></svg>message</div>
+    <div class="abs" style="left:138px; top:125px; font-size:11.5px; font-weight:700; color:#fff; background:#ED8D5A; padding:2px 6px; border-radius:5px;">label</div>
+    <div class="row" style="top:163px;"><span class="node" style="background:#E3A72F"></span>
+      <svg width="18" height="16" viewBox="0 0 18 16"><path d="M3 14 L10 7 M10 7 A3.6 3.6 0 1 0 14.5 2.5 L12.5 4.5 L13.5 5.5" fill="none" stroke="#CFE5E0" stroke-width="1.8" stroke-linecap="round"/></svg>tool call</div>
+    <div class="row" style="top:202px;"><span class="node" style="background:#9FD6C6"></span>
+      <svg width="18" height="16" viewBox="0 0 18 16"><path d="M4 1 H11 L14 4 V15 H4 z M6 7 H12 M6 10 H12" fill="none" stroke="#CFE5E0" stroke-width="1.5"/></svg>tool result</div>
+    <div class="row" style="top:240px;"><span class="node" style="background:#E3A72F"></span>
+      <svg width="18" height="16" viewBox="0 0 18 16"><path d="M3 14 L10 7 M10 7 A3.6 3.6 0 1 0 14.5 2.5 L12.5 4.5 L13.5 5.5" fill="none" stroke="#CFE5E0" stroke-width="1.8" stroke-linecap="round"/></svg>tool call</div>
+    <div class="abs" style="left:46px; top:273px; font-size:12px; color:#F2CE80; white-space:nowrap;">derived on request</div>
+  </div>
+
+  <div class="abs gsub" style="left:420px; top:514px; width:384px; text-align:center; font-size:12px; line-height:1.4; white-space:nowrap;">
+    Tool lists and CatchBench PRE rows load as config records:<br>tools and permissions, no steps, so no chat, trace or graph.</div>
+
+  <!-- ===================== right: tools ===================== -->
+  <div class="abs side" style="left:812px; top:14px;">Tools you already use</div>
+
+  <div id="lane-view" class="lane" style="top:56px;">
+    <div class="lname" style="color:#287887">View</div>
+    <div class="chips"><span class="chip">to_otlp</span><span class="chip">to_json</span><span class="chip">to_chat</span></div>
+    <div class="tiles" style="left:96px; top:4px;">
+      <span class="tile">Phoenix</span><span class="tile"><img src="logos/jaeger.svg">Jaeger</span>
+      <span class="tile"><img src="logos/mlflow.svg">MLflow</span><span class="tile"><img src="logos/harbor-favicon.svg">Harbor</span>
+      <span class="tile">Inspect AI</span>
+    </div>
+    <svg class="card" viewBox="0 0 122 88">
+      <rect x="0" y="0" width="122" height="13" fill="#F1F5F6"/><circle cx="8" cy="6.5" r="2.2" fill="#C9D3D6"/><circle cx="15" cy="6.5" r="2.2" fill="#C9D3D6"/><circle cx="22" cy="6.5" r="2.2" fill="#C9D3D6"/>
+      <g stroke="#C9D3D6" stroke-width="1"><path d="M10 20 V76 M10 32 H16 M10 44 H20 M10 56 H20 M10 68 H16"/></g>
+      <rect x="14" y="17" width="98" height="6" rx="3" fill="#4198AC"/>
+      <rect x="18" y="29" width="40" height="6" rx="3" fill="#7DC4A8"/>
+      <rect x="40" y="41" width="30" height="6" rx="3" fill="#E9B949"/>
+      <rect x="58" y="53" width="38" height="6" rx="3" fill="#7DC4A8"/>
+      <rect x="84" y="65" width="26" height="6" rx="3" fill="#ED8D5A"/>
+      <rect x="22" y="77" width="12" height="5" rx="2.5" fill="#B9C7CB"/>
+    </svg>
+  </div>
+
+  <div id="lane-eval" class="lane" style="top:162px;">
+    <div class="lname" style="color:#3E9A75">Evaluate</div>
+    <div class="chips"><span class="chip">to_chat</span></div>
+    <div class="tiles" style="left:96px; top:4px;">
+      <span class="tile"><img src="logos/ragas.png">Ragas</span><span class="tile"><img src="logos/deepeval-icon.svg">DeepEval</span>
+    </div>
+    <svg class="card" viewBox="0 0 122 88">
+      <g><circle cx="15" cy="30" r="5.5" fill="#5FAE8E"/><circle cx="15" cy="47" r="5.5" fill="#5FAE8E"/><circle cx="15" cy="64" r="5.5" fill="#5FAE8E"/><circle cx="15" cy="81" r="5.5" fill="#ED8D5A"/></g>
+      <g stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"><path d="M12.5 30 l2 2 l3.5 -4 M12.5 47 l2 2 l3.5 -4 M12.5 64 l2 2 l3.5 -4 M13 79 l4 4 M17 79 l-4 4"/></g>
+      <g fill="#E3EBED"><rect x="26" y="27" width="50" height="6" rx="3"/><rect x="26" y="44" width="40" height="6" rx="3"/><rect x="26" y="61" width="56" height="6" rx="3"/><rect x="26" y="78" width="44" height="6" rx="3"/></g>
+      <circle cx="101" cy="52" r="13" fill="none" stroke="#E3EBED" stroke-width="5"/>
+      <path d="M101 39 A13 13 0 1 1 89.7 58.5" fill="none" stroke="#5FAE8E" stroke-width="5" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <div id="lane-train" class="lane" style="top:268px;">
+    <div class="lname" style="color:#C98C12">Train</div>
+    <div class="chips"><span class="chip">to_chat</span></div>
+    <div class="tiles" style="left:96px; top:4px;">
+      <span class="tile"><img src="logos/hf-logo.svg">datasets</span><span class="tile"><img src="logos/trl.png" style="height:13px">TRL</span>
+    </div>
+    <svg class="card" viewBox="0 0 122 88">
+      <g font-family="Helvetica Neue, Arial" font-size="11" font-weight="700">
+        <rect x="6" y="6" width="36" height="17" rx="4" fill="#DCEAF7"/><text x="11" y="18.5" fill="#2F5E86">user</text>
+        <rect x="6" y="26" width="62" height="17" rx="4" fill="#D8EFE4"/><text x="11" y="38.5" fill="#2F7A5C">assistant</text>
+        <rect x="6" y="46" width="34" height="17" rx="4" fill="#FBEBC6"/><text x="11" y="58.5" fill="#8A6411">tool</text>
+        <rect x="6" y="66" width="62" height="17" rx="4" fill="#D8EFE4"/><text x="11" y="78.5" fill="#2F7A5C">assistant</text>
+      </g>
+      <g fill="#E3EBED"><rect x="48" y="11.5" width="64" height="7" rx="3.5"/><rect x="74" y="31.5" width="38" height="7" rx="3.5"/><rect x="46" y="51.5" width="56" height="7" rx="3.5"/><rect x="74" y="71.5" width="30" height="7" rx="3.5"/></g>
+    </svg>
+  </div>
+
+  <div id="lane-audit" class="lane" style="top:374px;">
+    <div class="lname" style="color:#D9703D">Audit</div>
+    <div class="chips"><span class="chip">to_chat</span></div>
+    <div class="tiles" style="left:96px; top:4px;">
+      <span class="tile"><svg width="15" height="17" viewBox="0 0 15 17"><path d="M7.5 1 L14 3.5 V8 C14 12 11 15 7.5 16 C4 15 1 12 1 8 V3.5 z" fill="#5E6B70"/><path d="M4.5 8.5 l2 2 l4 -4.5" stroke="#fff" stroke-width="1.6" fill="none"/></svg>Invariant Guardrails</span>
+    </div>
+    <svg class="card" viewBox="0 0 122 88">
+      <defs><marker id="ah2" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#8A979C"/></marker></defs>
+      <g stroke="#8A979C" stroke-width="1.4" fill="none" marker-end="url(#ah2)"><path d="M22 44 H40"/><path d="M68 44 H86"/></g>
+      <path d="M8 30 H18 L22 34 V58 H8 z" fill="#DCE5E8"/><path d="M11 40 H18 M11 45 H18 M11 50 H18" stroke="#9FB2B8"/>
+      <path d="M54 26 L67 31 V41 C67 50 61 56 54 59 C47 56 41 50 41 41 V31 z" fill="#5FAE8E"/>
+      <path d="M48 42 l4.5 4.5 l8 -9" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <path d="M90 30 H100 L104 34 V58 H90 z" fill="#DCE5E8"/>
+      <circle cx="104" cy="66" r="9" fill="#ED8D5A"/><path d="M100.5 62.5 l7 7 M107.5 62.5 l-7 7" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <div id="lane-analyze" class="lane" style="top:480px;">
+    <div class="lname" style="color:#1F5A63">Analyze</div>
+    <div class="chips"><span class="chip">table</span><span class="chip">to_pandas</span><span class="chip">to_networkx</span></div>
+    <div class="tiles" style="left:96px; top:4px;">
+      <span class="tile"><img src="logos/pandas.svg">pandas</span><span class="tile"><img src="logos/duckdb.svg">DuckDB</span>
+      <span class="tile"><img src="logos/polars.svg">Polars</span><span class="tile">networkx</span>
+    </div>
+    <svg class="card" viewBox="0 0 122 88">
+      <rect x="7" y="10" width="56" height="10" fill="#4198AC"/>
+      <g fill="#E3EBED"><rect x="7" y="24" width="56" height="7"/><rect x="7" y="35" width="56" height="7"/><rect x="7" y="46" width="56" height="7"/><rect x="7" y="57" width="56" height="7"/><rect x="7" y="68" width="56" height="7"/></g>
+      <g stroke="#fff" stroke-width="1.5"><path d="M25 10 V76 M44 10 V76"/></g>
+      <g stroke="#9FB2B8" stroke-width="1.2" fill="none"><path d="M80 24 L100 36 L112 20 M100 36 L94 58 L112 66 M80 24 L76 50 L94 58 M76 50 L84 74"/></g>
+      <g><circle cx="80" cy="24" r="5" fill="#E9B949"/><circle cx="100" cy="36" r="6" fill="#4198AC"/><circle cx="112" cy="20" r="4" fill="#7DC4A8"/><circle cx="94" cy="58" r="5.5" fill="#1F5A63"/><circle cx="112" cy="66" r="4.5" fill="#ED8D5A"/><circle cx="76" cy="50" r="4" fill="#7DC4A8"/><circle cx="84" cy="74" r="4" fill="#B4A3DE"/></g>
+    </svg>
+  </div>
+</div>
+
+<script>
+  // Circle area is proportional to the run count; the largest dataset gets radius 56.
+  const R_MAX = 56, N_MAX = Math.max(...Array.from(document.querySelectorAll(".bub"), b => +b.dataset.runs));
+  for (const b of document.querySelectorAll(".bub")) {
+    const r = R_MAX * Math.sqrt(+b.dataset.runs / N_MAX), x = +b.dataset.x, y = +b.dataset.y;
+    Object.assign(b.style, {left: (x - r) + "px", top: (y - r) + "px", width: 2 * r + "px", height: 2 * r + "px", background: b.dataset.c});
+    const name = b.dataset.name;
+    if (b.dataset.lab === "in") { b.textContent = name; b.style.fontSize = (r > 45 ? 19 : 12.5) + "px"; }
+    else if (b.dataset.lab === "in2") { b.innerHTML = name.replace("-", "-<br>"); b.style.fontSize = "12.5px"; }
+    else {
+      const l = document.createElement("div"); l.className = "blab"; l.textContent = name;
+      l.style.left = (x + r + 5) + "px"; l.style.top = (y - 8) + "px"; b.parentElement.appendChild(l);
+    }
+  }
+
+  // Wires: inputs converge on the pile's left side, outputs fan out to the five lanes.
+  const fig = document.getElementById("fig").getBoundingClientRect();
+  const box = id => { const r = document.getElementById(id).getBoundingClientRect(); return {l: r.left - fig.left, t: r.top - fig.top, r: r.right - fig.left, b: r.bottom - fig.top, cx: (r.left + r.right) / 2 - fig.left, cy: (r.top + r.bottom) / 2 - fig.top}; };
+  const svg = document.getElementById("wires"), NS = "http://www.w3.org/2000/svg";
+  svg.innerHTML = '<defs>' + ["#4198AC", "#287887", "#3E9A75", "#C98C12", "#D9703D", "#1F5A63"].map((c, i) =>
+    `<marker id="m${i}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="${c}"/></marker>`).join("") + '</defs>';
+  const wire = (x1, y1, x2, y2, color, mi, w = 2.2, dash = "") => {
+    const p = document.createElementNS(NS, "path"), dx = (x2 - x1) * 0.5;
+    p.setAttribute("d", `M${x1} ${y1} C${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`);
+    Object.entries({fill: "none", stroke: color, "stroke-width": w, "stroke-linecap": "round", "stroke-dasharray": dash}).forEach(([k, v]) => p.setAttribute(k, v));
+    if (mi !== null) p.setAttribute("marker-end", `url(#m${mi})`);
+    svg.appendChild(p);
+  };
+  // datasets to the hub cylinder
+  const db = box("db");
+  for (const b of document.querySelectorAll(".bub")) {
+    const r = b.getBoundingClientRect(), x = (r.left + r.right) / 2 - fig.left, y = (r.top + r.bottom) / 2 - fig.top;
+    wire(x, y, db.l + 6, db.cy, "#C9D6DA", null, 1.2);
+  }
+  const pile = box("pile"), px = pile.l + 34;
+  wire(db.r + 2, db.cy, px, pile.t + 150, "#4198AC", 0);
+  const sh = box("sheets");
+  wire(sh.r + 4, sh.t + 44, px, pile.t + 205, "#4198AC", 0);
+  const run = box("run");
+  wire(run.r + 160, run.t + 20, px, pile.t + 260, "#4198AC", 0);
+  const lanes = [["lane-view", 1], ["lane-eval", 2], ["lane-train", 3], ["lane-audit", 4], ["lane-analyze", 5]];
+  const colors = ["#4198AC", "#287887", "#3E9A75", "#C98C12", "#D9703D", "#1F5A63"];
+  lanes.forEach(([id, mi], i) => {
+    const L = box(id);
+    wire(pile.r - 38, pile.t + 120 + i * 42, L.l - 8, L.t + 17, colors[mi], mi, 2.4);
+  });
+</script>
+</body>
+</html>
