@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentpile"
-version = "0.3.0"
+version = "0.3.1"
 description = "Load public agent-trajectory datasets and agent traces into one run record based on ATIF v1.7."
 readme = "README.md"
 requires-python = ">=3.9"

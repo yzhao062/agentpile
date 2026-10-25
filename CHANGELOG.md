@@ -2,7 +2,7 @@
 
 All notable changes to agentpile are listed here. Versions follow [Semantic Versioning](https://semver.org/); before 1.0, a minor version may change the record format, and the entry says how.
 
-## Unreleased
+## 0.3.1 (2026-10-25)
 
 Examples that run as pasted and on your own runs, and capture with the framework versions a fresh install now gets. The record format and the readers are unchanged.
 

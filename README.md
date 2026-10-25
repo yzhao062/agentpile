@@ -312,7 +312,7 @@ Downloaded files live in one place, `~/.cache/agentpile/<dataset>/<revision>/` (
 
 ## 7. Status
 
-Alpha. Version 0.3.0 covers the 14 datasets above, each checked against a manifest of pinned counts, the ATIF, OpenAI-style message, OTLP JSON, tool-definition, agentpile config and Claude Code session formats, capture for Pydantic AI and the OpenAI Agents SDK, and chat rows for training and evaluation; the tools in section 1.4 are checked weekly. The record format may still change before 1.0, and the [changelog](https://github.com/yzhao062/agentpile/blob/main/CHANGELOG.md) lists every change.
+Alpha. Version 0.3.1 covers the 14 datasets above, each checked against a manifest of pinned counts, the ATIF, OpenAI-style message, OTLP JSON, tool-definition, agentpile config and Claude Code session formats, capture for Pydantic AI and the OpenAI Agents SDK, and chat rows for training and evaluation; the tools in section 1.4 are checked weekly. The record format may still change before 1.0, and the [changelog](https://github.com/yzhao062/agentpile/blob/main/CHANGELOG.md) lists every change.
 
 ## 8. License
 
