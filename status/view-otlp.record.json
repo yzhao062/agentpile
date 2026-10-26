@@ -6,11 +6,11 @@
     "row": "view-otlp",
     "outcome": "success",
     "revision": "c8095e2d96e83271f9acd7701ad20cbdca6b399f",
-    "date": "2026-10-25",
-    "run": "https://github.com/yzhao062/agentpile/actions/runs/40176867021",
-    "run_id": 40176867021,
+    "date": "2026-10-26",
+    "run": "https://github.com/yzhao062/agentpile/actions/runs/40338883624",
+    "run_id": 40338883624,
     "run_attempt": 1,
-    "event": "push",
+    "event": "schedule",
     "versions": {
       "opentelemetry-proto": "1.45.1",
       "protobuf": "7.36.2"
@@ -25,11 +25,11 @@
     "row": "view-otlp",
     "outcome": "success",
     "revision": "c8095e2d96e83271f9acd7701ad20cbdca6b399f",
-    "date": "2026-10-25",
-    "run": "https://github.com/yzhao062/agentpile/actions/runs/40176867021",
-    "run_id": 40176867021,
+    "date": "2026-10-26",
+    "run": "https://github.com/yzhao062/agentpile/actions/runs/40338883624",
+    "run_id": 40338883624,
     "run_attempt": 1,
-    "event": "push",
+    "event": "schedule",
     "versions": {
       "opentelemetry-proto": "1.45.1",
       "protobuf": "7.36.2"
